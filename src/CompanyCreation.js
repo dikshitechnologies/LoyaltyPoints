@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#E6F9FF" },
     header: {
         width: "100%",
-        aspectRatio: 1.9,
+        aspectRatio: 1.8,
         justifyContent: "center",
         alignItems: "center",
     },
