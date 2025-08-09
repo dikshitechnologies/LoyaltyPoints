@@ -1,42 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, ImageBackground, Image } from 'react-native';
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useMemo } from 'react';
+import bgcard from '../assets/bgcard.png';
+// Default fallback fonts in case PlayfairDisplay-Bold isn't available yet
 
-// Custom component to create stitched border effect
-const StitchedBorder = ({ style }) => {
-    return (
-        <View style={style}>
-            {/* Top border dots */}
-            <View style={styles.stitchLineHorizontal}>
-                {Array.from({ length: 25 }).map((_, index) => (
-                    <View key={`top-${index}`} style={styles.stitchDot} />
-                ))}
-            </View>
-            
-            {/* Bottom border dots */}
-            <View style={[styles.stitchLineHorizontal, { bottom: 0 }]}>
-                {Array.from({ length: 25 }).map((_, index) => (
-                    <View key={`bottom-${index}`} style={styles.stitchDot} />
-                ))}
-            </View>
-            
-            {/* Left border dots */}
-            <View style={styles.stitchLineVertical}>
-                {Array.from({ length: 20 }).map((_, index) => (
-                    <View key={`left-${index}`} style={styles.stitchDot} />
-                ))}
-            </View>
-            
-            {/* Right border dots */}
-            <View style={[styles.stitchLineVertical, { right: 0 }]}>
-                {Array.from({ length: 20 }).map((_, index) => (
-                    <View key={`right-${index}`} style={styles.stitchDot} />
-                ))}
-            </View>
-        </View>
-    );
-};
+
 
 const ReportScreen = () => {
     const [loyaltyNumber, setLoyaltyNumber] = useState('');
@@ -103,14 +72,14 @@ const ReportScreen = () => {
                         onSubmitEditing={handleSearch}
                     />
                     <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                        <MaterialIcons name="search" size={24} color="#1E88E5" />
+                        <MaterialIcons name="search" size={24} color="#006A72ff" />
                     </TouchableOpacity>
                 </View>
             </View>
 
             {loading && (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#1E88E5" />
+                    <ActivityIndicator size="large" color="#006A72ff" />
                     <Text style={styles.loadingText}>Loading customer data...</Text>
                 </View>
             )}
@@ -123,37 +92,36 @@ const ReportScreen = () => {
 
             {customerData && (
                 <View style={styles.customerInfoContainer}>
-                    <View style={styles.walletOuter}>
-                        <View style={styles.walletPapers}>
-                            {/* Papers inside wallet effect */}
-                            <View style={styles.walletPaper1} />
-                            <View style={styles.walletPaper2} />
-                        </View>
-                        <View style={styles.walletCard}>
-                            <StitchedBorder style={styles.stitchContainer} />
-                            <View style={styles.walletHeader}>
-                                <Text style={styles.walletTitle}>Loyalty Wallet</Text>
-                                <MaterialIcons name="account-balance-wallet" size={24} color="white" />
+                    <View style={styles.customerCard}>
+                        <ImageBackground 
+                            source={bgcard} 
+                            style={styles.cardBackground}
+                            imageStyle={{borderRadius: 16}}
+                            resizeMode="cover"
+                        >
+                            {/* Loyalty number on top left */}
+                            <View style={styles.loyaltyNumberContainer}>
+                                <Text style={styles.infoLabel}>LOYALTY NUMBER</Text>
+                                <Text style={styles.loyaltyNumberValue}>{customerData.loyaltyNumber}</Text>
                             </View>
-                            <View style={styles.walletDivider} />
-                            <View style={styles.customerDetails}>
-                                <View style={styles.customerNameSection}>
-                                    <Text style={styles.detailLabel}>Customer</Text>
-                                    <Text style={styles.customerName}>{customerData.name}</Text>
-                                </View>
-                                <View style={styles.pointsSection}>
-                                    <Text style={styles.detailLabel}>Points</Text>
-                                    <Text style={styles.pointsBalance}>{customerData.balancePoints}</Text>
-                                </View>
+                            
+                            {/* Customer name in center */}
+                            <View style={styles.centerNameContainer}>
+                                <Text style={styles.customerName}>{customerData.name}</Text>
                             </View>
-                            <View style={styles.cardFooter}>
-                                <Text style={styles.cardNumber}>Card #{customerData.loyaltyNumber}</Text>
-                                <Text style={styles.expiryDate}>Valid thru: 12/2028</Text>
+                            
+                            {/* Valid till date on bottom left */}
+                            <View style={styles.validTillContainer}>
+                                <Text style={styles.infoLabel}>VALID TILL</Text>
+                                <Text style={styles.validTillValue}>08/09/2026</Text>
                             </View>
-                            <View style={styles.walletButton}>
-                                <View style={styles.buttonCircle} />
+                            
+                            {/* Balance on bottom right */}
+                            <View style={styles.balanceContainer}>
+                                <Text style={styles.infoLabel}>BALANCE</Text>
+                                <Text style={styles.balanceValue}>{customerData.balancePoints}</Text>
                             </View>
-                        </View>
+                        </ImageBackground>
                     </View>
                 </View>
             )}
@@ -203,48 +171,12 @@ const ReportScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    // Stitched border styles
-    stitchContainer: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 2,
-    },
-    stitchLineHorizontal: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 2,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 8,
-    },
-    stitchLineVertical: {
-        position: 'absolute',
-        top: 8,
-        left: 0,
-        bottom: 8,
-        width: 2,
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-    },
-    stitchDot: {
-        width: 3,
-        height: 3,
-        borderRadius: 1.5,
-        backgroundColor: 'white',
-        opacity: 0.7,
-    },
-    
     container: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#ffffffff',
     },
     header: {
-        backgroundColor: '#1E88E5',
+        backgroundColor: '#006A72ff',
         padding: 20,
         paddingTop: 50,
         alignItems: 'center',
@@ -294,87 +226,111 @@ const styles = StyleSheet.create({
         padding: 15,
         paddingTop: 5,
         paddingBottom: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    walletOuter: {
-        position: 'relative',
-        marginVertical: 10,
-    },
-    walletPapers: {
-        position: 'absolute',
-        top: -5,
-        left: 10,
-        right: 10,
-        zIndex: 1,
-    },
-    walletPaper1: {
-        height: 20,
-        backgroundColor: '#FFA726', // Orange paper
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
-    },
-    walletPaper2: {
-        height: 10,
-        backgroundColor: '#FFCC80', // Light orange paper
-        borderTopLeftRadius: 5,
-        borderTopRightRadius: 5,
-        marginTop: -5,
-    },
-    walletCard: {
-        backgroundColor: '#004D6E', // Deep blue wallet color
-        borderRadius: 20,
-        padding: 20,
-        paddingVertical: 25,
+    customerCard: {
+        borderRadius: 16,
+        marginVertical: 15,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
-            height: 4,
+            height: 6,
         },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        elevation: 8,
-        position: 'relative',
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 6,
         overflow: 'hidden',
+        width: '90%',
+        height: 160, // Reduced height for simpler card
+        position: 'relative',
+        alignSelf: 'center',
     },
-    walletHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 10,
-        zIndex: 3,
-    },
-    walletTitle: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    walletDivider: {
-        height: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        marginVertical: 10,
-    },
-    customerDetails: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginVertical: 15,
-    },
-    customerNameSection: {
-        flex: 2,
-    },
-    pointsSection: {
+    cardBackground: {
         flex: 1,
-        alignItems: 'flex-end',
+        padding: 20,
+        justifyContent: 'space-between',
+        borderRadius: 16,
+        overflow: 'hidden',
+        position: 'relative',
     },
-    detailLabel: {
-        fontSize: 12,
-        color: 'rgba(255, 255, 255, 0.7)',
-        marginBottom: 5,
+    centerNameContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1,
     },
     customerName: {
-        fontSize: 20,
+        fontSize: 28,
+        color: '#FFFFFF',
         fontWeight: 'bold',
-        color: '#1E88E5',
-        marginTop: 3,
+        textAlign: 'center',
+        fontFamily: 'System',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: 1, height: 1},
+        textShadowRadius: 3,
+    },
+    loyaltyNumberContainer: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
+        alignItems: 'flex-start',
+        zIndex: 2,
+    },
+    balanceContainer: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        alignItems: 'flex-end',
+        zIndex: 2,
+    },
+    validTillContainer: {
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        alignItems: 'flex-start',
+        zIndex: 2,
+    },
+    validTillValue: {
+        fontSize: 16,
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+        fontFamily: 'System',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: 0.5, height: 0.5},
+        textShadowRadius: 1,
+    },
+    infoLabel: {
+        fontSize: 12,
+        color: '#FFFFFF',
+        opacity: 0.9,
+        marginBottom: 5,
+        fontFamily: 'System',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: 0.5, height: 0.5},
+        textShadowRadius: 1,
+    },
+    loyaltyNumberValue: {
+        fontSize: 16,
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+        fontFamily: 'System',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: 0.5, height: 0.5},
+        textShadowRadius: 1,
+    },
+    balanceValue: {
+        fontSize: 20,
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+        fontFamily: 'System',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: 0.5, height: 0.5},
+        textShadowRadius: 1,
     },
     content: {
         flex: 1,

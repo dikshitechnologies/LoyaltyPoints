@@ -16,6 +16,7 @@ import LoginScreen from './src/components/LoginScreen';
 import HomeScreen from './src/components/HomeScreen';
 import CompanyCreationScreen from './src/CompanyCreation';
 import TabNavigator from './src/components/TabNavigator';
+import PointsScreen from './src/components/PointsScreen'; 
 import RateFixingScreen from './src/RateFixingScreen';
 
 const Stack = createNativeStackNavigator();
@@ -30,6 +31,9 @@ function App() {
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={TabNavigator} />
+        <Stack.Screen name="Points" component={PointsScreen} />
+        
+
          <Stack.Screen name="Company" component={CompanyCreationScreen} />
            <Stack.Screen name="RateFixing" component={RateFixingScreen} />
       </Stack.Navigator>
