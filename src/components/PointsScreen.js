@@ -389,6 +389,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     backgroundColor: "#fff",
     elevation: 1,
+    
   },
 
   buttonRow: { flexDirection: "row", marginTop: 20 },
