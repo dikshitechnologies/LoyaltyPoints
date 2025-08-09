@@ -33,8 +33,8 @@ const PartyCreation = () => {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerText}>Dikshi Loyalty</Text>
-                <Text style={styles.subHeaderText}>User Create</Text>
+                <Text style={styles.headerText}>Add User</Text>
+                
             </View>
             
             <ScrollView style={styles.content}>
@@ -50,7 +50,7 @@ const PartyCreation = () => {
                             style={styles.inputInRow}
                             value={loyaltyNumber}
                             onChangeText={setLoyaltyNumber}
-                            placeholder="Enter loyalty number"
+                           
                             keyboardType="numeric"
                         />
                     </View>
@@ -61,7 +61,7 @@ const PartyCreation = () => {
                             style={styles.inputInRow}
                             value={name}
                             onChangeText={setName}
-                            placeholder="Enter name"
+                            
                         />
                     </View>
                     
@@ -71,7 +71,7 @@ const PartyCreation = () => {
                             style={styles.inputInRow}
                             value={phoneNumber}
                             onChangeText={setPhoneNumber}
-                            placeholder="Enter phone number"
+                            
                             keyboardType="phone-pad"
                         />
                     </View>
@@ -82,21 +82,23 @@ const PartyCreation = () => {
                             style={[styles.inputInRow, styles.textArea]}
                             value={address}
                             onChangeText={setAddress}
-                            placeholder="Enter address"
+                            
                             multiline
                             numberOfLines={3}
                             textAlignVertical="top"
                         />
                     </View>
                     
-                    <View style={styles.buttonRow}>
-                        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                            <Text style={styles.buttonText}>Save</Text>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
-                            <Text style={styles.buttonText}>Clear</Text>
-                        </TouchableOpacity>
+                    <View style={styles.buttonContainer}>
+                        <View style={styles.buttonRow}>
+                            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                                <Text style={styles.sbuttonText}>Save</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
+                                <Text style={styles.buttonText}>Clear</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </ScrollView>
@@ -110,12 +112,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
     },
     header: {
-        backgroundColor: '#1E88E5',
+        backgroundColor: '#006A72ff',
         padding: 20,
         paddingTop: 50,
         alignItems: 'center',
-        borderBottomLeftRadius: 38,
-        borderBottomRightRadius: 38,
+        borderBottomLeftRadius: 40,
+        borderBottomRightRadius: 40,
     },
     headerText: {
         fontSize: 24,
@@ -179,7 +181,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     inputInRow: {
-        backgroundColor: '#F9F9F9',
+        backgroundColor: '#ffffffff',
         borderRadius: 8,
         padding: 12,
         borderWidth: 1,
@@ -212,28 +214,38 @@ const styles = StyleSheet.create({
     halfInput: {
         width: '48%',
     },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: 25,
+        width: '100%',
+    },
     buttonRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 25,
-        paddingHorizontal: 10,
+        width: '68%',
     },
     saveButton: {
-        backgroundColor: '#1E88E5',
-        borderRadius: 8,
+        backgroundColor: '#006A72',
+        borderRadius: 18,
         padding: 15,
         alignItems: 'center',
         width: '48%',
     },
     clearButton: {
-        backgroundColor: '#FF5722',
-        borderRadius: 8,
+        backgroundColor: '#d9f5f7',
+        borderRadius: 18,
         padding: 15,
         alignItems: 'center',
         width: '48%',
     },
-    buttonText: {
+    sbuttonText: {
         color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    buttonText: {
+        color: '#006A72',
         fontWeight: 'bold',
         fontSize: 16,
     },
