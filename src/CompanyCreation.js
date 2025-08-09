@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import axios from "axios";
 import {
     View,
     Text,
@@ -53,22 +54,44 @@ export default function CompanyCreationScreen({ navigation }) {
         setRePassword("");
     };
 
-    const register = () => {
+  const register = async () => {
+    if (password !== rePassword) {
+        Alert.alert("Password Mismatch", "Passwords do not match. Please re-enter.");
+        return;
+    }
 
+    try {
+        const payload = {
+            companyCode: "", // or generate dynamically if needed
+            companyName: companyName,
+            gstNumber: gstin,
+            phone: phone,
+            addressLine1: address1,
+            addressLine2: address2,
+            userName: username,
+            password: password
+        };
 
-        navigation.navigate("RateFixing", {
-            date,
-            companyName,
-            gstin,
-            phone,
-            address1,
-            address2,
-            address3,
-            username,
-            password,
-            rePassword,
-        });
-    };
+        const response = await axios.post(
+            "http://dikshi.ddns.net/loyaltypoints/api/Company",
+            payload,
+            {
+                headers: { "Content-Type": "application/json" }
+            }
+        );
+
+        if (response.status === 201) {
+            Alert.alert("Success", "Company registered successfully!");
+            clearForm();
+            navigation.navigate("RateFixing", payload);
+        } else {
+            Alert.alert("Error", "Unexpected response from server.");
+        }
+    } catch (error) {
+        console.error(error);
+        Alert.alert("Error", "Failed to register company. Please try again.");
+    }
+};
 
     const renderInput = (
         label,
@@ -121,7 +144,7 @@ export default function CompanyCreationScreen({ navigation }) {
                 >
                     {/* Header Image with Title */}
                     <ImageBackground
-                        source={require("./assets/image.png")}
+                        source={require("./assets/image1.png")}
                         style={styles.header}
                         resizeMode="cover"
                     >

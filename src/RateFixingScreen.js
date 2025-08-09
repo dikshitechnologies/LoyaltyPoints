@@ -9,34 +9,96 @@ import {
     ScrollView,
     ImageBackground
 } from "react-native";
+import DatePicker from "react-native-date-picker";
 
 export default function RateFixingScreen({ route, navigation }) {
-    const { companyName, date } = route.params;
+    const { companyName, date: creationDate } = route.params;
+
+    const [rateDate, setRateDate] = useState(new Date());
+    const [openDatePicker, setOpenDatePicker] = useState(false);
+
+    const [amount, setAmount] = useState("");
     const [points, setPoints] = useState("");
 
     const saveRate = () => {
-        console.log("Rate fixed for", companyName, ":", points);
+        console.log("Saving Rate Fixing Details:", {
+            companyName,
+            creationDate,
+            rateDate,
+            amount,
+            points
+        });
         navigation.goBack();
+    };
+
+    const clearForm = () => {
+        setRateDate(new Date());
+        setAmount("");
+        setPoints("");
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
+                {/* Header */}
                 <ImageBackground
                     source={require("./assets/image.png")}
                     style={styles.header}
                     resizeMode="cover"
                 >
-                    <Text style={styles.headerText}>Rate Fixing</Text>
+                    
                 </ImageBackground>
 
+                {/* Card */}
                 <View style={styles.card}>
                     <Text style={styles.subtitle}>
-                        Specify the points for {companyName} ({date.toLocaleDateString()})
+                        Fix Points for {companyName}
+                       
                     </Text>
 
+                    {/* Date */}
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>RATE POINTS</Text>
+                        <Text style={styles.label}>DATE</Text>
+                        <TouchableOpacity
+                            style={styles.input}
+                            onPress={() => setOpenDatePicker(true)}
+                        >
+                            <Text style={{ color: "#00363A" }}>
+                                {rateDate.toLocaleDateString("en-GB", {
+                                    day: "numeric",
+                                    month: "long",
+                                    year: "numeric"
+                                })}
+                            </Text>
+                        </TouchableOpacity>
+                        <DatePicker
+                            modal
+                            open={openDatePicker}
+                            date={rateDate}
+                            mode="date"
+                            onConfirm={(selectedDate) => {
+                                setOpenDatePicker(false);
+                                setRateDate(selectedDate);
+                            }}
+                            onCancel={() => setOpenDatePicker(false)}
+                        />
+                    </View>
+
+                    {/* Amount */}
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>AMOUNT</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={amount}
+                            onChangeText={setAmount}
+                            keyboardType="numeric"
+                            placeholder="Enter amount"
+                        />
+                    </View>
+
+                    {/* Points */}
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>POINTS</Text>
                         <TextInput
                             style={styles.input}
                             value={points}
@@ -46,12 +108,21 @@ export default function RateFixingScreen({ route, navigation }) {
                         />
                     </View>
 
-                    <TouchableOpacity
-                        style={[styles.button, styles.registerBtn]}
-                        onPress={saveRate}
-                    >
-                        <Text style={styles.registerText}>SAVE</Text>
-                    </TouchableOpacity>
+                    {/* Buttons Row */}
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity
+                            style={[styles.button, styles.registerBtn]}
+                            onPress={saveRate}
+                        >
+                            <Text style={styles.registerText}>SAVE</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.button, styles.clearBtn]}
+                            onPress={clearForm}
+                        >
+                            <Text style={styles.clearText}>CLEAR</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -62,7 +133,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#E6F9FF" },
     header: {
         width: "100%",
-        aspectRatio: 1.9,
+        aspectRatio: 1,
         justifyContent: "center",
         alignItems: "center",
     },
@@ -109,12 +180,20 @@ const styles = StyleSheet.create({
         backgroundColor: "#ffffff",
         color: "#00363A",
     },
+    buttonRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 8,
+    },
     button: {
+        flex: 1,
         paddingVertical: 12,
         borderRadius: 25,
         alignItems: "center",
-        marginTop: 10,
+        marginHorizontal: 5,
     },
     registerBtn: { backgroundColor: "#006A72" },
     registerText: { color: "#ffffff", fontWeight: "bold" },
+    clearBtn: { backgroundColor: "#D9F5F7" },
+    clearText: { color: "#006A72", fontWeight: "bold" },
 });
