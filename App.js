@@ -14,6 +14,7 @@ import SplashScreen from './src/components/SplashScreen';
 import LoginScreen from './src/components/LoginScreen';
 import HomeScreen from './src/components/HomeScreen';
 import TabNavigator from './src/components/TabNavigator';
+import PointsScreen from './src/components/PointsScreen'; 
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,9 @@ function App() {
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={TabNavigator} />
+        <Stack.Screen name="Points" component={PointsScreen} />
+        
+
       </Stack.Navigator>
     </NavigationContainer>
   );

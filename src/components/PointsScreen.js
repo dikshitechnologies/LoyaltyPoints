@@ -1,140 +1,187 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
 
-const PointsScreen = () => {
-    return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerText}>Your Points</Text>
-                <Text style={styles.pointsText}>2,500 points</Text>
-            </View>
-            
-            <ScrollView style={styles.content}>
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Points History</Text>
-                    <View style={styles.pointsItem}>
-                        <Text>Coffee Shop Purchase</Text>
-                        <Text style={styles.pointsEarned}>+150 points</Text>
-                        <Text style={styles.dateText}>Aug 5, 2025</Text>
-                    </View>
-                    <View style={styles.pointsItem}>
-                        <Text>Gas Station</Text>
-                        <Text style={styles.pointsEarned}>+300 points</Text>
-                        <Text style={styles.dateText}>Aug 3, 2025</Text>
-                    </View>
-                    <View style={styles.pointsItem}>
-                        <Text>Grocery Store</Text>
-                        <Text style={styles.pointsEarned}>+500 points</Text>
-                        <Text style={styles.dateText}>July 30, 2025</Text>
-                    </View>
-                    <View style={styles.pointsItem}>
-                        <Text>Movie Theater</Text>
-                        <Text style={styles.pointsEarned}>+200 points</Text>
-                        <Text style={styles.dateText}>July 25, 2025</Text>
-                    </View>
-                    <View style={styles.pointsItem}>
-                        <Text>Gift Card Redemption</Text>
-                        <Text style={styles.pointsRedeemed}>-1000 points</Text>
-                        <Text style={styles.dateText}>July 20, 2025</Text>
-                    </View>
-                </View>
-                
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Earning Opportunities</Text>
-                    <View style={styles.opportunityItem}>
-                        <Text>Complete Profile</Text>
-                        <Text style={styles.opportunityPoints}>+100 points</Text>
-                    </View>
-                    <View style={styles.opportunityItem}>
-                        <Text>Refer a Friend</Text>
-                        <Text style={styles.opportunityPoints}>+500 points</Text>
-                    </View>
-                    <View style={styles.opportunityItem}>
-                        <Text>Follow on Social Media</Text>
-                        <Text style={styles.opportunityPoints}>+50 points</Text>
-                    </View>
-                </View>
-            </ScrollView>
-        </View>
-    );
-};
+export default function PointsScreen() {
+  // Add Mode State
+  const [addLoyaltyNumber, setAddLoyaltyNumber] = useState("");
+  const [addName, setAddName] = useState("");
+  const [addBalance, setAddBalance] = useState("");
+  const [purchaseAmount, setPurchaseAmount] = useState("");
+  const [pointsEarned, setPointsEarned] = useState("");
+
+  // Redeem Mode State
+  const [redeemLoyaltyNumber, setRedeemLoyaltyNumber] = useState("");
+  const [redeemName, setRedeemName] = useState("");
+  const [redeemBalance, setRedeemBalance] = useState("");
+  const [redeemPoints, setRedeemPoints] = useState("");
+  const [redeemAmount, setRedeemAmount] = useState("");
+
+  const [mode, setMode] = useState("add"); // "add" or "redeem"
+
+  // Points calculation
+  const calculatePoints = (amount) => {
+    const points = parseFloat(amount) * 0.1; // Example: 10% of purchase amount
+    setPointsEarned(points ? points.toFixed(2) : "");
+  };
+
+  const convertPointsToAmount = (points) => {
+    const amount = parseFloat(points) * 1; // Example: 1 point = ₹1
+    setRedeemAmount(amount ? amount.toFixed(2) : "");
+  };
+
+  const handleSave = () => {
+    if (mode === "add") {
+      Alert.alert("Saved", `Points Earned: ${pointsEarned}`);
+    } else {
+      Alert.alert("Redeemed", `Amount Redeemed: ₹${redeemAmount}`);
+    }
+  };
+
+  const handleClear = () => {
+    if (mode === "add") {
+      setAddLoyaltyNumber("");
+      setAddName("");
+      setAddBalance("");
+      setPurchaseAmount("");
+      setPointsEarned("");
+    } else {
+      setRedeemLoyaltyNumber("");
+      setRedeemName("");
+      setRedeemBalance("");
+      setRedeemPoints("");
+      setRedeemAmount("");
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Top Buttons */}
+      <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={[styles.topButton, mode === "add" && styles.activeButton]}
+          onPress={() => setMode("add")}
+        >
+          <Text style={styles.buttonText}>Add</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.topButton, mode === "redeem" && styles.activeButton]}
+          onPress={() => setMode("redeem")}
+        >
+          <Text style={styles.buttonText}>Redeem</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ADD Mode */}
+      {mode === "add" && (
+        <>
+          <Text style={styles.label}>Loyalty Number</Text>
+          <TextInput
+            style={styles.input}
+            value={addLoyaltyNumber}
+            onChangeText={setAddLoyaltyNumber}
+            placeholder="Enter Loyalty Number"
+          />
+
+          <Text style={styles.label}>Name</Text>
+          <TextInput
+            style={styles.input}
+            value={addName}
+            onChangeText={setAddName}
+            placeholder="Enter Name"
+          />
+
+          <Text style={styles.label}>Balance Points</Text>
+          <TextInput
+            style={styles.input}
+            value={addBalance}
+            onChangeText={setAddBalance}
+            placeholder="Enter Balance Points"
+            keyboardType="numeric"
+          />
+
+          <Text style={styles.label}>Purchase Amount</Text>
+          <TextInput
+            style={styles.input}
+            value={purchaseAmount}
+            onChangeText={(val) => {
+              setPurchaseAmount(val);
+              calculatePoints(val);
+            }}
+            placeholder="Enter Purchase Amount"
+            keyboardType="numeric"
+          />
+
+          <Text style={styles.label}>Points Earned</Text>
+          <TextInput style={styles.input} value={pointsEarned} editable={false} />
+        </>
+      )}
+
+      {/* REDEEM Mode */}
+      {mode === "redeem" && (
+        <>
+          <Text style={styles.label}>Loyalty Number</Text>
+          <TextInput
+            style={styles.input}
+            value={redeemLoyaltyNumber}
+            onChangeText={setRedeemLoyaltyNumber}
+            placeholder="Enter Loyalty Number"
+          />
+
+          <Text style={styles.label}>Name</Text>
+          <TextInput
+            style={styles.input}
+            value={redeemName}
+            onChangeText={setRedeemName}
+            placeholder="Enter Name"
+          />
+
+          <Text style={styles.label}>Balance Points</Text>
+          <TextInput
+            style={styles.input}
+            value={redeemBalance}
+            onChangeText={setRedeemBalance}
+            placeholder="Enter Balance Points"
+            keyboardType="numeric"
+          />
+
+          <Text style={styles.label}>Redeem Points</Text>
+          <TextInput
+            style={styles.input}
+            value={redeemPoints}
+            onChangeText={(val) => {
+              setRedeemPoints(val);
+              convertPointsToAmount(val);
+            }}
+            placeholder="Enter Points to Redeem"
+            keyboardType="numeric"
+          />
+
+          <Text style={styles.label}>Amount</Text>
+          <TextInput style={styles.input} value={redeemAmount} editable={false} />
+        </>
+      )}
+
+      {/* Save & Clear Buttons */}
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.buttonText}>Save</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
+          <Text style={styles.buttonText}>Clear</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F5F5',
-    },
-    header: {
-        backgroundColor: '#1E88E5',
-        padding: 20,
-        paddingTop: 50,
-        alignItems: 'center',
-    },
-    headerText: {
-        fontSize: 24,
-        color: 'white',
-        fontWeight: 'bold',
-    },
-    pointsText: {
-        fontSize: 32,
-        color: 'white',
-        fontWeight: 'bold',
-        marginTop: 10,
-    },
-    content: {
-        flex: 1,
-        padding: 15,
-    },
-    card: {
-        backgroundColor: 'white',
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 15,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
-    },
-    cardTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 15,
-        color: '#333',
-    },
-    pointsItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    pointsEarned: {
-        color: 'green',
-        fontWeight: 'bold',
-    },
-    pointsRedeemed: {
-        color: 'red',
-        fontWeight: 'bold',
-    },
-    dateText: {
-        color: '#888',
-        fontSize: 12,
-    },
-    opportunityItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    opportunityPoints: {
-        color: '#1E88E5',
-        fontWeight: 'bold',
-    },
+  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
+  buttonRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 },
+  topButton: { flex: 1, padding: 10, backgroundColor: "#ccc", marginHorizontal: 5, borderRadius: 8 },
+  activeButton: { backgroundColor: "#4CAF50" },
+  buttonText: { color: "#fff", textAlign: "center", fontWeight: "bold" },
+  label: { fontSize: 16, marginTop: 10, fontWeight: "bold" },
+  input: { borderWidth: 1, borderColor: "#ccc", padding: 10, borderRadius: 8, marginTop: 5 },
+  saveButton: { flex: 1, backgroundColor: "#2196F3", padding: 12, borderRadius: 8, marginHorizontal: 5, marginTop: 15 },
+  clearButton: { flex: 1, backgroundColor: "#f44336", padding: 12, borderRadius: 8, marginHorizontal: 5, marginTop: 15 },
 });
-
-export default PointsScreen;
