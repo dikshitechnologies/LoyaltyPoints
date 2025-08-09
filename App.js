@@ -16,7 +16,7 @@ import LoginScreen from './src/components/LoginScreen';
 import HomeScreen from './src/components/HomeScreen';
 import CompanyCreationScreen from './src/CompanyCreation';
 import TabNavigator from './src/components/TabNavigator';
-import RateFixingScreen from "./src/RateFixingScreen";
+import RateFixingScreen from './src/RateFixingScreen';
 
 const Stack = createNativeStackNavigator();
 
