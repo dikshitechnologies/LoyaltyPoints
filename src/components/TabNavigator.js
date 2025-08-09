@@ -4,14 +4,30 @@ import { Text, View, StyleSheet } from 'react-native';
 import PartyCreation from './PartyCreation';
 import PointsScreen from './PointsScreen';
 import ReportScreen from './ReportScreen';
-
-// You can replace this with icons later
-const TabIcon = ({ focused, color, title }) => (
-  <View style={styles.iconContainer}>
-    <View style={[styles.icon, { backgroundColor: focused ? '#1E88E5' : '#DDDDDD' }]} />
-    <Text style={[styles.iconText, { color: focused ? '#1E88E5' : '#999' }]}>{title}</Text>
-  </View>
-);
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+// Custom Tab Icon component with actual icons
+const TabIcon = ({ focused, color, title, iconType, iconName }) => {
+  const activeColor = '#1E88E5';
+  const inactiveColor = '#999';
+  const currentColor = focused ? activeColor : inactiveColor;
+  
+  return (
+    <View style={styles.iconContainer}>
+      {iconType === 'Ionicons' && (
+        <Ionicons name={iconName} size={24} color={currentColor} />
+      )}
+      {iconType === 'MaterialCommunityIcons' && (
+        <MaterialCommunityIcons name={iconName} size={24} color={currentColor} />
+      )}
+      {iconType === 'MaterialIcons' && (
+        <MaterialIcons name={iconName} size={24} color={currentColor} />
+      )}
+      <Text style={[styles.iconText, { color: currentColor }]}>{title}</Text>
+    </View>
+  );
+};
 
 const Tab = createBottomTabNavigator();
 
@@ -33,7 +49,13 @@ const TabNavigator = () => {
         options={{
           tabBarLabel: '',
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon focused={focused} color={color} title="Parties" />
+            <TabIcon 
+              focused={focused} 
+              color={color} 
+              title="User Creation" 
+              iconType="Ionicons" 
+              iconName="person-add-outline"
+            />
           ),
         }}
       />
@@ -43,7 +65,13 @@ const TabNavigator = () => {
         options={{
           tabBarLabel: '',
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon focused={focused} color={color} title="Points" />
+            <TabIcon 
+              focused={focused} 
+              color={color} 
+              title="Points" 
+              iconType="MaterialCommunityIcons" 
+              iconName="card-giftcard"
+            />
           ),
         }}
       />
@@ -53,7 +81,13 @@ const TabNavigator = () => {
         options={{
           tabBarLabel: '',
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon focused={focused} color={color} title="Reports" />
+            <TabIcon 
+              focused={focused} 
+              color={color} 
+              title="Reports" 
+              iconType="MaterialIcons" 
+              iconName="insert-chart"
+            />
           ),
         }}
       />
@@ -66,14 +100,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginBottom: 3,
-  },
   iconText: {
     fontSize: 12,
+    marginTop: 2,
   },
 });
 
