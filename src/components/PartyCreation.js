@@ -1,5 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    TextInput, 
+    TouchableOpacity, 
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    ImageBackground,
+    Keyboard,
+    TouchableWithoutFeedback
+} from 'react-native';
 
 const PartyCreation = () => {
     const [loyaltyNumber, setLoyaltyNumber] = useState('');
@@ -7,6 +20,12 @@ const PartyCreation = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
     const [currentDate, setCurrentDate] = useState('');
+    
+    // Refs for focus navigation
+    const loyaltyNumberRef = useRef();
+    const nameRef = useRef();
+    const phoneNumberRef = useRef();
+    const addressRef = useRef();
 
     useEffect(() => {
         // Set today's date when component mounts
@@ -29,113 +48,174 @@ const PartyCreation = () => {
         setPhoneNumber('');
         setAddress('');
     };
+    
+    // Reusable input component similar to CompanyCreation
+    const renderInput = (
+        label,
+        value,
+        setValue,
+        keyboard = "default",
+        refProp = null,
+        onSubmitEditing = null,
+        returnKeyType = "next",
+        multiline = false,
+        numberOfLines = 1,
+        autoCapitalize = "characters"
+    ) => (
+        <View style={styles.inputContainer}>
+            <Text style={styles.label}>{label}</Text>
+            <View style={styles.inputWrapper}>
+                <TextInput
+                    style={[styles.input, multiline && styles.textArea]}
+                    value={value}
+                    onChangeText={setValue}
+                    keyboardType={keyboard}
+                    ref={refProp}
+                    returnKeyType={returnKeyType}
+                    onSubmitEditing={onSubmitEditing}
+                    blurOnSubmit={false}
+                    multiline={multiline}
+                    numberOfLines={numberOfLines}
+                    autoCapitalize={autoCapitalize}
+                />
+            </View>
+        </View>
+    );
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerText}>Add User</Text>
-                
-            </View>
-            
-            <ScrollView style={styles.content}>
-                <View style={styles.formContainerFullWidth}>
-                    <View style={styles.dateContainer}>
-                        <Text style={styles.dateLabel}>Date:</Text>
-                        <Text style={styles.dateValue}>{currentDate}</Text>
-                    </View>
-                    
-                    <View style={styles.inputRow}>
-                        <Text style={styles.labelInRow}>Loyalty Number</Text>
-                        <TextInput 
-                            style={styles.inputInRow}
-                            value={loyaltyNumber}
-                            onChangeText={setLoyaltyNumber}
-                           
-                            keyboardType="numeric"
-                        />
-                    </View>
-                    
-                    <View style={styles.inputRow}>
-                        <Text style={styles.labelInRow}>Name</Text>
-                        <TextInput 
-                            style={styles.inputInRow}
-                            value={name}
-                            onChangeText={setName}
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+            >
+                <ScrollView
+                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }} // Extra padding at bottom
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                        <View style={{flex: 1}}>
+                            {/* Header */}
+                            <View style={styles.header}>
+                                <Text style={styles.headerText}>Add User</Text>
+                            </View>
                             
-                        />
-                    </View>
-                    
-                    <View style={styles.inputRow}>
-                        <Text style={styles.labelInRow}>Phone Number</Text>
-                        <TextInput 
-                            style={styles.inputInRow}
-                            value={phoneNumber}
-                            onChangeText={setPhoneNumber}
+                            {/* Form Card */}
+                            <View style={styles.card}>
+                                <Text style={styles.subtitle}>
+                                    Fill in the details below to add a new user.
+                                </Text>
                             
-                            keyboardType="phone-pad"
-                        />
-                    </View>
-                    
-                    <View style={styles.inputRow}>
-                        <Text style={styles.labelInRow}>Address</Text>
-                        <TextInput 
-                            style={[styles.inputInRow, styles.textArea]}
-                            value={address}
-                            onChangeText={setAddress}
-                            
-                            multiline
-                            numberOfLines={3}
-                            textAlignVertical="top"
-                        />
-                    </View>
-                    
-                    <View style={styles.buttonContainer}>
-                        <View style={styles.buttonRow}>
-                            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                                <Text style={styles.sbuttonText}>Save</Text>
-                            </TouchableOpacity>
-                            
-                            <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
-                                <Text style={styles.buttonText}>Clear</Text>
-                            </TouchableOpacity>
+                                {/* Date Display */}
+                                <View style={styles.dateContainer}>
+                                    <Text style={styles.dateLabel}>DATE:</Text>
+                                    <Text style={styles.dateValue}>{currentDate}</Text>
+                                </View>
+                                
+                                {/* Form Fields */}
+                                {renderInput(
+                                    "LOYALTY NUMBER",
+                                    loyaltyNumber,
+                                    setLoyaltyNumber,
+                                    "numeric",
+                                    loyaltyNumberRef,
+                                    () => nameRef.current.focus()
+                                )}
+                                
+                                {renderInput(
+                                    "NAME",
+                                    name,
+                                    setName,
+                                    "default",
+                                    nameRef,
+                                    () => phoneNumberRef.current.focus()
+                                )}
+                                
+                                {renderInput(
+                                    "PHONE NUMBER",
+                                    phoneNumber,
+                                    setPhoneNumber,
+                                    "phone-pad",
+                                    phoneNumberRef,
+                                    () => addressRef.current.focus()
+                                )}
+                                
+                                {renderInput(
+                                    "ADDRESS",
+                                    address,
+                                    setAddress,
+                                    "default",
+                                    addressRef,
+                                    () => handleSave(),
+                                    "done",
+                                    true,
+                                    3,
+                                    "sentences"
+                                )}
+                                
+                                {/* Buttons */}
+                                <View style={styles.buttonRow}>
+                                    <TouchableOpacity
+                                        style={[styles.button, styles.saveBtn]}
+                                        onPress={handleSave}
+                                    >
+                                        <Text style={styles.saveText}>SAVE</Text>
+                                    </TouchableOpacity>
+                                    
+                                    <TouchableOpacity
+                                        style={[styles.button, styles.clearBtn]}
+                                        onPress={handleClear}
+                                    >
+                                        <Text style={styles.clearText}>CLEAR</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
                         </View>
-                    </View>
-                </View>
-            </ScrollView>
-        </View>
+                    </TouchableWithoutFeedback>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
+    container: { 
+        flex: 1, 
+        backgroundColor: '#ffffff'
     },
     header: {
         backgroundColor: '#006A72ff',
         padding: 20,
         paddingTop: 50,
         alignItems: 'center',
-        borderBottomLeftRadius: 40,
-        borderBottomRightRadius: 40,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
     },
     headerText: {
         fontSize: 24,
         color: 'white',
         fontWeight: 'bold',
     },
-    subHeaderText: {
-        fontSize: 16,
-        color: 'white',
-        marginTop: 5,
+    card: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 15,
+        margin: 15,
+        marginTop: 20,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
     },
-    content: {
-        flex: 1,
-    },
-    formContainerFullWidth: {
-        padding: 20,
-        paddingTop: 25,
-        width: '100%',
+    subtitle: {
+        fontSize: 14,
+        color: "#006A72",
+        marginBottom: 20,
+        textAlign: "center",
     },
     dateContainer: {
         flexDirection: 'row',
@@ -144,110 +224,68 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     dateLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#006A72",
         marginRight: 8,
     },
     dateValue: {
-        fontSize: 16,
-        color: '#333',
+        fontSize: 14,
+        color: "#00363A",
+    },
+    inputContainer: {
+        marginBottom: 12,
     },
     label: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#006A72",
         marginBottom: 5,
-        color: '#333',
     },
-    labelInRow: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
-        width: '30%',
-        alignSelf: 'center',
+    inputWrapper: {
+        flexDirection: "row",
+        alignItems: "center",
     },
     input: {
-        backgroundColor: '#F9F9F9',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 15,
         borderWidth: 1,
-        borderColor: '#DDDDDD',
-    },
-    inputRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 15,
-    },
-    inputInRow: {
-        backgroundColor: '#ffffffff',
+        borderColor: "#8FD6DA",
         borderRadius: 8,
-        padding: 12,
-        borderWidth: 1,
-        borderColor: '#DDDDDD',
-        width: '68%',
-    },
-    halfInputRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '48%',
-    },
-    inputInHalfRow: {
-        backgroundColor: '#F9F9F9',
-        borderRadius: 8,
-        padding: 12,
-        borderWidth: 1,
-        borderColor: '#DDDDDD',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
+        backgroundColor: "#ffffff",
+        color: "#00363A",
         flex: 1,
     },
     textArea: {
         height: 80,
-        paddingTop: 12,
-        textAlignVertical: 'top',
-    },
-    rowContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 15,
-    },
-    halfInput: {
-        width: '48%',
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginTop: 25,
-        width: '100%',
+        textAlignVertical: "top",
     },
     buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '68%',
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 20,
     },
-    saveButton: {
-        backgroundColor: '#006A72',
-        borderRadius: 18,
-        padding: 15,
-        alignItems: 'center',
-        width: '48%',
+    button: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 25,
+        alignItems: "center",
+        marginHorizontal: 5,
     },
-    clearButton: {
-        backgroundColor: '#d9f5f7',
-        borderRadius: 18,
-        padding: 15,
-        alignItems: 'center',
-        width: '48%',
+    saveBtn: { 
+        backgroundColor: "#006A72" 
     },
-    sbuttonText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 16,
+    saveText: { 
+        color: "#ffffff", 
+        fontWeight: "bold" 
     },
-    buttonText: {
-        color: '#006A72',
-        fontWeight: 'bold',
-        fontSize: 16,
+    clearBtn: { 
+        backgroundColor: "#D9F5F7" 
+    },
+    clearText: { 
+        color: "#006A72", 
+        fontWeight: "bold" 
     },
 });
 
