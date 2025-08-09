@@ -28,7 +28,8 @@ function App() {
       <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Home" component={TabNavigator} />
+         <Stack.Screen name="Company" component={CompanyCreationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
