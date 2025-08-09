@@ -8,7 +8,7 @@ const LoginScreen = ({ navigation }) => {
   const handleLogin = () => {
     // For demo purposes, navigate to Home without validation
     // In a real app, you would add validation and API calls here
-    navigation.replace('Home');
+    navigation.replace('Company');
   };
 
   return (

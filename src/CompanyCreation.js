@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import axios from "axios";
 import {
     View,
     Text,
@@ -10,7 +11,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ImageBackground,
-    Alert
+    Alert,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
 
@@ -30,6 +31,10 @@ export default function CompanyCreationScreen({ navigation }) {
 
     const [showPassword, setShowPassword] = useState(false);
     const [showRePassword, setShowRePassword] = useState(false);
+
+    // Validation error states
+    const [gstinError, setGstinError] = useState("");
+    const [phoneError, setPhoneError] = useState("");
 
     // Refs for navigation
     const gstinRef = useRef();
@@ -51,25 +56,96 @@ export default function CompanyCreationScreen({ navigation }) {
         setUsername("");
         setPassword("");
         setRePassword("");
+        setGstinError("");
+        setPhoneError("");
     };
 
-    const register = () => {
+    // Validation functions
+    const validateGstin = (text) => {
+        const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
-
-        navigation.navigate("RateFixing", {
-            date,
-            companyName,
-            gstin,
-            phone,
-            address1,
-            address2,
-            address3,
-            username,
-            password,
-            rePassword,
-        });
+        if (!gstinRegex.test(text)) return "Invalid GSTIN format";
+        return "";
     };
 
+    const validatePhone = (text) => {
+        const phoneRegex = /^[6-9][0-9]{9}$/;
+
+        if (!phoneRegex.test(text)) return "Invalid phone number";
+        return "";
+    };
+
+    const register = async () => {
+        // Example: you can do validations here if needed
+
+        // Then navigate and pass companyName as a param
+        navigation.navigate('RateFixing', { companyName: companyName });
+    };
+
+    //   const register = async () => {
+    //     // Validate before submit
+
+
+
+
+    //     if (
+    //       !companyName.trim() ||
+    //       !address1.trim() ||
+    //       !username.trim() ||
+    //       !password ||
+    //       !rePassword
+    //     ) {
+    //       Alert.alert("Missing Fields", "Please fill all the required fields.");
+    //       return;
+    //     }
+
+    //     if (password !== rePassword) {
+    //       Alert.alert("Password Mismatch", "Passwords do not match. Please re-enter.");
+    //       return;
+    //     }
+
+
+
+    //     try {
+    //       const payload = {
+    //         companyCode: "",
+    //         companyName: companyName.trim(),
+    //         gstNumber: gstin.trim(),
+    //         phone: phone.trim(),
+    //         addressLine1: address1.trim(),
+    //         addressLine2: address2.trim(),
+    //         userName: username.trim(),
+    //         password: password,
+    //         roleFlag:"N",
+    //       };
+
+    //       const response = await axios.post(
+    //         "http://dikshi.ddns.net/loyaltypoints/api/Company",
+    //         payload,
+    //         { headers: { "Content-Type": "application/json" } }
+    //       );
+
+    //       if (response.status === 201) {
+    //         Alert.alert("Success", "Company registered successfully!");
+    //         clearForm();
+    //         navigation.navigate("Login");
+    //       } else {
+    //         Alert.alert("Error", `Unexpected server response: ${response.status}`);
+    //       }
+    //     } catch (error) {
+    //       console.error("Registration Error:", error.message);
+    //       if (error.message.includes("Network")) {
+    //         Alert.alert(
+    //           "Network Error",
+    //           "Cannot connect to server. Please check your internet or server address."
+    //         );
+    //       } else {
+    //         Alert.alert("Error", "Failed to register company. Please try again.");
+    //       }
+    //     }
+    //   };
+
+    // Your reusable input component
     const renderInput = (
         label,
         value,
@@ -81,7 +157,8 @@ export default function CompanyCreationScreen({ navigation }) {
         onSubmitEditing = null,
         showEye = false,
         toggleEye = null,
-        returnKeyType = "next"
+        returnKeyType = "next",
+        onBlur = null
     ) => (
         <View style={[styles.inputContainer, style]}>
             <Text style={styles.label}>{label}</Text>
@@ -96,12 +173,12 @@ export default function CompanyCreationScreen({ navigation }) {
                     returnKeyType={returnKeyType}
                     onSubmitEditing={onSubmitEditing}
                     blurOnSubmit={false}
+                    onBlur={onBlur}
+                    autoCapitalize="characters"
                 />
                 {showEye && (
                     <TouchableOpacity onPress={toggleEye} style={styles.eyeIcon}>
-                        <Text style={{ fontSize: 18 }}>
-                            {secure ? "🔒" : "🔓"}
-                        </Text>
+                        <Text style={{ fontSize: 18 }}>{secure ? "🔒" : "🔓"}</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -121,7 +198,7 @@ export default function CompanyCreationScreen({ navigation }) {
                 >
                     {/* Header Image with Title */}
                     <ImageBackground
-                        source={require("./assets/image.png")}
+                        source={require("./assets/image1.png")}
                         style={styles.header}
                         resizeMode="cover"
                     >
@@ -137,10 +214,7 @@ export default function CompanyCreationScreen({ navigation }) {
                         {/* Creation Date */}
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>CREATION DATE</Text>
-                            <TouchableOpacity
-                                style={styles.input}
-                                onPress={() => setOpen(true)}
-                            >
+                            <TouchableOpacity style={styles.input} onPress={() => setOpen(true)}>
                                 <Text style={{ color: "#000" }}>
                                     {date
                                         ? date.toLocaleDateString("en-GB", {
@@ -178,26 +252,53 @@ export default function CompanyCreationScreen({ navigation }) {
 
                         {/* GSTIN & Phone */}
                         <View style={styles.row}>
-                            {renderInput(
-                                "GSTIN",
-                                gstin,
-                                setGstin,
-                                false,
-                                "default",
-                                { flex: 1, marginRight: 6 },
-                                gstinRef,
-                                () => phoneRef.current.focus()
-                            )}
-                            {renderInput(
-                                "PHONE",
-                                phone,
-                                setPhone,
-                                false,
-                                "phone-pad",
-                                { flex: 1, marginLeft: 6 },
-                                phoneRef,
-                                () => address1Ref.current.focus()
-                            )}
+                            <View style={{ flex: 1, marginRight: 6 }}>
+                                {renderInput(
+                                    "GSTIN",
+                                    gstin,
+                                    (text) => {
+                                        setGstin(text.toUpperCase());
+
+                                    },
+                                    false,
+                                    "default",
+                                    {},
+                                    gstinRef,
+                                    () => {
+                                        const error = validateGstin(gstin);
+                                        setGstinError(error);
+                                        if (!error) phoneRef.current.focus();
+                                    },
+                                    false,
+                                    null,
+                                    "next"
+                                )}
+                                {gstinError ? <Text style={styles.errorText}>{gstinError}</Text> : null}
+                            </View>
+
+                            <View style={{ flex: 1, marginLeft: 6 }}>
+                                {renderInput(
+                                    "PHONE",
+                                    phone,
+                                    (text) => {
+                                        setPhone(text);
+
+                                    },
+                                    false,
+                                    "phone-pad",
+                                    {},
+                                    phoneRef,
+                                    () => {
+                                        const error = validatePhone(phone);
+                                        setPhoneError(error);
+                                        if (!error) address1Ref.current.focus();
+                                    },
+                                    false,
+                                    null,
+                                    "next"
+                                )}
+                                {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
+                            </View>
                         </View>
 
                         {/* Addresses */}
@@ -258,7 +359,10 @@ export default function CompanyCreationScreen({ navigation }) {
                                 rePasswordRef,
                                 () => {
                                     if (password !== rePassword) {
-                                        Alert.alert("Password Mismatch", "Passwords do not match. Please re-enter.");
+                                        Alert.alert(
+                                            "Password Mismatch",
+                                            "Passwords do not match. Please re-enter."
+                                        );
                                         setRePassword("");
                                     } else {
                                         register(); // If they match, directly call register
@@ -268,7 +372,6 @@ export default function CompanyCreationScreen({ navigation }) {
                                 () => setShowRePassword(!showRePassword),
                                 "done"
                             )}
-
                         </View>
 
                         {/* Buttons */}
@@ -279,10 +382,7 @@ export default function CompanyCreationScreen({ navigation }) {
                             >
                                 <Text style={styles.registerText}>REGISTER</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.button, styles.clearBtn]}
-                                onPress={clearForm}
-                            >
+                            <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={clearForm}>
                                 <Text style={styles.clearText}>CLEAR</Text>
                             </TouchableOpacity>
                         </View>
@@ -297,7 +397,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#E6F9FF" },
     header: {
         width: "100%",
-        aspectRatio: 1.9,
+        aspectRatio: 1.8,
         justifyContent: "center",
         alignItems: "center",
     },
@@ -374,4 +474,11 @@ const styles = StyleSheet.create({
     registerText: { color: "#ffffff", fontWeight: "bold" },
     clearBtn: { backgroundColor: "#D9F5F7" },
     clearText: { color: "#006A72", fontWeight: "bold" },
+
+    errorText: {
+        color: "red",
+        fontSize: 12,
+        marginTop: 1,
+        marginLeft: 4,
+    },
 });
