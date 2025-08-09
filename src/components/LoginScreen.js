@@ -241,7 +241,7 @@ const LoginScreen = ({ navigation }) => {
                   disabled={isLoading}
                 >
                   <LinearGradient
-                    colors={['#4c669f', '#3b5998', '#192f6a']}
+                    colors={['#006a72', '#006a72','#006a72']}
                     style={styles.gradient}
                   >
                     {isLoading ? (
