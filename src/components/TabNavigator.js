@@ -4,26 +4,17 @@ import { Text, View, StyleSheet } from 'react-native';
 import PartyCreation from './PartyCreation';
 import PointsScreen from './PointsScreen';
 import ReportScreen from './ReportScreen';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-// Custom Tab Icon component with actual icons
-const TabIcon = ({ focused, color, title, iconType, iconName }) => {
+
+// Custom Tab Icon component with MaterialIcons
+const TabIcon = ({ focused, title, iconName }) => {
   const activeColor = '#1E88E5';
   const inactiveColor = '#999';
   const currentColor = focused ? activeColor : inactiveColor;
-  
+
   return (
     <View style={styles.iconContainer}>
-      {iconType === 'Ionicons' && (
-        <Ionicons name={iconName} size={24} color={currentColor} />
-      )}
-      {iconType === 'MaterialCommunityIcons' && (
-        <MaterialCommunityIcons name={iconName} size={24} color={currentColor} />
-      )}
-      {iconType === 'MaterialIcons' && (
-        <MaterialIcons name={iconName} size={24} color={currentColor} />
-      )}
+      <MaterialIcons name={iconName} size={24} color={currentColor} />
       <Text style={[styles.iconText, { color: currentColor }]}>{title}</Text>
     </View>
   );
@@ -43,49 +34,43 @@ const TabNavigator = () => {
         },
       }}
     >
-      <Tab.Screen 
-        name="PartyCreation" 
-        component={PartyCreation} 
+      <Tab.Screen
+        name="PartyCreation"
+        component={PartyCreation}
         options={{
           tabBarLabel: '',
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIcon 
-              focused={focused} 
-              color={color} 
-              title="User Creation" 
-              iconType="Ionicons" 
-              iconName="person-add-outline"
+              focused={focused}
+              title="Party"
+              iconName="person-add"
             />
           ),
         }}
       />
-      <Tab.Screen 
-        name="PointsScreen" 
-        component={PointsScreen} 
+      <Tab.Screen
+        name="PointsScreen"
+        component={PointsScreen}
         options={{
           tabBarLabel: '',
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIcon 
-              focused={focused} 
-              color={color} 
-              title="Points" 
-              iconType="MaterialCommunityIcons" 
+              focused={focused}
+              title="Points"
               iconName="card-giftcard"
             />
           ),
         }}
       />
-      <Tab.Screen 
-        name="ReportScreen" 
-        component={ReportScreen} 
+      <Tab.Screen
+        name="ReportScreen"
+        component={ReportScreen}
         options={{
           tabBarLabel: '',
-          tabBarIcon: ({ focused, color }) => (
+          tabBarIcon: ({ focused }) => (
             <TabIcon 
-              focused={focused} 
-              color={color} 
-              title="Reports" 
-              iconType="MaterialIcons" 
+              focused={focused}
+              title="Reports"
               iconName="insert-chart"
             />
           ),
