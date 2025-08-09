@@ -9,11 +9,15 @@ import { StatusBar, StyleSheet, useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+
 // Import screens
 import SplashScreen from './src/components/SplashScreen';
 import LoginScreen from './src/components/LoginScreen';
 import HomeScreen from './src/components/HomeScreen';
+import CompanyCreationScreen from './src/CompanyCreation';
 import TabNavigator from './src/components/TabNavigator';
+import PointsScreen from './src/components/PointsScreen'; 
+import RateFixingScreen from './src/RateFixingScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +31,11 @@ function App() {
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={TabNavigator} />
+        <Stack.Screen name="Points" component={PointsScreen} />
+        
+
+         <Stack.Screen name="Company" component={CompanyCreationScreen} />
+           <Stack.Screen name="RateFixing" component={RateFixingScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

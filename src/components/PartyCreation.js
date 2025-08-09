@@ -1,90 +1,104 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 
 const PartyCreation = () => {
-    const [partyName, setPartyName] = useState('');
-    const [location, setLocation] = useState('');
-    const [date, setDate] = useState('');
-    const [time, setTime] = useState('');
-    const [description, setDescription] = useState('');
-    const [isPrivate, setIsPrivate] = useState(false);
+    const [loyaltyNumber, setLoyaltyNumber] = useState('');
+    const [name, setName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [address, setAddress] = useState('');
+    const [currentDate, setCurrentDate] = useState('');
+
+    useEffect(() => {
+        // Set today's date when component mounts
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const formattedDate = `${day}/${month}/${today.getFullYear()}`;
+        setCurrentDate(formattedDate);
+    }, []);
+
+    const handleSave = () => {
+        // Save functionality will be implemented here
+        console.log('Save button pressed');
+    };
+
+    const handleClear = () => {
+        // Clear all form inputs
+        setLoyaltyNumber('');
+        setName('');
+        setPhoneNumber('');
+        setAddress('');
+    };
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerText}>Create Party</Text>
-                <Text style={styles.subHeaderText}>Earn points with social events</Text>
+                <Text style={styles.headerText}>Add User</Text>
+                
             </View>
             
             <ScrollView style={styles.content}>
-                <View style={styles.formContainer}>
-                    <Text style={styles.label}>Party Name</Text>
-                    <TextInput 
-                        style={styles.input}
-                        value={partyName}
-                        onChangeText={setPartyName}
-                        placeholder="Enter party name"
-                    />
-                    
-                    <Text style={styles.label}>Location</Text>
-                    <TextInput 
-                        style={styles.input}
-                        value={location}
-                        onChangeText={setLocation}
-                        placeholder="Enter location"
-                    />
-                    
-                    <View style={styles.rowContainer}>
-                        <View style={styles.halfInput}>
-                            <Text style={styles.label}>Date</Text>
-                            <TextInput 
-                                style={styles.input}
-                                value={date}
-                                onChangeText={setDate}
-                                placeholder="MM/DD/YYYY"
-                            />
-                        </View>
-                        
-                        <View style={styles.halfInput}>
-                            <Text style={styles.label}>Time</Text>
-                            <TextInput 
-                                style={styles.input}
-                                value={time}
-                                onChangeText={setTime}
-                                placeholder="HH:MM AM/PM"
-                            />
-                        </View>
+                <View style={styles.formContainerFullWidth}>
+                    <View style={styles.dateContainer}>
+                        <Text style={styles.dateLabel}>Date:</Text>
+                        <Text style={styles.dateValue}>{currentDate}</Text>
                     </View>
                     
-                    <Text style={styles.label}>Description</Text>
-                    <TextInput 
-                        style={[styles.input, styles.textArea]}
-                        value={description}
-                        onChangeText={setDescription}
-                        placeholder="Enter party description"
-                        multiline
-                        numberOfLines={4}
-                        textAlignVertical="top"
-                    />
-                    
-                    <View style={styles.switchContainer}>
-                        <Text style={styles.label}>Private Event</Text>
-                        <Switch
-                            value={isPrivate}
-                            onValueChange={setIsPrivate}
-                            trackColor={{ false: '#DDDDDD', true: '#1E88E5' }}
-                            thumbColor={isPrivate ? '#FFFFFF' : '#f4f3f4'}
+                    <View style={styles.inputRow}>
+                        <Text style={styles.labelInRow}>Loyalty Number</Text>
+                        <TextInput 
+                            style={styles.inputInRow}
+                            value={loyaltyNumber}
+                            onChangeText={setLoyaltyNumber}
+                           
+                            keyboardType="numeric"
                         />
                     </View>
                     
-                    <TouchableOpacity style={styles.createButton}>
-                        <Text style={styles.createButtonText}>Create Party</Text>
-                    </TouchableOpacity>
+                    <View style={styles.inputRow}>
+                        <Text style={styles.labelInRow}>Name</Text>
+                        <TextInput 
+                            style={styles.inputInRow}
+                            value={name}
+                            onChangeText={setName}
+                            
+                        />
+                    </View>
                     
-                    <View style={styles.pointsInfoContainer}>
-                        <Text style={styles.pointsInfoText}>
-                            You will earn <Text style={styles.pointsHighlight}>500 points</Text> for hosting this party!
-                        </Text>
+                    <View style={styles.inputRow}>
+                        <Text style={styles.labelInRow}>Phone Number</Text>
+                        <TextInput 
+                            style={styles.inputInRow}
+                            value={phoneNumber}
+                            onChangeText={setPhoneNumber}
+                            
+                            keyboardType="phone-pad"
+                        />
+                    </View>
+                    
+                    <View style={styles.inputRow}>
+                        <Text style={styles.labelInRow}>Address</Text>
+                        <TextInput 
+                            style={[styles.inputInRow, styles.textArea]}
+                            value={address}
+                            onChangeText={setAddress}
+                            
+                            multiline
+                            numberOfLines={3}
+                            textAlignVertical="top"
+                        />
+                    </View>
+                    
+                    <View style={styles.buttonContainer}>
+                        <View style={styles.buttonRow}>
+                            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                                <Text style={styles.sbuttonText}>Save</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
+                                <Text style={styles.buttonText}>Clear</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </ScrollView>
@@ -95,13 +109,15 @@ const PartyCreation = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#FFFFFF',
     },
     header: {
-        backgroundColor: '#1E88E5',
+        backgroundColor: '#006A72ff',
         padding: 20,
         paddingTop: 50,
         alignItems: 'center',
+        borderBottomLeftRadius: 40,
+        borderBottomRightRadius: 40,
     },
     headerText: {
         fontSize: 24,
@@ -115,27 +131,40 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        padding: 15,
     },
-    formContainer: {
-        backgroundColor: 'white',
-        borderRadius: 10,
+    formContainerFullWidth: {
         padding: 20,
-        marginBottom: 20,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
+        paddingTop: 25,
+        width: '100%',
+    },
+    dateContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        marginBottom: 15,
+    },
+    dateLabel: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginRight: 8,
+    },
+    dateValue: {
+        fontSize: 16,
+        color: '#333',
     },
     label: {
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 5,
         color: '#333',
+    },
+    labelInRow: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        width: '30%',
+        alignSelf: 'center',
     },
     input: {
         backgroundColor: '#F9F9F9',
@@ -145,49 +174,80 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#DDDDDD',
     },
+    inputRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
+    inputInRow: {
+        backgroundColor: '#ffffffff',
+        borderRadius: 8,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: '#DDDDDD',
+        width: '68%',
+    },
+    halfInputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '48%',
+    },
+    inputInHalfRow: {
+        backgroundColor: '#F9F9F9',
+        borderRadius: 8,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: '#DDDDDD',
+        flex: 1,
+    },
     textArea: {
-        height: 100,
+        height: 80,
         paddingTop: 12,
+        textAlignVertical: 'top',
     },
     rowContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        marginBottom: 15,
     },
     halfInput: {
         width: '48%',
     },
-    switchContainer: {
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: 25,
+        width: '100%',
+    },
+    buttonRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
+        width: '68%',
     },
-    createButton: {
-        backgroundColor: '#1E88E5',
-        borderRadius: 8,
+    saveButton: {
+        backgroundColor: '#006A72',
+        borderRadius: 18,
         padding: 15,
         alignItems: 'center',
-        marginTop: 10,
+        width: '48%',
     },
-    createButtonText: {
+    clearButton: {
+        backgroundColor: '#d9f5f7',
+        borderRadius: 18,
+        padding: 15,
+        alignItems: 'center',
+        width: '48%',
+    },
+    sbuttonText: {
         color: 'white',
         fontWeight: 'bold',
         fontSize: 16,
     },
-    pointsInfoContainer: {
-        marginTop: 20,
-        padding: 15,
-        backgroundColor: '#E3F2FD',
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    pointsInfoText: {
-        textAlign: 'center',
-        color: '#333',
-    },
-    pointsHighlight: {
+    buttonText: {
+        color: '#006A72',
         fontWeight: 'bold',
-        color: '#1E88E5',
+        fontSize: 16,
     },
 });
 
