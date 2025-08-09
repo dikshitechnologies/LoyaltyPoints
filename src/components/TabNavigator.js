@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View, StyleSheet, Animated, TouchableWithoutFeedback } from 'react-native';
+import { Text, View, StyleSheet, Animated, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import PartyCreation from './PartyCreation';
 import PointsScreen from './PointsScreen';
 import ReportScreen from './ReportScreen';
@@ -86,8 +86,26 @@ const Tab = createBottomTabNavigator();
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets();
   const focusedOptions = descriptors[state.routes[state.index].key].options;
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   
-  if (focusedOptions.tabBarVisible === false) {
+  // Listen to keyboard events to hide tab bar when keyboard is shown
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, []);
+  
+  if (focusedOptions.tabBarVisible === false || isKeyboardVisible) {
     return null;
   }
 
@@ -103,6 +121,9 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           const isFocused = state.index === index;
           
           const onPress = () => {
+            // Dismiss keyboard if it's visible
+            Keyboard.dismiss();
+            
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,
