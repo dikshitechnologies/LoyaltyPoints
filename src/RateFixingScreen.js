@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import Video from "react-native-video";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import {
     View,
@@ -108,10 +109,14 @@ export default function RateFixingScreen() {
         <SafeAreaView style={styles.container}>
             {/* Top Image */}
             <View style={styles.imageContainer}>
-                <Image
-                    source={require("./assets/image.png")}
+                <Video
+                    source={require("./assets/ratefix.mp4")} // place your video in assets folder
                     style={styles.topImage}
                     resizeMode="cover"
+                    repeat
+                    muted
+                    autoplay
+                    ignoreSilentSwitch="obey"
                 />
             </View>
 
@@ -324,7 +329,7 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: "#fff",
         marginHorizontal: wp("5%"),
-        marginTop: hp("18%"),
+        marginTop:hp("10%"),
         borderRadius: wp("3%"),
         padding: wp("4%"),
         elevation: 4,
