@@ -5,9 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
+
   Dimensions,
 } from "react-native";
+import { KeyboardAvoidingView, ScrollView, Platform } from "react-native";
 import Video from "react-native-video";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -33,7 +34,14 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView>
+   <KeyboardAvoidingView
+    style={{ flex: 1, backgroundColor: "#fff" }}
+    behavior={Platform.OS === "ios" ? "padding" : undefined}
+  >
+    <ScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      keyboardShouldPersistTaps="handled"
+    >
       <LinearGradient
         colors={["#000000ff", "#000000ff", "#0b508cff"]}
         start={{ x: 0.5, y: 0 }}
@@ -114,6 +122,7 @@ export default function LoginScreen({ navigation }) {
         </View>
 
       </LinearGradient>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
