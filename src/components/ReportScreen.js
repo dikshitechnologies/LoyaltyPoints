@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import bgcard from '../assets/bgcard.png';
-
+import { BASE_URL ,fcomCode } from './Services';
+import { handleStatusCodeError } from './ErrorHandler';
+import axios from 'axios';
 const ReportScreen = () => {
   const [loyaltyNumber, setLoyaltyNumber] = useState('');
   const [customerData, setCustomerData] = useState(null);
@@ -19,58 +21,107 @@ const ReportScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch customer data + transaction history
-  const fetchCustomerData = async (number) => {
+
+const fetchUser = async (val)=>{
+
+  try {
+
+    const response = await axios.get(`${BASE_URL}Register/points-summary/${val}`)
+    if(response.status == 200){
+      console.log(response)
+      const customerInfo = {
+        name: response.data[0].customerName,
+        loyaltyNumber: val,
+        balancePoints: response.data[0].balance
+      };
+       setCustomerData(customerInfo);
+       fetchCustomerData(loyaltyNumber);
+    }
+     else {
+        handleStatusCodeError(response.status, "Error deleting data");
+        setTransactions([]);
+        setCustomerData(null)
+      }
+  }
+  catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred.",
+          setTransactions([]),
+          setCustomerData(null)
+          
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
+    }
+  };
+
+
+
+
+
+  const fetchCustomerData = async (number,pageNumber=1) => {
     if (!number.trim()) return;
 
     setLoading(true);
     setError(null);
 
+
+  
     try {
-      // 1️⃣ Get customer summary
-      const summaryRes = await fetch(`http://dikshi.ddns.net/loyaltypoints/api/Register/points-summary/${number}`);
-      if (!summaryRes.ok) throw new Error("Failed to fetch points summary");
-      const summaryData = await summaryRes.json();
-
-      if (!summaryData || summaryData.length === 0) {
-        setError("Customer not found");
-        setLoading(false);
-        return;
-      }
-
-      const customerInfo = {
-        name: summaryData[0].customerName,
-        loyaltyNumber: number,
-        balancePoints: summaryData[0].balance
-      };
-
+      
+      const pageSize=20;
       // 2️⃣ Get transaction history
-      const historyRes = await fetch(`http://dikshi.ddns.net/loyaltypoints/api/Report/History/${number}/001?pageNumber=1&pageSize=10`);
-      if (!historyRes.ok) throw new Error("Failed to fetch transaction history");
-      const historyData = await historyRes.json();
-
-      const formattedTransactions = historyData.data.map((item, index) => ({
+      const response = await axios(`${BASE_URL}Report/History/${number}/${fcomCode}?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+            console.log(response.data)
+      if(response.status == 200){
+    
+      const formattedTransactions = response.data.data.map((item, index) => ({
         id: index + 1,
-        date: item.lDate.split(" ")[0], // YYYY-MM-DD
+        date: item.lDate.split(" ")[0], 
         amount: item.lAmt,
         points: item.points,
         type: item.sourceTable === "Y" ? "CR" : "DR",
         description: item.sourceTable === "Y" ? "Points Added" : "Points Redeemed"
       }));
 
-      setCustomerData(customerInfo);
+     
       setTransactions(formattedTransactions);
       setLoading(false);
-
-    } catch (err) {
-      setError(err.message || "Failed to fetch customer data");
-      setLoading(false);
-      console.error("Error fetching customer data:", err);
+      }
+       else {
+        handleStatusCodeError(response.status, "Error deleting data");
+        setTransactions([]);
+      }
+    } catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred.",
+            setTransactions([])
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
     }
   };
 
-  const handleSearch = () => {
-    fetchCustomerData(loyaltyNumber);
+
+  const handleSearch = async () => {
+    if(loyaltyNumber == null || loyaltyNumber== ""){
+      alert("Please Enter the Loyalty Number!")
+      return;
+    }
+      await fetchUser(loyaltyNumber);
+      
   };
 
   return (
@@ -98,19 +149,19 @@ const ReportScreen = () => {
       </View>
 
       {/* Loading */}
-      {loading && (
+      {/* {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#006A72ff" />
           <Text style={styles.loadingText}>Loading customer data...</Text>
         </View>
       )}
 
-      {/* Error */}
+      
       {error && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
-      )}
+      )} */}
 
       {/* Customer Card */}
       {customerData && (
@@ -131,10 +182,10 @@ const ReportScreen = () => {
                 <Text style={styles.customerName}>{customerData.name}</Text>
               </View>
 
-              <View style={styles.validTillContainer}>
+              {/* <View style={styles.validTillContainer}>
                 <Text style={styles.infoLabel}>VALID TILL</Text>
                 <Text style={styles.validTillValue}>08/09/2026</Text>
-              </View>
+              </View> */}
 
               <View style={styles.balanceContainer}>
                 <Text style={styles.infoLabel}>BALANCE</Text>
@@ -161,12 +212,12 @@ const ReportScreen = () => {
             {transactions.map((transaction) => (
               <View key={transaction.id} style={styles.transactionItem}>
                 <Text style={styles.transactionDate}>{transaction.date}</Text>
-                <Text style={styles.transactionAmount}>{transaction.amount}</Text>
+                <Text style={styles.transactionAmount}>{transaction.amount.toFixed(2)}</Text>
                 <View style={styles.typeContainer}>
                   {transaction.type === 'CR' ? (
-                    <MaterialIcons name="arrow-downward" size={20} color="#4CAF50" />
+                    <MaterialIcons name="arrow-upward" size={20} color="#4CAF50" />
                   ) : (
-                    <MaterialIcons name="arrow-upward" size={20} color="#F44336" />
+                    <MaterialIcons name="arrow-downward" size={20} color="#F44336" />
                   )}
                   <Text style={[
                     styles.transactionType,
@@ -242,7 +293,7 @@ const styles = StyleSheet.create({
   headerDesc: { width: '40%', fontWeight: 'bold', color: '#666', fontSize: 13 },
   transactionItem: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
   transactionDate: { width: '20%', color: '#333' },
-  transactionAmount: { width: '20%', color: '#333', textAlign: 'center' },
+  transactionAmount: { width: '20%', color: '#333', textAlign: 'right' },
   typeContainer: { width: '20%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   transactionType: { marginLeft: 3, fontWeight: 'bold' },
   creditType: { color: '#4CAF50' },

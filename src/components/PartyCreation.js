@@ -17,14 +17,16 @@ import {
 } from 'react-native';
 import { BASE_URL , fcomCode } from './Services';
 import { showConfirmation } from './AlertUtils';
-
-const PartyCreation = () => {
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { handleStatusCodeError } from './ErrorHandler';
+const PartyCreation = ({navigation}) => {
     const [loyaltyNumber, setLoyaltyNumber] = useState('');
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
     const [currentDate, setCurrentDate] = useState('');
-    
+    const [focusedField, setFocusedField] = useState(null);
+
     // Refs for focus navigation
     const loyaltyNumberRef = useRef();
     const nameRef = useRef();
@@ -41,6 +43,26 @@ const PartyCreation = () => {
     }, []);
 
     const handleSave = () => {
+       
+         if (!name.trim()) {
+        Alert.alert("Validation Error", "Name is required");
+        return;
+    }
+    if (!/^[A-Za-z\s]+$/.test(name.trim())) {
+        Alert.alert("Validation Error", "Name must contain only letters");
+        return;
+    }
+
+    // Phone number validation
+    if (!phoneNumber.trim()) {
+        Alert.alert("Validation Error", "Phone number is required");
+        return;
+    }
+    if (!/^\d{10}$/.test(phoneNumber)) {
+        Alert.alert("Validation Error", "Phone number must be 10 digits");
+        return;
+    }
+
     newCustomer();
     };
 
@@ -58,8 +80,7 @@ const PartyCreation = () => {
             customerName: name,
             phonenumber: phoneNumber,
             address: address,
-            joindate: currentDate,
-            fcompcode: fcomCode
+            fcomCode: fcomCode
         };
         console.log('Payload:', payload);
         try{
@@ -70,47 +91,65 @@ const PartyCreation = () => {
                    console.log('New customer created:', response.data);
                    handleClear();
                 }
-                else {
-                    Alert.alert('Error', 'Failed to create new customer');
-                }
+                 else {
+                handleStatusCodeError(response.status, "Error deleting data");
+            }
         }
-        catch(error) {
-            console.error('Error creating new customer:', error);
-        }
+        catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
     }
+  };
+
     
     // Reusable input component similar to CompanyCreation
-    const renderInput = (
-        label,
-        value,
-        setValue,
-        keyboard = "default",
-        refProp = null,
-        onSubmitEditing = null,
-        returnKeyType = "next",
-        multiline = false,
-        numberOfLines = 1,
-        autoCapitalize = "characters"
-    ) => (
-        <View style={styles.inputContainer}>
-            <Text style={styles.label}>{label}</Text>
-            <View style={styles.inputWrapper}>
-                <TextInput
-                    style={[styles.input, multiline && styles.textArea]}
-                    value={value}
-                    onChangeText={setValue}
-                    keyboardType={keyboard}
-                    ref={refProp}
-                    returnKeyType={returnKeyType}
-                    onSubmitEditing={onSubmitEditing}
-                    blurOnSubmit={false}
-                    multiline={multiline}
-                    numberOfLines={numberOfLines}
-                    autoCapitalize={autoCapitalize}
-                />
-            </View>
+ const renderInput = (
+    label,
+    value,
+    setValue,
+    keyboard = "default",
+    refProp = null,
+    onSubmitEditing = null,
+    returnKeyType = "next",
+    multiline = false,
+    numberOfLines = 1,
+    autoCapitalize = "characters",
+    fieldKey 
+) => (
+    <View style={styles.inputContainer}>
+        <Text style={styles.label}>{label}</Text>
+        <View style={styles.inputWrapper}>
+            <TextInput
+                style={[
+                    styles.input,
+                    multiline && styles.textArea,
+                    focusedField === fieldKey && styles.inputFocused 
+                ]}
+                value={value}
+                onChangeText={setValue}
+                keyboardType={keyboard}
+                ref={refProp}
+                returnKeyType={returnKeyType}
+                onSubmitEditing={onSubmitEditing}
+                blurOnSubmit={false}
+                multiline={multiline}
+                numberOfLines={numberOfLines}
+                autoCapitalize={autoCapitalize}
+                onFocus={() => setFocusedField(fieldKey)}
+                onBlur={() => setFocusedField(null)}
+            />
         </View>
-    );
+    </View>
+);
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -125,15 +164,20 @@ const PartyCreation = () => {
                 >
                     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                         <View style={{flex: 1}}>
+
                             {/* Header */}
-                            <View style={styles.header}>
-                                <Text style={styles.headerText}>Add User</Text>
+                            <View style={[styles.header,{flexDirection:'row' ,alignItems:'center' , justifyContent:'center'}]}>
+                                <TouchableOpacity  onPress={()=>navigation.navigate('RateFixing')}  style={{position:'absolute' , left:20}}>
+                                     <MaterialIcons name='price-change' size={34} color="white" />
+                                </TouchableOpacity>
+                               
+                                <Text style={[styles.headerText,{marginBottom:10}]}>Customer Creation</Text>
                             </View>
                             
                             {/* Form Card */}
                             <View style={styles.card}>
                                 <Text style={styles.subtitle}>
-                                    Fill in the details below to add a new user.
+                                    Fill in the details below to add a new Customer.
                                 </Text>
                             
                                 {/* Date Display */}
@@ -143,45 +187,62 @@ const PartyCreation = () => {
                                 </View>
                                 
                                 {/* Form Fields */}
-                                {renderInput(
-                                    "LOYALTY NUMBER",
-                                    loyaltyNumber,
-                                    setLoyaltyNumber,
-                                    "numeric",
-                                    loyaltyNumberRef,
-                                    () => nameRef.current.focus()
-                                )}
-                                
-                                {renderInput(
-                                    "NAME",
-                                    name,
-                                    setName,
-                                    "default",
-                                    nameRef,
-                                    () => phoneNumberRef.current.focus()
-                                )}
-                                
-                                {renderInput(
-                                    "PHONE NUMBER",
-                                    phoneNumber,
-                                    setPhoneNumber,
-                                    "phone-pad",
-                                    phoneNumberRef,
-                                    () => addressRef.current.focus()
-                                )}
-                                
-                                {renderInput(
-                                    "ADDRESS",
-                                    address,
-                                    setAddress,
-                                    "default",
-                                    addressRef,
-                                    () => handleSave(),
-                                    "done",
-                                    true,
-                                    3,
-                                    "sentences"
-                                )}
+                                    {renderInput(
+                                        "LOYALTY NUMBER",
+                                        loyaltyNumber,
+                                        setLoyaltyNumber,
+                                        "default",
+                                        loyaltyNumberRef,
+                                        () => nameRef.current.focus(),
+                                        "next",
+                                        false,
+                                        1,
+                                        "characters",
+                                        "loyaltyNumber"
+                                    )}
+
+                                    {renderInput(
+                                        "NAME",
+                                        name,
+                                        setName,
+                                        "default",
+                                        nameRef,
+                                        () => phoneNumberRef.current.focus(),
+                                        "next",
+                                        false,
+                                        1,
+                                        "characters",
+                                        "name"
+                                    )}
+
+                                    {renderInput(
+                                        "PHONE NUMBER",
+                                        phoneNumber,
+                                        setPhoneNumber,
+                                        "phone-pad",
+                                        phoneNumberRef,
+                                        () => addressRef.current.focus(),
+                                        "next",
+                                        false,
+                                        1,
+                                        "characters",
+                                        "phoneNumber"
+                                    )}
+
+                                    {renderInput(
+                                        "ADDRESS",
+                                        address,
+                                        setAddress,
+                                        "default",
+                                        addressRef,
+                                        () => handleSave(),
+                                        "done",
+                                        true,
+                                        3,
+                                        "sentences",
+                                        "address"
+                                    )}
+
                                 
                                 {/* Buttons */}
                                 <View style={styles.buttonRow}>
@@ -215,8 +276,9 @@ const styles = StyleSheet.create({
     },
     header: {
         backgroundColor: '#006A72ff',
-        padding: 20,
-        paddingTop: 50,
+        paddingRight: 10,
+        paddingBottom: 20,
+        paddingTop: 30,
         alignItems: 'center',
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
@@ -317,6 +379,10 @@ const styles = StyleSheet.create({
         color: "#006A72", 
         fontWeight: "bold" 
     },
+    inputFocused: {
+    borderColor: "#FF9800", 
+    backgroundColor: "#FFF8E1"
+}
 });
 
 export default PartyCreation;
