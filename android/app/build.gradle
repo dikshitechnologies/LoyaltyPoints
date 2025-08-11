@@ -128,4 +128,4 @@ dependencies {
     
     // Vector icons are already included via the fonts.gradle script
 }
-apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+

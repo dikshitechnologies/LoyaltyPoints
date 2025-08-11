@@ -365,7 +365,7 @@ export default function CompanyCreationScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#E6F9FF" },
-    topImage: { width: wp("100%"), height: hp("25%") },
+    topImage: { width: wp("100%"), height: hp("20%") },
     card: {
         backgroundColor: "#ffffff",
         marginHorizontal: wp("5%"),
