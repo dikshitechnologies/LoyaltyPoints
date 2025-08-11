@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,9 +10,12 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
+import { setCompanyCode } from "../store";
+import axios from "axios";
 import Video from "react-native-video";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // <-- Add this
 import loginVideo from "../assets/Logindesign.mp4";
 
 const { height } = Dimensions.get("window");
@@ -21,9 +24,73 @@ export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const handleLogin = () => {
-    navigation.navigate("RateFixing");
+  // Load saved credentials
+  useEffect(() => {
+    const loadCredentials = async () => {
+      try {
+        const savedUsername = await AsyncStorage.getItem("username");
+        const savedPassword = await AsyncStorage.getItem("password");
+        if (savedUsername && savedPassword) {
+          setUsername(savedUsername);
+          setPassword(savedPassword);
+          setRememberMe(true);
+        }
+      } catch (error) {
+        console.error("Error loading saved credentials:", error);
+      }
+    };
+    loadCredentials();
+  }, []);
+
+  const handleLogin = async () => {
+    if (!username || !password) {
+      alert("Please enter username and password");
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `http://dikshi.ddns.net/loyaltypoints/api/LoginPage`,
+        {
+          params: {
+            username: username,
+            password: password,
+          },
+        }
+      );
+
+      if (response.data?.message === "Login successful") {
+        const { roleFlag, username: userFromAPI, fcompcode } = response.data;
+
+        // Save credentials if Remember Me is checked
+        if (rememberMe) {
+          await AsyncStorage.setItem("username", username);
+          await AsyncStorage.setItem("password", password);
+        } else {
+          await AsyncStorage.removeItem("username");
+          await AsyncStorage.removeItem("password");
+        }
+
+        if (roleFlag === "Y") {
+          navigation.navigate("Company");
+        } else if (roleFlag === "N") {
+          setCompanyCode(response.data.companyCode);
+          navigation.navigate("Home", {
+            username: userFromAPI || username,
+            roleFlag,
+            companyCode: fcompcode,
+            fullPayload: response.data
+          });
+        }
+      } else {
+        alert("Invalid username or password");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error connecting to server");
+    }
   };
 
   const handleCancel = () => {
@@ -66,15 +133,9 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>USERNAME</Text>
               <View style={styles.inputBox}>
-                <Icon
-                  name="person"
-                  size={20}
-                  color="#006A72"
-                  style={styles.leftIcon}
-                />
+                <Icon name="person" size={20} color="#006A72" style={styles.leftIcon} />
                 <TextInput
                   style={styles.textField}
-                
                   placeholderTextColor="#888"
                   value={username}
                   onChangeText={setUsername}
@@ -86,23 +147,15 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>PASSWORD</Text>
               <View style={styles.inputBox}>
-                <Icon
-                  name="lock"
-                  size={20}
-                  color="#006A72"
-                  style={styles.leftIcon}
-                />
+                <Icon name="lock" size={20} color="#006A72" style={styles.leftIcon} />
                 <TextInput
                   style={styles.textField}
-                
                   placeholderTextColor="#888"
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
                 />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                >
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                   <Icon
                     name={showPassword ? "visibility" : "visibility-off"}
                     size={20}
@@ -112,6 +165,19 @@ export default function LoginScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Remember Me */}
+            <TouchableOpacity
+              style={styles.rememberMeContainer}
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <Icon
+                name={rememberMe ? "check-box" : "check-box-outline-blank"}
+                size={20}
+                color="#006A72"
+              />
+              <Text style={styles.rememberMeText}>Remember Me</Text>
+            </TouchableOpacity>
 
             {/* Buttons */}
             <View style={styles.buttonRow}>
@@ -188,7 +254,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
-  buttonRow: { flexDirection: "row", marginTop: 15 },
+  rememberMeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  rememberMeText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: "#006A72",
+  },
+  buttonRow: { flexDirection: "row", marginTop: 3 },
   button: {
     flex: 1,
     paddingVertical: 12,
@@ -203,8 +279,8 @@ const styles = StyleSheet.create({
   footer: {
     fontSize: 14,
     color: "#333",
-    marginBottom: 10,
-    marginTop: 50,
+ 
+    marginTop: 40,
     textAlign: "center",
   },
 });

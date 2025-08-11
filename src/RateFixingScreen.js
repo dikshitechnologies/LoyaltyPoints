@@ -15,6 +15,7 @@ import {
     Alert
 } from "react-native";
 import DatePicker from "react-native-date-picker";
+import { getCompanyCode } from "./store";
 
 export default function RateFixingScreen() {
     const [activeTab, setActiveTab] = useState("amountToPoints");
@@ -31,7 +32,7 @@ export default function RateFixingScreen() {
     const [amount2, setAmount2] = useState("");
     const [openDatePicker2, setOpenDatePicker2] = useState(false);
 
-    const fcompcode = "005"; 
+    const fcompcode =getCompanyCode(); 
 
     const formatDate = (date) => date.toISOString();
 
