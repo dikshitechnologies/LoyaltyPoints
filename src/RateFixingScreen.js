@@ -31,7 +31,7 @@ export default function RateFixingScreen() {
     const [amount2, setAmount2] = useState("");
     const [openDatePicker2, setOpenDatePicker2] = useState(false);
 
-    const fcompcode = ""; // Replace with actual company code
+    const fcompcode = "005"; 
 
     const formatDate = (date) => date.toISOString();
 
@@ -46,7 +46,7 @@ export default function RateFixingScreen() {
                 point: points1,
                 date: formatDate(rateDate1),
                 fcompcode,
-                flag: "AP" // Amount to Points
+               
             };
             console.log("Sending to Amount→Point API:", payload);
 
@@ -80,7 +80,7 @@ export default function RateFixingScreen() {
                 point: points2,
                 date: formatDate(rateDate2),
                 fcompcode,
-                flag: "PA" // Points to Amount
+               
             };
             console.log("Sending to Point→Amount API:", payload);
 
