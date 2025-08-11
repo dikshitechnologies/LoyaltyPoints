@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
+import Video from "react-native-video";
 import {
     View,
     Text,
@@ -187,10 +188,14 @@ export default function CompanyCreationScreen({ navigation }) {
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: hp("10%") }}
                     keyboardShouldPersistTaps="handled"
                 >
-                    <Image
-                        source={require("./assets/image1.png")}
-                        style={styles.topImage}
+                    <Video
+                        source={require("./assets/Company.mp4")} // your local video file
+                        style={styles.topImage} // reuse the same style
                         resizeMode="cover"
+                        repeat // loops video
+                        muted // remove if you want sound
+                        autoplay
+                        controls={false} // hide native controls
                     />
                     <View style={styles.card}>
                         <View style={styles.headingContainer}>

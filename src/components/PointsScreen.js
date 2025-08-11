@@ -1,4 +1,4 @@
-
+// PointsScreen.js
 
 import axios from "axios";
 import { BASE_URL, fcomCode } from "./Services";
@@ -18,13 +18,11 @@ import {
   Easing,
   ScrollView,
   KeyboardAvoidingView,
-  
-
 } from 'react-native';
 import { useFocusEffect } from "@react-navigation/native";
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Material Icon
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import DeviceInfo from 'react-native-device-info';
 import { showConfirmation } from "./AlertUtils";
 
@@ -44,16 +42,13 @@ const [currentRedeemAmount , setCurrentRedeemAmount] = useState(null);
   const [purchaseAmount, setPurchaseAmount] = useState("");
   const [pointsEarned, setPointsEarned] = useState("");
 
-  // Redeem Mode State
   const [redeemLoyaltyNumber, setRedeemLoyaltyNumber] = useState("");
   const [redeemName, setRedeemName] = useState("");
   const [redeemBalance, setRedeemBalance] = useState("");
   const [redeemPoints, setRedeemPoints] = useState("");
   const [redeemAmount, setRedeemAmount] = useState("");
 
-  const [mode, setMode] = useState("add"); // "add" or "redeem"
-
-  // Refs for focus navigation
+  const [mode, setMode] = useState("add");
   const purchaseAmountRef = useRef(null);
   const redeemPointsRef = useRef(null);
 
@@ -74,7 +69,23 @@ useFocusEffect(
 
 
 
-  // Animation for segmented control
+
+
+useFocusEffect(
+  useCallback(() => {
+    AddPoints();
+    RedeemAmount();
+  }, [])
+);
+
+
+
+
+
+
+
+
+
   const animation = useRef(new Animated.Value(0)).current;
   const switchMode = (newMode) => {
     setMode(newMode);
@@ -90,7 +101,6 @@ useFocusEffect(
     outputRange: ["2%", "50%"],
   });
 
-  // Points calculation
   const calculatePoints = (amount) => {
     if (!amount || isNaN(amount)) {
       setPointsEarned("");
@@ -154,22 +164,13 @@ useFocusEffect(
     }
   };
 
-  const getPoints = async() => {
-    if (mode === "add") {
-    if (!addLoyaltyNumber) {
+  const getPoints = async () => {
+    let loyaltyNumber = mode === "add" ? addLoyaltyNumber : redeemLoyaltyNumber;
+    if (!loyaltyNumber) {
       Alert.alert("Error", "Please enter a loyalty number");
       return;
     }
-  } else if (mode === "redeem") {
-    if (!redeemLoyaltyNumber) {
-      Alert.alert("Error", "Please enter a loyalty number");
-      return;
-    }
-  }
-  let loyaltyNumber = mode === "add" ? addLoyaltyNumber : redeemLoyaltyNumber;
-
-
-    try{
+    try {
       const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}`);
       if(response.status == 200){
         if(response.data.length === 0) {
@@ -177,11 +178,9 @@ useFocusEffect(
         }
         const data = response.data[0];
         if (mode === "add") {
-
-        setAddName(data.customerName);
-        setAddBalance(data.balance.toString());
-        }
-        else if (mode === "redeem") {
+          setAddName(data.customerName);
+          setAddBalance(data.balance.toString());
+        } else {
           setRedeemName(data.customerName);
           setRedeemBalance(data.balance.toString());
         }
@@ -340,24 +339,15 @@ catch (error) {
 
 
 
-  //-----------------------------------------------------------------
-const device = useCameraDevice('back');
+  const device = useCameraDevice('back');
   const [hasPermission, setHasPermission] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
- 
 
   const requestPermission = async () => {
     let status;
     if (Platform.OS === 'android') {
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        {
-          title: 'Camera Permission',
-          message: 'App needs access to your camera to scan QR codes',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK'
-        }
+        PermissionsAndroid.PERMISSIONS.CAMERA
       );
       status = granted === PermissionsAndroid.RESULTS.GRANTED ? 'authorized' : 'denied';
     } else {
@@ -371,35 +361,24 @@ const device = useCameraDevice('back');
   }, []);
 
   const codeScanner = useCodeScanner({
-    codeTypes: [
-      'qr', 'ean-13', 'code-128', 'code-39', 'code-93',
-      'codabar', 'upc-a', 'upc-e', 'itf', 'ean-8',
-      'aztec', 'pdf-417', 'data-matrix'
-    ],
+    codeTypes: ['qr', 'ean-13', 'code-128'],
     onCodeScanned: (codes) => {
       if (codes.length > 0 && codes[0].value) {
         const value = codes[0].value;
         setAddLoyaltyNumber(value);
         setShowScanner(false);
-        getPoints(); // optional: trigger fetch immediately
+        getPoints();
       }
     }
   });
-  //-------------------------------------------------------------------
 
-   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={80}
-    >
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 120 }}
-        keyboardShouldPersistTaps="handled"
-      >
+  return (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
+          {/* Header */}
           <View style={styles.header}>
-           <Text style={styles.headerText}>Loyalty Hub</Text>
+            <Text style={styles.headerText}>Loyalty Hub</Text>
           </View>
                       
           {/* Segmented Control */}
@@ -451,213 +430,203 @@ const device = useCameraDevice('back');
             )}
 </View>
 
-          {/* ADD Mode */}
-          {mode === "add" && (
-            <>
-              <Text style={styles.label}>Loyalty Number</Text>
-<View style={styles.row}>
-  <TextInput
-    style={[styles.input, { flex: 1 }]}
-    value={addLoyaltyNumber}
-    onChangeText={setAddLoyaltyNumber}
-    onBlur={getPoints}
-    placeholder="Enter Loyalty Number"
-    returnKeyType="next"
-    onSubmitEditing={() => purchaseAmountRef.current.focus()}
-  />
-  <TouchableOpacity
-    onPress={() => {
-      if (hasPermission) {
-        setShowScanner(true);
-      } else {
-        requestPermission();
-      }
-    }}
-    style={styles.qrButton}
-  >
-    <Icon
-      name="qr-code-scanner"
-      size={isTablet ? wp('5%') : wp('7%')}
-      color="#333"
-    />
-  </TouchableOpacity>
-</View>
+            {/* ADD Mode */}
+            {mode === "add" && (
+              <>
+                <Text style={styles.label}>Loyalty Number</Text>
+                <View style={styles.row}>
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    value={addLoyaltyNumber}
+                    onChangeText={setAddLoyaltyNumber}
+                    onBlur={getPoints}
+                    placeholder="Enter Loyalty Number"
+                    returnKeyType="next"
+                    onSubmitEditing={() => purchaseAmountRef.current.focus()}
+                  />
+                  <TouchableOpacity
+                    onPress={() => (hasPermission ? setShowScanner(true) : requestPermission())}
+                    style={styles.qrButton}
+                  >
+                    <Icon name="qr-code-scanner" size={isTablet ? wp('5%') : wp('7%')} color="#333" />
+                  </TouchableOpacity>
+                </View>
 
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                value={addName}
-                onChangeText={setAddName}
-                placeholder="Enter Name"
-                editable={false}
-              />
+                <Text style={styles.label}>Name</Text>
+                <TextInput style={styles.input} value={addName} editable={false} />
 
-              <Text style={styles.label}>Balance Points</Text>
-              <TextInput
-                style={styles.input}
-                value={addBalance}
-                onChangeText={setAddBalance}
-                placeholder="Enter Balance Points"
-                keyboardType="numeric"
-                editable={false}
-              />
+                <Text style={styles.label}>Balance Points</Text>
+                <TextInput style={styles.input} value={addBalance} editable={false} />
 
-              <Text style={styles.label}>Purchase Amount</Text>
-              <TextInput
-                ref={purchaseAmountRef}
-                style={styles.input}
-                value={purchaseAmount}
-                onChangeText={(val) => {
-                  setPurchaseAmount(val);
-                  calculatePoints(val);
-                }}
-                placeholder="Enter Purchase Amount"
-                keyboardType="numeric"
-              />
+                <Text style={styles.label}>Purchase Amount</Text>
+                <TextInput
+                  ref={purchaseAmountRef}
+                  style={styles.input}
+                  value={purchaseAmount}
+                  onChangeText={(val) => {
+                    setPurchaseAmount(val);
+                    calculatePoints(val);
+                  }}
+                  keyboardType="numeric"
+                />
 
-              <Text style={styles.label}>Points Earned</Text>
-              <TextInput
-                style={styles.input}
-                value={pointsEarned}
-                editable={false}
-              />
+                <Text style={styles.label}>Points Earned</Text>
+                <TextInput style={styles.input} value={pointsEarned} editable={false} />
+              </>
+            )}
 
-              <Modal
-        visible={showScanner}
-        animationType="slide"
-        onRequestClose={() => setShowScanner(false)}
-      >
+            {/* REDEEM Mode */}
+            {mode === "redeem" && (
+              <>
+                <Text style={styles.label}>Loyalty Number</Text>
+                <View style={styles.row}>
+                   <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    value={addLoyaltyNumber}
+                    onChangeText={setAddLoyaltyNumber}
+                    onBlur={getPoints}
+                    placeholder="Enter Loyalty Number"
+                    returnKeyType="next"
+                    onSubmitEditing={() => redeemPointsRef.current.focus()}
+                  />
+                  <TouchableOpacity
+                    onPress={() => (hasPermission ? setShowScanner(true) : requestPermission())}
+                    style={styles.qrButton}
+                  >
+                    <Icon name="qr-code-scanner" size={isTablet ? wp('5%') : wp('7%')} color="#333" />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.label}>Name</Text>
+                <TextInput style={styles.input} value={redeemName} editable={false} />
+
+                <Text style={styles.label}>Balance Points</Text>
+                <TextInput style={styles.input} value={redeemBalance} editable={false} />
+
+                <Text style={styles.label}>Redeem Points</Text>
+                <TextInput
+                  ref={redeemPointsRef}
+                  style={styles.input}
+                  value={redeemPoints}
+                  onChangeText={(val) => {
+                    setRedeemPoints(val);
+                    convertPointsToAmount(val);
+                  }}
+                  keyboardType="numeric"
+                />
+
+                <Text style={styles.label}>Amount</Text>
+                <TextInput style={styles.input} value={redeemAmount} editable={false} />
+              </>
+            )}
+
+            {/* Buttons */}
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={[styles.button, styles.saveBtn]} onPress={handleSave}>
+                <Text style={styles.saveText}>SAVE</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={handleClear}>
+                <Text style={styles.clearText}>CLEAR</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* QR Scanner */}
+      <Modal visible={showScanner} animationType="slide" onRequestClose={() => setShowScanner(false)}>
         <View style={{ flex: 1, backgroundColor: 'black' }}>
-          {device && hasPermission ? (
-            <Camera
-              style={{ flex: 1 }}
-              device={device}
-              isActive={showScanner}
-              codeScanner={codeScanner}
-            />
-          ) : null}
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setShowScanner(false)}
-          >
+          {device && hasPermission && (
+            <Camera style={{ flex: 1 }} device={device} isActive={showScanner} codeScanner={codeScanner} />
+          )}
+          <TouchableOpacity style={styles.closeButton} onPress={() => setShowScanner(false)}>
             <Text style={{ color: 'white', fontSize: 18 }}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
-            </>
-          )}
-
-          {/* REDEEM Mode */}
-          {mode === "redeem" && (
-            <>
-              <Text style={styles.label}>Loyalty Number</Text>
-<View style={styles.row}>
-  <TextInput
-    style={[styles.input, { flex: 1 }]}
-    value={redeemLoyaltyNumber}
-    onChangeText={setRedeemLoyaltyNumber}
-    placeholder="Enter Loyalty Number"
-    returnKeyType="next"
-    onSubmitEditing={getPoints}
-  />
-  <TouchableOpacity
-    onPress={() => {
-      if (hasPermission) {
-        setShowScanner(true);
-      } else {
-        requestPermission();
-      }
-    }}
-    style={styles.qrButton}
-  >
-    <Icon
-      name="qr-code-scanner"
-      size={isTablet ? wp('5%') : wp('7%')}
-      color="#333"
-    />
-  </TouchableOpacity>
-</View>
-
-
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                value={redeemName}
-                onChangeText={setRedeemName}
-                placeholder="Enter Name"
-                editable={false}
-              />
-
-              <Text style={styles.label}>Balance Points</Text>
-              <TextInput
-                style={styles.input}
-                value={redeemBalance}
-                onChangeText={setRedeemBalance}
-                placeholder="Enter Balance Points"
-                keyboardType="numeric"
-                editable={false}
-              />
-
-              <Text style={styles.label}>Redeem Points</Text>
-              <TextInput
-                ref={redeemPointsRef}
-                style={styles.input}
-                value={redeemPoints}
-                onChangeText={(val) => {
-                  setRedeemPoints(val);
-                  convertPointsToAmount(val);
-                }}
-                placeholder="Enter Points to Redeem"
-                keyboardType="numeric"
-              />
-
-              <Text style={styles.label}>Amount</Text>
-              <TextInput
-                style={styles.input}
-                value={redeemAmount}
-                editable={false}
-              />
-            </>
-          )}
-
-          {/* Save & Clear */}
-          <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
-              <Text style={styles.cbuttonText}>Clear</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 0, backgroundColor: "#f5f7f9" },
+  container: { flex: 1, backgroundColor: '#fff' },
   header: {
-        backgroundColor: '#006A72ff',
-        padding: 20,
-        paddingTop: 50,
-        alignItems: 'center',
-        borderBottomLeftRadius: 40,
-        borderBottomRightRadius: 40,
-    },
-
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5
+    backgroundColor: '#006A72',
+    paddingTop: 40,
+    paddingBottom: 20,
+    alignItems: 'center',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
+  headerText: { fontSize: 24, color: 'white', fontWeight: 'bold' },
+
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 15,
+    margin: 15,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  label: { fontSize: 12, fontWeight: "600", color: "#006A72", marginTop: 10, marginBottom: 5 },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    height: 40
+    borderColor: "#8FD6DA",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    backgroundColor: "#ffffff",
+    color: "#00363A",
   },
+  buttonRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
+  button: { flex: 1, paddingVertical: 12, borderRadius: 25, alignItems: "center", marginHorizontal: 5 },
+  saveBtn: { backgroundColor: "#006A72" },
+  saveText: { color: "#ffffff", fontWeight: "bold" },
+  clearBtn: { backgroundColor: "#D9F5F7" },
+  clearText: { color: "#006A72", fontWeight: "bold" },
+segmentContainer: {
+  flexDirection: "row",
+  backgroundColor: "#d1e6e7",
+  borderRadius: 40,       // matches slider
+  padding: 3,
+  position: "relative",
+  marginBottom: 20,
+  height: 50,
+  elevation: 3,
+  marginTop: 10,
+  width: "100%",
+  overflow: "hidden",     // keeps slider inside rounded edges
+},
+slider: {
+  position: "absolute",
+  top: 3,
+  bottom: 3,
+  width: "48%",
+  backgroundColor: "#006A72",
+  borderRadius: 40,
+  elevation: 4,
+},
+segmentButton: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+},
+segmentText: {
+  fontSize: 16,
+  fontWeight: "600",
+  color: "#444",
+},
+segmentTextActive: {
+  color: "#fff",
+},
+
+  row: { flexDirection: "row", alignItems: "center" },
+  qrButton: { marginLeft: 8, paddingHorizontal: 6, justifyContent: "center", alignItems: "center" },
   closeButton: {
     position: 'absolute',
     bottom: 30,
@@ -667,114 +636,4 @@ const styles = StyleSheet.create({
     backgroundColor: '#00000088',
     borderRadius: 5
   },
-  // Segmented Control
-  segmentContainer: {
-    flexDirection: "row",
-    backgroundColor: "#d1e6e7",
-    borderRadius: 20,
-    padding: 3,
-    position: "relative",
-    marginBottom: 20,
-    height: 50,
-    elevation: 3,
-    marginTop: 10,
-  },
-  slider: {
-    position: "absolute",
-    top: 3,
-    bottom: 3,
-    width: "48%",
-    backgroundColor: "#006A72",
-    borderRadius: 12,
-    elevation: 4,
-  },
-  segmentButton: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  segmentText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "black",
-  },
-  segmentTextActive: {
-    color: "white",
-  },
-
-  label: { fontSize: 15, marginTop: 12, fontWeight: "bold", color: "#006A72" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#cce2e3",
-    padding: 12,
-    borderRadius: 10,
-    marginTop: 6,
-    backgroundColor: "#fff",
-    elevation: 1,
-
-  },
-
-buttonRow: {
-  flexDirection: 'row',
-  justifyContent: 'center', // center the buttons in row
-  alignItems: 'center',
-  marginTop: 20,
-},
-saveButton: {
-  backgroundColor: '#006A72',
-  borderRadius: 20,
-  paddingVertical: 12,
-  paddingHorizontal: 20,
-  alignItems: 'center',
-  width: 120, // smaller width
-  marginHorizontal: 10, // space between buttons
-},
-clearButton: {
-  backgroundColor: '#d9f5f7',
-  borderRadius: 20,
-  paddingVertical: 12,
-  paddingHorizontal: 20,
-  alignItems: 'center',
-  width: 120, // smaller width
-  marginHorizontal: 10,
-},
-
-  buttonText: { color: "#fff", textAlign: "center", fontWeight: "bold", fontSize: 16 },
-  cbuttonText: { color: "#006A72", textAlign: "center", fontWeight: "bold", fontSize: 16 },
-  headerText: {
-        fontSize: 24,
-        color: 'white',
-        fontWeight: 'bold',
-    },
-    row: {
-  flexDirection: "row",
-  alignItems: "center",
-},
-qrButton: {
-  marginLeft: 8,
-  paddingHorizontal: 6,
-  justifyContent: "center",
-  alignItems: "center",
-},
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

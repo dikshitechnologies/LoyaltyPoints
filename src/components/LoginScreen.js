@@ -17,7 +17,7 @@ import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
-import loginVideo from "../assets/Logindesign.mp4";
+import loginVideo from "../assets/Generate.mp4";
 
 
 import { Dimensions } from "react-native";
