@@ -10,7 +10,7 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
-    ImageBackground,
+    Image,
     Alert,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
@@ -75,75 +75,69 @@ export default function CompanyCreationScreen({ navigation }) {
         return "";
     };
 
-    const register = async () => {
-        // Example: you can do validations here if needed
 
-        // Then navigate and pass companyName as a param
-        navigation.navigate('RateFixing', { companyName: companyName });
-    };
-
-    //   const register = async () => {
-    //     // Validate before submit
+     const register = async () => {
+        // Validate before submit
 
 
 
 
-    //     if (
-    //       !companyName.trim() ||
-    //       !address1.trim() ||
-    //       !username.trim() ||
-    //       !password ||
-    //       !rePassword
-    //     ) {
-    //       Alert.alert("Missing Fields", "Please fill all the required fields.");
-    //       return;
-    //     }
+        if (
+          !companyName.trim() ||
+          !address1.trim() ||
+          !username.trim() ||
+          !password ||
+          !rePassword
+        ) {
+          Alert.alert("Missing Fields", "Please fill all the required fields.");
+          return;
+        }
 
-    //     if (password !== rePassword) {
-    //       Alert.alert("Password Mismatch", "Passwords do not match. Please re-enter.");
-    //       return;
-    //     }
+        if (password !== rePassword) {
+          Alert.alert("Password Mismatch", "Passwords do not match. Please re-enter.");
+          return;
+        }
 
 
 
-    //     try {
-    //       const payload = {
-    //         companyCode: "",
-    //         companyName: companyName.trim(),
-    //         gstNumber: gstin.trim(),
-    //         phone: phone.trim(),
-    //         addressLine1: address1.trim(),
-    //         addressLine2: address2.trim(),
-    //         userName: username.trim(),
-    //         password: password,
-    //         roleFlag:"N",
-    //       };
+        try {
+          const payload = {
+            companyCode: "",
+            companyName: companyName.trim(),
+            gstNumber: gstin.trim(),
+            phone: phone.trim(),
+            addressLine1: address1.trim(),
+            addressLine2: address2.trim(),
+            userName: username.trim(),
+            password: password,
+            roleFlag:"N",
+          };
 
-    //       const response = await axios.post(
-    //         "http://dikshi.ddns.net/loyaltypoints/api/Company",
-    //         payload,
-    //         { headers: { "Content-Type": "application/json" } }
-    //       );
+          const response = await axios.post(
+            "http://dikshi.ddns.net/loyaltypoints/api/Company",
+            payload,
+            { headers: { "Content-Type": "application/json" } }
+          );
 
-    //       if (response.status === 201) {
-    //         Alert.alert("Success", "Company registered successfully!");
-    //         clearForm();
-    //         navigation.navigate("Login");
-    //       } else {
-    //         Alert.alert("Error", `Unexpected server response: ${response.status}`);
-    //       }
-    //     } catch (error) {
-    //       console.error("Registration Error:", error.message);
-    //       if (error.message.includes("Network")) {
-    //         Alert.alert(
-    //           "Network Error",
-    //           "Cannot connect to server. Please check your internet or server address."
-    //         );
-    //       } else {
-    //         Alert.alert("Error", "Failed to register company. Please try again.");
-    //       }
-    //     }
-    //   };
+          if (response.status === 201) {
+            Alert.alert("Success", "Company registered successfully!");
+            clearForm();
+            navigation.navigate("Login");
+          } else {
+            Alert.alert("Error", `Unexpected server response: ${response.status}`);
+          }
+        } catch (error) {
+          console.error("Registration Error:", error.message);
+          if (error.message.includes("Network")) {
+            Alert.alert(
+              "Network Error",
+              "Cannot connect to server. Please check your internet or server address."
+            );
+          } else {
+            Alert.alert("Error", "Failed to register company. Please try again.");
+          }
+        }
+      };
 
     // Your reusable input component
     const renderInput = (
@@ -193,23 +187,24 @@ export default function CompanyCreationScreen({ navigation }) {
                 keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
             >
                 <ScrollView
-                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
                     keyboardShouldPersistTaps="handled"
                 >
                     {/* Header Image with Title */}
-                    <ImageBackground
-                        source={require("./assets/image1.png")}
-                        style={styles.header}
-                        resizeMode="cover"
-                    >
-                        <Text style={styles.headerText}>Company Creation</Text>
-                    </ImageBackground>
+                    <Image
+                source={require("./assets/image1.png")}
+                style={styles.topImage}
+                resizeMode="cover"
+            />
+            
+            {/* Heading */}
+           
 
                     {/* Form Card */}
                     <View style={styles.card}>
-                        <Text style={styles.subtitle}>
-                            Fill in the details below to register your company.
-                        </Text>
+                       <View style={styles.headingContainer}>
+                <Text style={styles.headingText}>COMPANY CREATION</Text>
+            </View>
 
                         {/* Creation Date */}
                         <View style={styles.inputContainer}>
@@ -428,9 +423,22 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         textAlign: "center",
     },
+    topImage: { width: "100%", height: "25%" },
     row: {
         flexDirection: "row",
         justifyContent: "space-between",
+    },
+    headingContainer: {
+        alignItems: "center",
+        marginVertical: 15,
+    },
+    headingText: {
+        marginTop:-5,
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#006A72",
+        letterSpacing: 1,
+        textTransform: "uppercase",
     },
     inputContainer: {
         marginBottom: 12,
