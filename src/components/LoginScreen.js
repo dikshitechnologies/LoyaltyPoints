@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  
+
   KeyboardAvoidingView,
   ScrollView,
   Platform,
@@ -30,6 +30,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const passwordRef = useRef(null);
 
   useEffect(() => {
     const loadCredentials = async () => {
@@ -136,6 +137,9 @@ export default function LoginScreen({ navigation }) {
                 <TextInput
                   style={styles.textField}
                   placeholderTextColor="#888"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+
+                  returnKeyType="next"
                   value={username}
                   onChangeText={setUsername}
                 />
@@ -148,6 +152,7 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.inputBox}>
                 <Icon name="lock" size={wp("5%")} color="#006A72" style={styles.leftIcon} />
                 <TextInput
+                  ref={passwordRef}
                   style={styles.textField}
                   placeholderTextColor="#888"
                   secureTextEntry={!showPassword}
@@ -278,7 +283,7 @@ const styles = StyleSheet.create({
   footer: {
     fontSize: wp("3.5%"),
     color: "#333",
-    marginTop:isTablet?0:hp("5%"),
+    marginTop: isTablet ? 0 : hp("5%"),
     textAlign: "center",
   },
 });

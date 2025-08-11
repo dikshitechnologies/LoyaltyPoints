@@ -14,6 +14,7 @@ import {
     Alert,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp,
@@ -33,6 +34,7 @@ export default function CompanyCreationScreen({ navigation }) {
     const [password, setPassword] = useState("");
     const [rePassword, setRePassword] = useState("");
 
+    // Password visibility (false = hidden/dots by default)
     const [showPassword, setShowPassword] = useState(false);
     const [showRePassword, setShowRePassword] = useState(false);
 
@@ -49,6 +51,8 @@ export default function CompanyCreationScreen({ navigation }) {
 
     const clearForm = () => {
         setDate(new Date());
+        setShowPassword(false);
+        setShowRePassword(false);
         setCompanyName("");
         setGstin("");
         setPhone("");
@@ -158,13 +162,16 @@ export default function CompanyCreationScreen({ navigation }) {
                     onSubmitEditing={onSubmitEditing}
                     blurOnSubmit={false}
                     onBlur={onBlur}
-                    autoCapitalize="characters"
+                    autoCapitalize={label === "GSTIN" ? "characters" : "none"}
                 />
                 {showEye && (
                     <TouchableOpacity onPress={toggleEye} style={styles.eyeIcon}>
-                        <Text style={{ fontSize: wp("4.5%") }}>{secure ? "🔒" : "🔓"}</Text>
+                        <Text style={{ fontSize: wp("4.5%"), color: secure ? "#666" : "green" }}>
+                            {secure ? "🔒" : "🔓"}
+                        </Text>
                     </TouchableOpacity>
                 )}
+
             </View>
         </View>
     );
@@ -196,10 +203,10 @@ export default function CompanyCreationScreen({ navigation }) {
                                 <Text style={{ color: "#000" }}>
                                     {date
                                         ? date.toLocaleDateString("en-GB", {
-                                              day: "numeric",
-                                              month: "long",
-                                              year: "numeric",
-                                          })
+                                            day: "numeric",
+                                            month: "long",
+                                            year: "numeric",
+                                        })
                                         : "Select Date"}
                                 </Text>
                             </TouchableOpacity>
@@ -255,9 +262,7 @@ export default function CompanyCreationScreen({ navigation }) {
                                 {renderInput(
                                     "PHONE",
                                     phone,
-                                    (text) => {
-                                        setPhone(text);
-                                    },
+                                    setPhone,
                                     false,
                                     "phone-pad",
                                     {},
@@ -312,7 +317,7 @@ export default function CompanyCreationScreen({ navigation }) {
                                 "PASSWORD",
                                 password,
                                 setPassword,
-                                !showPassword,
+                                !showPassword, // hide by default
                                 "default",
                                 { flex: 1, marginRight: wp("1.5%") },
                                 passwordRef,
