@@ -23,7 +23,7 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = () => {
-    navigation.navigate("Company");
+    navigation.navigate("RateFixing");
   };
 
 

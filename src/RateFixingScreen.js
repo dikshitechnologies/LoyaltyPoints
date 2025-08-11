@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import {
     View,
     Text,
@@ -10,6 +12,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    Alert
 } from "react-native";
 import DatePicker from "react-native-date-picker";
 
@@ -28,18 +31,72 @@ export default function RateFixingScreen() {
     const [amount2, setAmount2] = useState("");
     const [openDatePicker2, setOpenDatePicker2] = useState(false);
 
-    const saveTab1 = () => {
-        console.log("Tab 1 saved:", { rateDate1, amount1, points1 });
+    const fcompcode = ""; // Replace with actual company code
+
+    const formatDate = (date) => date.toISOString();
+
+    const saveTab1 = async () => {
+        if (!amount1 || !points1) {
+            Alert.alert("Validation", "Please enter both amount and points.");
+            return;
+        }
+        try {
+            const payload = {
+                amount: amount1,
+                point: points1,
+                date: formatDate(rateDate1),
+                fcompcode,
+                flag: "AP" // Amount to Points
+            };
+            console.log("Sending to Amount→Point API:", payload);
+
+            const res = await axios.post(
+                "http://dikshi.ddns.net/loyaltypoints/api/Ratefixing/AmountPoint",
+                payload
+            );
+            console.log("Tab 1 Response:", res.data);
+            Alert.alert("Success", "Amount → Points saved successfully");
+          
+        } catch (err) {
+            console.error("Tab 1 Save Error:", err);
+            Alert.alert("Error", "Failed to save Amount → Points");
+        }
     };
+
     const clearTab1 = () => {
         setRateDate1(new Date());
         setAmount1("");
         setPoints1("");
     };
 
-    const saveTab2 = () => {
-        console.log("Tab 2 saved:", { rateDate2, points2, amount2 });
+    const saveTab2 = async () => {
+        if (!points2 || !amount2) {
+            Alert.alert("Validation", "Please enter both points and amount.");
+            return;
+        }
+        try {
+            const payload = {
+                pointAmount: amount2,
+                point: points2,
+                date: formatDate(rateDate2),
+                fcompcode,
+                flag: "PA" // Points to Amount
+            };
+            console.log("Sending to Point→Amount API:", payload);
+
+            const res = await axios.post(
+                "http://dikshi.ddns.net/loyaltypoints/api/Ratefixing/PointAmount",
+                payload
+            );
+            console.log("Tab 2 Response:", res.data);
+            Alert.alert("Success", "Points → Amount saved successfully");
+           
+        } catch (err) {
+            console.error("Tab 2 Save Error:", err);
+            Alert.alert("Error", "Failed to save Points → Amount");
+        }
     };
+
     const clearTab2 = () => {
         setRateDate2(new Date());
         setPoints2("");
@@ -261,64 +318,69 @@ export default function RateFixingScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#E6F9FF" },
-    imageContainer: { position: "absolute", top: 0, left: 0, right: 0, height: 250 },
-    topImage: { width: "100%", height: "150%" },
+    imageContainer: { position: "absolute", top: 0, left: 0, right: 0, height: hp("30%") },
+    topImage: { width: wp("100%"), height: hp("40%") },
     card: {
         backgroundColor: "#fff",
-        marginHorizontal: 20,
-        marginTop:150,
-        borderRadius: 12,
-        padding: 15,
+        marginHorizontal: wp("5%"),
+        marginTop: hp("18%"),
+        borderRadius: wp("3%"),
+        padding: wp("4%"),
         elevation: 4,
         shadowColor: "#000",
         shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowRadius: wp("1%"),
     },
-    headingContainer: { alignItems: "center", marginBottom: 15 },
+    headingContainer: { alignItems: "center", marginBottom: hp("2%") },
     headingText: {
-        fontSize: 20,
+        fontSize: wp("5%"),
         fontWeight: "bold",
         color: "#006A72",
-        letterSpacing: 1,
+        letterSpacing: wp("0.3%"),
         textTransform: "uppercase",
     },
-    tabContainer: { flexDirection: "row", marginBottom: 15, borderRadius: 8, overflow: "hidden" },
+    tabContainer: {
+        flexDirection: "row",
+        marginBottom: hp("2%"),
+        borderRadius: wp("2%"),
+        overflow: "hidden"
+    },
     tabButton: {
         flex: 1,
         backgroundColor: "#D9F5F7",
-        paddingVertical: 10,
+        paddingVertical: hp("1.5%"),
         alignItems: "center",
     },
     activeTab: { backgroundColor: "#006A72" },
-    tabText: { color: "#006A72", fontWeight: "bold" },
+    tabText: { color: "#006A72", fontWeight: "bold", fontSize: wp("4%") },
     activeTabText: { color: "#fff" },
-    inputContainer: { marginBottom: 12 },
+    inputContainer: { marginBottom: hp("1.5%") },
     label: {
-        fontSize: 12,
+        fontSize: wp("3.2%"),
         fontWeight: "600",
         color: "#006A72",
-        marginBottom: 5,
+        marginBottom: hp("0.5%"),
     },
     input: {
         borderWidth: 1,
         borderColor: "#8FD6DA",
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        fontSize: 14,
+        borderRadius: wp("2%"),
+        paddingHorizontal: wp("3%"),
+        paddingVertical: hp("1.2%"),
+        fontSize: wp("3.5%"),
         backgroundColor: "#fff",
         color: "#00363A",
     },
-    buttonRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
+    buttonRow: { flexDirection: "row", justifyContent: "space-between", marginTop: hp("1%") },
     button: {
         flex: 1,
-        paddingVertical: 12,
-        borderRadius: 25,
+        paddingVertical: hp("1.8%"),
+        borderRadius: wp("8%"),
         alignItems: "center",
-        marginHorizontal: 5,
+        marginHorizontal: wp("1.5%"),
     },
     saveBtn: { backgroundColor: "#006A72" },
-    saveText: { color: "#fff", fontWeight: "bold" },
+    saveText: { color: "#fff", fontWeight: "bold", fontSize: wp("4%") },
     clearBtn: { backgroundColor: "#D9F5F7" },
-    clearText: { color: "#006A72", fontWeight: "bold" },
+    clearText: { color: "#006A72", fontWeight: "bold", fontSize: wp("4%") },
 });
