@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-   KeyboardAvoidingView,
+  KeyboardAvoidingView,
   Dimensions,
 } from "react-native";
 import Video from "react-native-video";
@@ -16,15 +16,16 @@ import loginVideo from "../assets/Logindesign.mp4";
 
 const { width, height } = Dimensions.get("window");
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  
+
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = () => {
-    console.log("Username:", username, "Password:", password, "Date:");
+    navigation.navigate("Company");
   };
+
 
   const handleCancel = () => {
     setUsername("");
@@ -33,86 +34,86 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView>
-    <LinearGradient
-      colors={["#000000ff", "#000000ff", "#0b508cff"]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
-      style={styles.container}
-    >
-      {/* Top video */}
-      <Video
-        source={loginVideo}
-        style={styles.video}
-        muted
-        repeat
-        resizeMode="cover"
-        rate={1.0}
-        ignoreSilentSwitch="obey"
-      />
+      <LinearGradient
+        colors={["#000000ff", "#000000ff", "#0b508cff"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.container}
+      >
+        {/* Top video */}
+        <Video
+          source={loginVideo}
+          style={styles.video}
+          muted
+          repeat
+          resizeMode="cover"
+          rate={1.0}
+          ignoreSilentSwitch="obey"
+        />
 
-      {/* Floating container */}
-    
-      <View style={styles.formContainer}>
-        <Text style={styles.header}>Welcome</Text>
-        <Text style={styles.subText}>Please login with your information</Text>
+        {/* Floating container */}
 
-        {/* Username */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Username:</Text>
-          <View style={styles.inputBox}>
-            <Icon name="person" size={20} color="#006A72" style={styles.leftIcon} />
-            <TextInput
-              style={styles.textField}
-              placeholder="Enter username"
-              placeholderTextColor="#888"
-              value={username}
-              onChangeText={setUsername}
-            />
-          </View>
-        </View>
+        <View style={styles.formContainer}>
+          <Text style={styles.header}>Welcome</Text>
+          <Text style={styles.subText}>Please login with your information</Text>
 
-        {/* Password */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password:</Text>
-          <View style={styles.inputBox}>
-            <Icon name="lock" size={20} color="#006A72" style={styles.leftIcon} />
-            <TextInput
-              style={styles.textField}
-              placeholder="Enter password"
-              placeholderTextColor="#888"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Icon
-                name={showPassword ? "visibility" : "visibility-off"}
-                size={20}
-                color="#006A72"
-                style={styles.rightIcon}
+          {/* Username */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Username:</Text>
+            <View style={styles.inputBox}>
+              <Icon name="person" size={20} color="#006A72" style={styles.leftIcon} />
+              <TextInput
+                style={styles.textField}
+                placeholder="Enter username"
+                placeholderTextColor="#888"
+                value={username}
+                onChangeText={setUsername}
               />
+            </View>
+          </View>
+
+          {/* Password */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password:</Text>
+            <View style={styles.inputBox}>
+              <Icon name="lock" size={20} color="#006A72" style={styles.leftIcon} />
+              <TextInput
+                style={styles.textField}
+                placeholder="Enter password"
+                placeholderTextColor="#888"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Icon
+                  name={showPassword ? "visibility" : "visibility-off"}
+                  size={20}
+                  color="#006A72"
+                  style={styles.rightIcon}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+
+
+          {/* Buttons */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.submitButton} onPress={handleLogin}>
+              <Text style={styles.buttonText}>LOGIN</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+              <Text style={styles.buttonText}>CANCEL</Text>
             </TouchableOpacity>
           </View>
+
+          <Text style={styles.footer}>
+            © Dikshi Technologies - 9841419981
+          </Text>
         </View>
 
-      
-
-        {/* Buttons */}
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.submitButton} onPress={handleLogin}>
-            <Text style={styles.buttonText}>LOGIN</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-            <Text style={styles.buttonText}>CANCEL</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.footer}>
-          © Dikshi Technologies - 9841419981
-        </Text>
-      </View>
-     
-    </LinearGradient>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#006A72",
     paddingVertical: 12,
     borderRadius: 25,
-    marginLeft:90,
+    marginLeft: 90,
     alignItems: "center",
     marginRight: 10,
   },
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   footer: {
     fontSize: 14,
     color: "#333",
-    marginBottom:40,
+    marginBottom: 40,
     marginTop: 120,
     textAlign: "center",
   },
