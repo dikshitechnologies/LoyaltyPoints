@@ -1,21 +1,37 @@
-import React, { useState, useRef } from "react";
+
+
+import axios from "axios";
+import { BASE_URL, fcomCode } from "./Services";
+
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
+  TextInput,
+  Modal,
+  PermissionsAndroid,
+  Platform,
+  TouchableOpacity,
   Alert,
   Animated,
   Easing,
   ScrollView,
   KeyboardAvoidingView,
-  Platform
-} from "react-native";
-import axios from "axios";
-import { BASE_URL, fcomCode } from "./Services";
+  
+
+} from 'react-native';
+import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Material Icon
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import DeviceInfo from 'react-native-device-info';
+
+
 export default function PointsScreen() {
   // Add Mode State
+
+
+  const isTablet = DeviceInfo.isTablet();
   const [addLoyaltyNumber, setAddLoyaltyNumber] = useState("");
   const [addName, setAddName] = useState("");
   const [addBalance, setAddBalance] = useState("");
@@ -178,6 +194,53 @@ export default function PointsScreen() {
 
   };
 
+  //-----------------------------------------------------------------
+const device = useCameraDevice('back');
+  const [hasPermission, setHasPermission] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+ 
+
+  const requestPermission = async () => {
+    let status;
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        {
+          title: 'Camera Permission',
+          message: 'App needs access to your camera to scan QR codes',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK'
+        }
+      );
+      status = granted === PermissionsAndroid.RESULTS.GRANTED ? 'authorized' : 'denied';
+    } else {
+      status = await Camera.requestCameraPermission();
+    }
+    setHasPermission(status === 'authorized');
+  };
+
+  useEffect(() => {
+    requestPermission();
+  }, []);
+
+  const codeScanner = useCodeScanner({
+    codeTypes: [
+      'qr', 'ean-13', 'code-128', 'code-39', 'code-93',
+      'codabar', 'upc-a', 'upc-e', 'itf', 'ean-8',
+      'aztec', 'pdf-417', 'data-matrix'
+    ],
+    onCodeScanned: (codes) => {
+      if (codes.length > 0 && codes[0].value) {
+        const value = codes[0].value;
+        setAddLoyaltyNumber(value);
+        setShowScanner(false);
+        getPoints(); // optional: trigger fetch immediately
+      }
+    }
+  });
+  //-------------------------------------------------------------------
+
    return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -185,10 +248,14 @@ export default function PointsScreen() {
       keyboardVerticalOffset={80}
     >
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.container}>
+          <View style={styles.header}>
+           <Text style={styles.headerText}>Loyalty Hub</Text>
+          </View>
+                      
           {/* Segmented Control */}
           <View style={styles.segmentContainer}>
             <Animated.View style={[styles.slider, { left: sliderLeft }]} />
@@ -224,14 +291,33 @@ export default function PointsScreen() {
           {mode === "add" && (
             <>
               <Text style={styles.label}>Loyalty Number</Text>
-              <TextInput
-                style={styles.input}
-                value={addLoyaltyNumber}
-                onChangeText={setAddLoyaltyNumber}
-                placeholder="Enter Loyalty Number"
-                returnKeyType="next"
-                onSubmitEditing={getPoints}
-              />
+<View style={styles.row}>
+  <TextInput
+    style={[styles.input, { flex: 1 }]}
+    value={addLoyaltyNumber}
+    onChangeText={setAddLoyaltyNumber}
+    onBlur={getPoints}
+    placeholder="Enter Loyalty Number"
+    returnKeyType="next"
+    onSubmitEditing={() => purchaseAmountRef.current.focus()}
+  />
+  <TouchableOpacity
+    onPress={() => {
+      if (hasPermission) {
+        setShowScanner(true);
+      } else {
+        requestPermission();
+      }
+    }}
+    style={styles.qrButton}
+  >
+    <Icon
+      name="qr-code-scanner"
+      size={isTablet ? wp('5%') : wp('7%')}
+      color="#333"
+    />
+  </TouchableOpacity>
+</View>
 
               <Text style={styles.label}>Name</Text>
               <TextInput
@@ -271,6 +357,29 @@ export default function PointsScreen() {
                 value={pointsEarned}
                 editable={false}
               />
+
+              <Modal
+        visible={showScanner}
+        animationType="slide"
+        onRequestClose={() => setShowScanner(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'black' }}>
+          {device && hasPermission ? (
+            <Camera
+              style={{ flex: 1 }}
+              device={device}
+              isActive={showScanner}
+              codeScanner={codeScanner}
+            />
+          ) : null}
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setShowScanner(false)}
+          >
+            <Text style={{ color: 'white', fontSize: 18 }}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
             </>
           )}
 
@@ -278,14 +387,33 @@ export default function PointsScreen() {
           {mode === "redeem" && (
             <>
               <Text style={styles.label}>Loyalty Number</Text>
-              <TextInput
-                style={styles.input}
-                value={redeemLoyaltyNumber}
-                onChangeText={setRedeemLoyaltyNumber}
-                placeholder="Enter Loyalty Number"
-                returnKeyType="next"
-                onSubmitEditing={getPoints}
-              />
+<View style={styles.row}>
+  <TextInput
+    style={[styles.input, { flex: 1 }]}
+    value={redeemLoyaltyNumber}
+    onChangeText={setRedeemLoyaltyNumber}
+    placeholder="Enter Loyalty Number"
+    returnKeyType="next"
+    onSubmitEditing={getPoints}
+  />
+  <TouchableOpacity
+    onPress={() => {
+      if (hasPermission) {
+        setShowScanner(true);
+      } else {
+        requestPermission();
+      }
+    }}
+    style={styles.qrButton}
+  >
+    <Icon
+      name="qr-code-scanner"
+      size={isTablet ? wp('5%') : wp('7%')}
+      color="#333"
+    />
+  </TouchableOpacity>
+</View>
+
 
               <Text style={styles.label}>Name</Text>
               <TextInput
@@ -344,18 +472,48 @@ export default function PointsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#f5f7f9" },
+  container: { flex: 1, padding: 0, backgroundColor: "#f5f7f9" },
+  header: {
+        backgroundColor: '#006A72ff',
+        padding: 20,
+        paddingTop: 50,
+        alignItems: 'center',
+        borderBottomLeftRadius: 40,
+        borderBottomRightRadius: 40,
+    },
 
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    height: 40
+  },
+  closeButton: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#00000088',
+    borderRadius: 5
+  },
   // Segmented Control
   segmentContainer: {
     flexDirection: "row",
     backgroundColor: "#d1e6e7",
-    borderRadius: 14,
+    borderRadius: 20,
     padding: 3,
     position: "relative",
     marginBottom: 20,
     height: 50,
     elevation: 3,
+    marginTop: 10,
   },
   slider: {
     position: "absolute",
@@ -389,28 +547,51 @@ const styles = StyleSheet.create({
     marginTop: 6,
     backgroundColor: "#fff",
     elevation: 1,
-    
+
   },
 
-  buttonRow: { flexDirection: "row", marginTop: 20 },
-  saveButton: {
-    flex: 1,
-    backgroundColor: "#008C99",
-    padding: 12,
-    borderRadius: 8,
-    marginHorizontal: 5,
-    elevation: 2,
-  },
-  clearButton: {
-    flex: 1,
-    backgroundColor: "#d9f5f7",
-    padding: 12,
-    borderRadius: 8,
-    marginHorizontal: 5,
-    elevation: 2,
-  },
+buttonRow: {
+  flexDirection: 'row',
+  justifyContent: 'center', // center the buttons in row
+  alignItems: 'center',
+  marginTop: 20,
+},
+saveButton: {
+  backgroundColor: '#006A72',
+  borderRadius: 20,
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  alignItems: 'center',
+  width: 120, // smaller width
+  marginHorizontal: 10, // space between buttons
+},
+clearButton: {
+  backgroundColor: '#d9f5f7',
+  borderRadius: 20,
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  alignItems: 'center',
+  width: 120, // smaller width
+  marginHorizontal: 10,
+},
+
   buttonText: { color: "#fff", textAlign: "center", fontWeight: "bold", fontSize: 16 },
-  cbuttonText: { color: "#006A72", textAlign: "center", fontWeight: "bold", fontSize: 16 }
+  cbuttonText: { color: "#006A72", textAlign: "center", fontWeight: "bold", fontSize: 16 },
+  headerText: {
+        fontSize: 24,
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    row: {
+  flexDirection: "row",
+  alignItems: "center",
+},
+qrButton: {
+  marginLeft: 8,
+  paddingHorizontal: 6,
+  justifyContent: "center",
+  alignItems: "center",
+},
 });
 
 
