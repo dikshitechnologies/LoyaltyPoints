@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import bgcard from '../assets/bgcard.png';
-import { BASE_URL ,fcomCode } from './Services';
+import { BASE_URL } from './Services';
 import { handleStatusCodeError } from './ErrorHandler';
+import {getCompanyCode } from "../store";
+
 import axios from 'axios';
 const COLUMN_WIDTHS = {
   date: '13%',
@@ -31,14 +33,13 @@ const ReportScreen = () => {
   const [error, setError] = useState(null);
 const [pageNumber, setPageNumber] = useState(1);
 const [hasMore, setHasMore] = useState(true);
-
-
+const fcomCode = getCompanyCode();
 
 const fetchUser = async (val)=>{
 
   try {
-
-    const response = await axios.get(`${BASE_URL}Register/points-summary/${val}`)
+console.log("Fetching user with loyalty number:", fcomCode);
+    const response = await axios.get(`${BASE_URL}Register/points-summary/${val}/${fcomCode}`)
     if(response.status == 200){
       console.log(response)
       const customerInfo = {

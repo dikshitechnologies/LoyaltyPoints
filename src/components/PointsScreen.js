@@ -1,7 +1,7 @@
 // PointsScreen.js
 
 import axios from "axios";
-import { BASE_URL, fcomCode } from "./Services";
+import { BASE_URL } from "./Services";
 
 import React, { useEffect, useState, useRef ,useCallback  } from 'react';
 import {
@@ -25,10 +25,12 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import DeviceInfo from 'react-native-device-info';
 import { showConfirmation } from "./AlertUtils";
+ import {getCompanyCode } from "../store";
 
 
 export default function PointsScreen() {
   // Add Mode State
+   const fcomCode = getCompanyCode();
 const [currentValPoint , setCurrentValPoint] = useState(null);
 const [currentValAmount , setCurrentValAmount] = useState(null);
 
@@ -166,12 +168,13 @@ useFocusEffect(
 
   const getPoints = async () => {
     let loyaltyNumber = mode === "add" ? addLoyaltyNumber : redeemLoyaltyNumber;
+    console.log("Fetching points for loyalty number:", loyaltyNumber);
     if (!loyaltyNumber) {
       Alert.alert("Error", "Please enter a loyalty number");
       return;
     }
     try {
-      const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}`);
+      const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}/${fcomCode}`);
       if(response.status == 200){
         if(response.data.length === 0) {
 
@@ -180,7 +183,7 @@ useFocusEffect(
         if (mode === "add") {
           setAddName(data.customerName);
           setAddBalance(data.balance.toString());
-        } else {
+        } else if (mode === "redeem") {
           setRedeemName(data.customerName);
           setRedeemBalance(data.balance.toString());
         }
@@ -373,7 +376,7 @@ catch (error) {
   });
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1,backgroundColor:'white' }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           {/* Header */}
@@ -383,7 +386,7 @@ catch (error) {
                       
           {/* Segmented Control */}
           <View style={styles.segmentContainer}>
-            <Animated.View style={[styles.slider, { left: sliderLeft }]} />
+            <Animated.View style={[styles.slider, { left: sliderLeft , zIndex: -1}]} />
             <TouchableOpacity
               style={styles.segmentButton}
               onPress={() => { switchMode("add"); handleClear(); }}
@@ -414,14 +417,14 @@ catch (error) {
 
           <View style={{ marginVertical: 10 }}>
             {mode === "add" ? (
-              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72",position: "absolute", top: 10, right:10 }}>
+              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72",position: "absolute", top: 1, right:10 }}>
                 Per Point value:{" "}
                 {currentValAmount && currentValPoint
                   ? (parseFloat(currentValAmount) / parseFloat(currentValPoint)).toFixed(2)
                   : "Loading..."}
               </Text>
             ) : (
-              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72",position: "absolute", top: 10, right:10 }}>
+              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72",position: "absolute", top: 1, right:10 }}>
                 Per Redeem value:{" "}
                 {currentRedeemAmount && currentRedeemPoint
                   ? (parseFloat(currentRedeemAmount) / parseFloat(currentRedeemPoint)).toFixed(2)
@@ -429,6 +432,9 @@ catch (error) {
               </Text>
             )}
 </View>
+
+
+<View style={styles.card}>
 
             {/* ADD Mode */}
             {mode === "add" && (
@@ -482,8 +488,8 @@ catch (error) {
                 <View style={styles.row}>
                    <TextInput
                     style={[styles.input, { flex: 1 }]}
-                    value={addLoyaltyNumber}
-                    onChangeText={setAddLoyaltyNumber}
+                    value={redeemLoyaltyNumber}
+                    onChangeText={setRedeemLoyaltyNumber}
                     onBlur={getPoints}
                     placeholder="Enter Loyalty Number"
                     returnKeyType="next"
@@ -529,8 +535,9 @@ catch (error) {
                 <Text style={styles.clearText}>CLEAR</Text>
               </TouchableOpacity>
             </View>
-          </View>
+         
         </View>
+      </View>
       </ScrollView>
 
       {/* QR Scanner */}
@@ -615,11 +622,13 @@ segmentButton: {
   flex: 1,
   justifyContent: "center",
   alignItems: "center",
+  
 },
 segmentText: {
   fontSize: 16,
   fontWeight: "600",
   color: "#444",
+  
 },
 segmentTextActive: {
   color: "#fff",

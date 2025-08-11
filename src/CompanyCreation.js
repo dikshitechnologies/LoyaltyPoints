@@ -20,6 +20,11 @@ import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import { handleStatusCodeError } from "./components/ErrorHandler";
+import { BASE_URL } from "./components/Services";
+
+
+
 
 export default function CompanyCreationScreen({ navigation }) {
     const [date, setDate] = useState(new Date());
@@ -98,7 +103,6 @@ export default function CompanyCreationScreen({ navigation }) {
 
         try {
             const payload = {
-                companyCode: "",
                 companyName: companyName.trim(),
                 gstNumber: gstin.trim(),
                 phone: phone.trim(),
@@ -108,32 +112,35 @@ export default function CompanyCreationScreen({ navigation }) {
                 password: password,
                 roleFlag: "N",
             };
-
+           
             const response = await axios.post(
-                "http://dikshi.ddns.net/loyaltypoints/api/Company",
+                `${BASE_URL}Company/companyCreation`,
                 payload,
                 { headers: { "Content-Type": "application/json" } }
             );
-
-            if (response.status === 201) {
+            console.log("Company registration response:", response);
+            if (response.status === 201 || response.status === 200) {
                 Alert.alert("Success", "Company registered successfully!");
                 clearForm();
                 navigation.navigate("Login");
             } else {
-                Alert.alert("Error", `Unexpected server response: ${response.status}`);
+                handleStatusCodeError(response.status, "Error deleting data");
             }
         } catch (error) {
-            console.error("Registration Error:", error.message);
-            if (error.message.includes("Network")) {
-                Alert.alert(
-                    "Network Error",
-                    "Cannot connect to server. Please check your internet or server address."
-                );
-            } else {
-                Alert.alert("Error", "Failed to register company. Please try again.");
-            }
-        }
-    };
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
+    }
+  };
+
 
     const renderInput = (
         label,
