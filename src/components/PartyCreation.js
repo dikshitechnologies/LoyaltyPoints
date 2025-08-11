@@ -147,7 +147,7 @@ const PartyCreation = () => {
                                     "LOYALTY NUMBER",
                                     loyaltyNumber,
                                     setLoyaltyNumber,
-                                    "numeric",
+                                    "default",
                                     loyaltyNumberRef,
                                     () => nameRef.current.focus()
                                 )}
