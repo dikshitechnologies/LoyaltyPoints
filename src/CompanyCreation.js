@@ -14,6 +14,10 @@ import {
     Alert,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
+import {
+    widthPercentageToDP as wp,
+    heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 
 export default function CompanyCreationScreen({ navigation }) {
     const [date, setDate] = useState(new Date());
@@ -32,11 +36,9 @@ export default function CompanyCreationScreen({ navigation }) {
     const [showPassword, setShowPassword] = useState(false);
     const [showRePassword, setShowRePassword] = useState(false);
 
-    // Validation error states
     const [gstinError, setGstinError] = useState("");
     const [phoneError, setPhoneError] = useState("");
 
-    // Refs for navigation
     const gstinRef = useRef();
     const phoneRef = useRef();
     const address1Ref = useRef();
@@ -60,86 +62,74 @@ export default function CompanyCreationScreen({ navigation }) {
         setPhoneError("");
     };
 
-    // Validation functions
     const validateGstin = (text) => {
         const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-
         if (!gstinRegex.test(text)) return "Invalid GSTIN format";
         return "";
     };
 
     const validatePhone = (text) => {
         const phoneRegex = /^[6-9][0-9]{9}$/;
-
         if (!phoneRegex.test(text)) return "Invalid phone number";
         return "";
     };
 
-
-     const register = async () => {
-        // Validate before submit
-
-
-
-
+    const register = async () => {
         if (
-          !companyName.trim() ||
-          !address1.trim() ||
-          !username.trim() ||
-          !password ||
-          !rePassword
+            !companyName.trim() ||
+            !address1.trim() ||
+            !username.trim() ||
+            !password ||
+            !rePassword
         ) {
-          Alert.alert("Missing Fields", "Please fill all the required fields.");
-          return;
+            Alert.alert("Missing Fields", "Please fill all the required fields.");
+            return;
         }
 
         if (password !== rePassword) {
-          Alert.alert("Password Mismatch", "Passwords do not match. Please re-enter.");
-          return;
+            Alert.alert("Password Mismatch", "Passwords do not match. Please re-enter.");
+            return;
         }
-
-
 
         try {
-          const payload = {
-            companyCode: "",
-            companyName: companyName.trim(),
-            gstNumber: gstin.trim(),
-            phone: phone.trim(),
-            addressLine1: address1.trim(),
-            addressLine2: address2.trim(),
-            userName: username.trim(),
-            password: password,
-            roleFlag:"N",
-          };
+            const payload = {
+                companyCode: "",
+                companyName: companyName.trim(),
+                gstNumber: gstin.trim(),
+                phone: phone.trim(),
+                addressLine1: address1.trim(),
+                addressLine2: address2.trim(),
+                userName: username.trim(),
+                password: password,
+                roleFlag: "N",
+            };
 
-          const response = await axios.post(
-            "http://dikshi.ddns.net/loyaltypoints/api/Company",
-            payload,
-            { headers: { "Content-Type": "application/json" } }
-          );
-
-          if (response.status === 201) {
-            Alert.alert("Success", "Company registered successfully!");
-            clearForm();
-            navigation.navigate("Login");
-          } else {
-            Alert.alert("Error", `Unexpected server response: ${response.status}`);
-          }
-        } catch (error) {
-          console.error("Registration Error:", error.message);
-          if (error.message.includes("Network")) {
-            Alert.alert(
-              "Network Error",
-              "Cannot connect to server. Please check your internet or server address."
+            const response = await axios.post(
+                "http://dikshi.ddns.net/loyaltypoints/api/Company",
+                payload,
+                { headers: { "Content-Type": "application/json" } }
             );
-          } else {
-            Alert.alert("Error", "Failed to register company. Please try again.");
-          }
-        }
-      };
 
-    // Your reusable input component
+            if (response.status === 201) {
+                Alert.alert("Success", "Company registered successfully!");
+                clearForm();
+                navigation.navigate("Login");
+            } else {
+                Alert.alert("Error", `Unexpected server response: ${response.status}`);
+            }
+        } catch (error) {
+            console.error("Registration Error:", error.message);
+            if (error.message.includes("Network")) {
+                Alert.alert(
+                    "Network Error",
+                    "Cannot connect to server. Please check your internet or server address."
+                );
+            } else {
+                Alert.alert("Error", "Failed to register company. Please try again.");
+            }
+        }
+    };
+
     const renderInput = (
         label,
         value,
@@ -172,7 +162,7 @@ export default function CompanyCreationScreen({ navigation }) {
                 />
                 {showEye && (
                     <TouchableOpacity onPress={toggleEye} style={styles.eyeIcon}>
-                        <Text style={{ fontSize: 18 }}>{secure ? "🔒" : "🔓"}</Text>
+                        <Text style={{ fontSize: wp("4.5%") }}>{secure ? "🔒" : "🔓"}</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -184,39 +174,32 @@ export default function CompanyCreationScreen({ navigation }) {
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+                keyboardVerticalOffset={Platform.OS === "ios" ? hp("12%") : 0}
             >
                 <ScrollView
-                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
+                    contentContainerStyle={{ flexGrow: 1, paddingBottom: hp("10%") }}
                     keyboardShouldPersistTaps="handled"
                 >
-                    {/* Header Image with Title */}
                     <Image
-                source={require("./assets/image1.png")}
-                style={styles.topImage}
-                resizeMode="cover"
-            />
-            
-            {/* Heading */}
-           
-
-                    {/* Form Card */}
+                        source={require("./assets/image1.png")}
+                        style={styles.topImage}
+                        resizeMode="cover"
+                    />
                     <View style={styles.card}>
-                       <View style={styles.headingContainer}>
-                <Text style={styles.headingText}>COMPANY CREATION</Text>
-            </View>
+                        <View style={styles.headingContainer}>
+                            <Text style={styles.headingText}>COMPANY CREATION</Text>
+                        </View>
 
-                        {/* Creation Date */}
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>CREATION DATE</Text>
                             <TouchableOpacity style={styles.input} onPress={() => setOpen(true)}>
                                 <Text style={{ color: "#000" }}>
                                     {date
                                         ? date.toLocaleDateString("en-GB", {
-                                            day: "numeric",
-                                            month: "long",
-                                            year: "numeric",
-                                        })
+                                              day: "numeric",
+                                              month: "long",
+                                              year: "numeric",
+                                          })
                                         : "Select Date"}
                                 </Text>
                             </TouchableOpacity>
@@ -233,7 +216,6 @@ export default function CompanyCreationScreen({ navigation }) {
                             />
                         </View>
 
-                        {/* Company Name */}
                         {renderInput(
                             "COMPANY NAME",
                             companyName,
@@ -245,15 +227,13 @@ export default function CompanyCreationScreen({ navigation }) {
                             () => gstinRef.current.focus()
                         )}
 
-                        {/* GSTIN & Phone */}
                         <View style={styles.row}>
-                            <View style={{ flex: 1, marginRight: 6 }}>
+                            <View style={{ flex: 1, marginRight: wp("1.5%") }}>
                                 {renderInput(
                                     "GSTIN",
                                     gstin,
                                     (text) => {
                                         setGstin(text.toUpperCase());
-
                                     },
                                     false,
                                     "default",
@@ -271,13 +251,12 @@ export default function CompanyCreationScreen({ navigation }) {
                                 {gstinError ? <Text style={styles.errorText}>{gstinError}</Text> : null}
                             </View>
 
-                            <View style={{ flex: 1, marginLeft: 6 }}>
+                            <View style={{ flex: 1, marginLeft: wp("1.5%") }}>
                                 {renderInput(
                                     "PHONE",
                                     phone,
                                     (text) => {
                                         setPhone(text);
-
                                     },
                                     false,
                                     "phone-pad",
@@ -296,7 +275,6 @@ export default function CompanyCreationScreen({ navigation }) {
                             </View>
                         </View>
 
-                        {/* Addresses */}
                         {renderInput(
                             "ADDRESS 1",
                             address1,
@@ -318,7 +296,6 @@ export default function CompanyCreationScreen({ navigation }) {
                             () => usernameRef.current.focus()
                         )}
 
-                        {/* Username */}
                         {renderInput(
                             "USERNAME",
                             username,
@@ -330,7 +307,6 @@ export default function CompanyCreationScreen({ navigation }) {
                             () => passwordRef.current.focus()
                         )}
 
-                        {/* Password & Re-enter */}
                         <View style={styles.row}>
                             {renderInput(
                                 "PASSWORD",
@@ -338,7 +314,7 @@ export default function CompanyCreationScreen({ navigation }) {
                                 setPassword,
                                 !showPassword,
                                 "default",
-                                { flex: 1, marginRight: 6 },
+                                { flex: 1, marginRight: wp("1.5%") },
                                 passwordRef,
                                 () => rePasswordRef.current.focus(),
                                 true,
@@ -350,7 +326,7 @@ export default function CompanyCreationScreen({ navigation }) {
                                 setRePassword,
                                 !showRePassword,
                                 "default",
-                                { flex: 1, marginLeft: 6 },
+                                { flex: 1, marginLeft: wp("1.5%") },
                                 rePasswordRef,
                                 () => {
                                     if (password !== rePassword) {
@@ -360,7 +336,7 @@ export default function CompanyCreationScreen({ navigation }) {
                                         );
                                         setRePassword("");
                                     } else {
-                                        register(); // If they match, directly call register
+                                        register();
                                     }
                                 },
                                 true,
@@ -369,7 +345,6 @@ export default function CompanyCreationScreen({ navigation }) {
                             )}
                         </View>
 
-                        {/* Buttons */}
                         <View style={styles.buttonRow}>
                             <TouchableOpacity
                                 style={[styles.button, styles.registerBtn]}
@@ -390,64 +365,39 @@ export default function CompanyCreationScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#E6F9FF" },
-    header: {
-        width: "100%",
-        aspectRatio: 1.8,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    headerText: {
-        marginTop: 90,
-        fontSize: 22,
-        fontWeight: "600",
-        color: "#ffffff",
-        backgroundColor: "rgba(0, 106, 114, 0.75)", // same teal tone as theme
-        paddingHorizontal: 20,
-        paddingVertical: 8,
-        borderRadius: 25,
-        letterSpacing: 1,
-        overflow: "hidden",
-    },
-
+    topImage: { width: wp("100%"), height: hp("25%") },
     card: {
         backgroundColor: "#ffffff",
-        marginHorizontal: 20,
-        marginTop: -20,
-        borderRadius: 12,
-        padding: 15,
+        marginHorizontal: wp("5%"),
+        marginTop: -hp("2.5%"),
+        borderRadius: wp("3%"),
+        padding: wp("4%"),
         elevation: 3,
     },
-    subtitle: {
-        fontSize: 14,
-        color: "#006A72",
-        marginBottom: 20,
-        textAlign: "center",
-    },
-    topImage: { width: "100%", height: "25%" },
     row: {
         flexDirection: "row",
         justifyContent: "space-between",
     },
     headingContainer: {
         alignItems: "center",
-        marginVertical: 15,
+        marginVertical: hp("2%"),
     },
     headingText: {
-        marginTop:-5,
-        fontSize: 20,
+        marginTop: -hp("0.5%"),
+        fontSize: wp("5%"),
         fontWeight: "bold",
         color: "#006A72",
         letterSpacing: 1,
         textTransform: "uppercase",
     },
     inputContainer: {
-        marginBottom: 12,
+        marginBottom: hp("1.5%"),
     },
     label: {
-        fontSize: 12,
+        fontSize: wp("3%"),
         fontWeight: "600",
         color: "#006A72",
-        marginBottom: 5,
+        marginBottom: hp("0.5%"),
     },
     inputWrapper: {
         flexDirection: "row",
@@ -456,37 +406,36 @@ const styles = StyleSheet.create({
     input: {
         borderWidth: 1,
         borderColor: "#8FD6DA",
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        fontSize: 14,
+        borderRadius: wp("2%"),
+        paddingHorizontal: wp("3%"),
+        paddingVertical: hp("1.2%"),
+        fontSize: wp("3.5%"),
         backgroundColor: "#ffffff",
         color: "#00363A",
     },
     eyeIcon: {
-        paddingHorizontal: 10,
+        paddingHorizontal: wp("2.5%"),
     },
     buttonRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginTop: 8,
+        marginTop: hp("1%"),
     },
     button: {
         flex: 1,
-        paddingVertical: 12,
-        borderRadius: 25,
+        paddingVertical: hp("1.5%"),
+        borderRadius: wp("6%"),
         alignItems: "center",
-        marginHorizontal: 5,
+        marginHorizontal: wp("1%"),
     },
     registerBtn: { backgroundColor: "#006A72" },
     registerText: { color: "#ffffff", fontWeight: "bold" },
     clearBtn: { backgroundColor: "#D9F5F7" },
     clearText: { color: "#006A72", fontWeight: "bold" },
-
     errorText: {
         color: "red",
-        fontSize: 12,
-        marginTop: 1,
-        marginLeft: 4,
+        fontSize: wp("3%"),
+        marginTop: hp("0.2%"),
+        marginLeft: wp("1%"),
     },
 });
