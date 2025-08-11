@@ -15,7 +15,8 @@ import axios from "axios";
 import Video from "react-native-video";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // <-- Add this
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import loginVideo from "../assets/Logindesign.mp4";
 
 const { height } = Dimensions.get("window");
@@ -26,7 +27,6 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Load saved credentials
   useEffect(() => {
     const loadCredentials = async () => {
       try {
@@ -53,18 +53,12 @@ export default function LoginScreen({ navigation }) {
     try {
       const response = await axios.get(
         `http://dikshi.ddns.net/loyaltypoints/api/LoginPage`,
-        {
-          params: {
-            username: username,
-            password: password,
-          },
-        }
+        { params: { username, password } }
       );
 
       if (response.data?.message === "Login successful") {
         const { roleFlag, username: userFromAPI, fcompcode } = response.data;
 
-        // Save credentials if Remember Me is checked
         if (rememberMe) {
           await AsyncStorage.setItem("username", username);
           await AsyncStorage.setItem("password", password);
@@ -84,7 +78,7 @@ export default function LoginScreen({ navigation }) {
             fullPayload: response.data
           });
         }
-        handleCancel(); 
+        handleCancel();
       } else {
         alert("Invalid username or password");
       }
@@ -134,7 +128,7 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>USERNAME</Text>
               <View style={styles.inputBox}>
-                <Icon name="person" size={20} color="#006A72" style={styles.leftIcon} />
+                <Icon name="person" size={wp("5%")} color="#006A72" style={styles.leftIcon} />
                 <TextInput
                   style={styles.textField}
                   placeholderTextColor="#888"
@@ -148,7 +142,7 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>PASSWORD</Text>
               <View style={styles.inputBox}>
-                <Icon name="lock" size={20} color="#006A72" style={styles.leftIcon} />
+                <Icon name="lock" size={wp("5%")} color="#006A72" style={styles.leftIcon} />
                 <TextInput
                   style={styles.textField}
                   placeholderTextColor="#888"
@@ -159,7 +153,7 @@ export default function LoginScreen({ navigation }) {
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                   <Icon
                     name={showPassword ? "visibility" : "visibility-off"}
-                    size={20}
+                    size={wp("5%")}
                     color="#006A72"
                     style={styles.rightIcon}
                   />
@@ -174,7 +168,7 @@ export default function LoginScreen({ navigation }) {
             >
               <Icon
                 name={rememberMe ? "check-box" : "check-box-outline-blank"}
-                size={20}
+                size={wp("5%")}
                 color="#006A72"
               />
               <Text style={styles.rememberMeText}>Remember Me</Text>
@@ -208,80 +202,79 @@ export default function LoginScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center" },
-  video: { width: "100%", height: height * 0.5 },
+  video: { width: "100%", height: hp("50%") },
   formContainer: {
     backgroundColor: "#fff",
-    paddingHorizontal: 30,
-    paddingVertical: 25,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
+    paddingHorizontal: wp("8%"),
+    paddingVertical: hp("3%"),
+    borderTopLeftRadius: wp("6%"),
+    borderTopRightRadius: wp("6%"),
     width: "100%",
-    marginTop: -30,
+    marginTop: -hp("4%"),
   },
   header: {
-    fontSize: 24,
+    fontSize: wp("6%"),
     fontWeight: "bold",
     color: "#006A72",
-    marginBottom: 5,
+    marginBottom: hp("1%"),
     textAlign: "center",
   },
   subText: {
-    fontSize: 14,
+    fontSize: wp("3.5%"),
     color: "#006A72",
-    marginBottom: 20,
+    marginBottom: hp("2%"),
     textAlign: "center",
   },
-  inputContainer: { marginBottom: 15 },
+  inputContainer: { marginBottom: hp("2%") },
   label: {
-    fontSize: 13,
+    fontSize: wp("3.5%"),
     fontWeight: "600",
     color: "#006A72",
-    marginBottom: 5,
+    marginBottom: hp("0.8%"),
   },
   inputBox: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#8FD6DA",
-    borderRadius: 8,
+    borderRadius: wp("2%"),
     backgroundColor: "#fff",
-    paddingHorizontal: 5,
+    paddingHorizontal: wp("1.5%"),
   },
-  leftIcon: { marginHorizontal: 5 },
-  rightIcon: { marginHorizontal: 5 },
+  leftIcon: { marginHorizontal: wp("1%") },
+  rightIcon: { marginHorizontal: wp("1%") },
   textField: {
     flex: 1,
-    paddingVertical: 8,
-    fontSize: 14,
+    paddingVertical: hp("1%"),
+    fontSize: wp("3.8%"),
     color: "#333",
   },
   rememberMeContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: hp("2%"),
   },
   rememberMeText: {
-    marginLeft: 8,
-    fontSize: 14,
+    marginLeft: wp("2%"),
+    fontSize: wp("3.5%"),
     color: "#006A72",
   },
-  buttonRow: { flexDirection: "row", marginTop: 3 },
+  buttonRow: { flexDirection: "row", marginTop: hp("1%") },
   button: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 25,
+    paddingVertical: hp("1.5%"),
+    borderRadius: wp("6%"),
     alignItems: "center",
-    marginHorizontal: 5,
+    marginHorizontal: wp("1%"),
   },
   saveBtn: { backgroundColor: "#006A72" },
-  saveText: { color: "#fff", fontWeight: "bold", fontSize: 15 },
+  saveText: { color: "#fff", fontWeight: "bold", fontSize: wp("4%") },
   clearBtn: { backgroundColor: "#D9F5F7" },
-  clearText: { color: "#006A72", fontWeight: "bold", fontSize: 15 },
+  clearText: { color: "#006A72", fontWeight: "bold", fontSize: wp("4%") },
   footer: {
-    fontSize: 14,
+    fontSize: wp("3.5%"),
     color: "#333",
- 
-    marginTop: 40,
+    marginTop: hp("5%"),
     textAlign: "center",
   },
 });
