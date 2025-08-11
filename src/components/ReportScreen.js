@@ -147,7 +147,7 @@ const ReportScreen = () => {
 
       {/* Transactions */}
       {customerData && (
-        <ScrollView style={styles.content}>
+        <ScrollView style={styles.content} contentContainerStyle={{paddingBottom:70}}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Transaction History</Text>
 
@@ -164,9 +164,9 @@ const ReportScreen = () => {
                 <Text style={styles.transactionAmount}>{transaction.amount}</Text>
                 <View style={styles.typeContainer}>
                   {transaction.type === 'CR' ? (
-                    <MaterialIcons name="arrow-downward" size={20} color="#4CAF50" />
+                    <MaterialIcons name="arrow-upward" size={20} color="#4CAF50" />
                   ) : (
-                    <MaterialIcons name="arrow-upward" size={20} color="#F44336" />
+                    <MaterialIcons name="arrow-downward" size={20} color="#F44336" />
                   )}
                   <Text style={[
                     styles.transactionType,
@@ -236,15 +236,15 @@ const styles = StyleSheet.create({
   card: { backgroundColor: 'white', borderRadius: 10, padding: 15, marginBottom: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 3 },
   cardTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#333', borderBottomWidth: 1, borderBottomColor: '#F0F0F0', paddingBottom: 10 },
   transactionHeader: { flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', marginBottom: 5 },
-  headerDate: { width: '20%', fontWeight: 'bold', color: '#666', fontSize: 13 },
+  headerDate: { width: '25%', fontWeight: 'bold', color: '#666', fontSize: 13 },
   headerAmount: { width: '20%', fontWeight: 'bold', color: '#666', fontSize: 13, textAlign: 'center' },
-  headerType: { width: '20%', fontWeight: 'bold', color: '#666', fontSize: 13, textAlign: 'center' },
+  headerType: { width: '22%', fontWeight: 'bold', color: '#666', fontSize: 13, textAlign: 'center' },
   headerDesc: { width: '40%', fontWeight: 'bold', color: '#666', fontSize: 13 },
   transactionItem: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-  transactionDate: { width: '20%', color: '#333' },
+  transactionDate: { width: '25%', color: '#333' },
   transactionAmount: { width: '20%', color: '#333', textAlign: 'center' },
   typeContainer: { width: '20%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  transactionType: { marginLeft: 3, fontWeight: 'bold' },
+  transactionType: { fontWeight: 'bold'},
   creditType: { color: '#4CAF50' },
   debitType: { color: '#F44336' },
   transactionDesc: { width: '40%', color: '#333' },
