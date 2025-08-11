@@ -86,7 +86,7 @@ export default function RateFixingScreen() {
             console.log("Sending to Point→Amount API:", payload);
 
             const res = await axios.post(
-                "http://dikshi.ddns.net/loyaltypoints/api/Ratefixing/PointAmount",
+                "http://dikshi.ddns.net/loyaltypoints/api/Ratefixing/RedeemPointAmount",
                 payload
             );
             console.log("Tab 2 Response:", res.data);
