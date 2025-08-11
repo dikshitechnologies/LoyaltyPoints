@@ -19,7 +19,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import loginVideo from "../assets/Logindesign.mp4";
 
-const { height } = Dimensions.get("window");
+
+import { Dimensions } from "react-native";
+
+const { width, height } = Dimensions.get("window");
+const isTablet = Math.min(width, height) >= 600;
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
@@ -274,7 +278,7 @@ const styles = StyleSheet.create({
   footer: {
     fontSize: wp("3.5%"),
     color: "#333",
-    marginTop: hp("5%"),
+    marginTop:isTablet?0:hp("5%"),
     textAlign: "center",
   },
 });
