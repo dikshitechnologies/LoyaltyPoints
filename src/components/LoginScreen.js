@@ -18,7 +18,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import loginVideo from "../assets/Logindesign.mp4";
-
+import { handleStatusCodeError } from "./ErrorHandler";
 const { height } = Dimensions.get("window");
 
 export default function LoginScreen({ navigation }) {
@@ -56,7 +56,7 @@ export default function LoginScreen({ navigation }) {
         { params: { username, password } }
       );
 
-      if (response.data?.message === "Login successful") {
+      if (response.status==200) {
         const { roleFlag, username: userFromAPI, fcompcode } = response.data;
 
         if (rememberMe) {
@@ -80,13 +80,23 @@ export default function LoginScreen({ navigation }) {
         }
         handleCancel();
       } else {
-        alert("Invalid username or password");
+        handleStatusCodeError(response.status, "Error deleting data");
       }
     } catch (error) {
-      console.error(error);
-      alert("Error connecting to server");
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
     }
   };
+
 
   const handleCancel = () => {
     setUsername("");
