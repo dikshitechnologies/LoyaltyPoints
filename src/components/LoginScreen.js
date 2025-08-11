@@ -84,6 +84,7 @@ export default function LoginScreen({ navigation }) {
             fullPayload: response.data
           });
         }
+        handleCancel(); 
       } else {
         alert("Invalid username or password");
       }

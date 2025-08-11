@@ -32,7 +32,7 @@ export default function RateFixingScreen() {
     const [amount2, setAmount2] = useState("");
     const [openDatePicker2, setOpenDatePicker2] = useState(false);
 
-    const fcompcode =getCompanyCode(); 
+    const fcompcode = getCompanyCode();
 
     const formatDate = (date) => date.toISOString();
 
@@ -47,7 +47,7 @@ export default function RateFixingScreen() {
                 point: points1,
                 date: formatDate(rateDate1),
                 fcompcode,
-               
+
             };
             console.log("Sending to Amount→Point API:", payload);
 
@@ -57,7 +57,7 @@ export default function RateFixingScreen() {
             );
             console.log("Tab 1 Response:", res.data);
             Alert.alert("Success", "Amount → Points saved successfully");
-          
+
         } catch (err) {
             console.error("Tab 1 Save Error:", err);
             Alert.alert("Error", "Failed to save Amount → Points");
@@ -81,7 +81,7 @@ export default function RateFixingScreen() {
                 point: points2,
                 date: formatDate(rateDate2),
                 fcompcode,
-               
+
             };
             console.log("Sending to Point→Amount API:", payload);
 
@@ -91,7 +91,7 @@ export default function RateFixingScreen() {
             );
             console.log("Tab 2 Response:", res.data);
             Alert.alert("Success", "Points → Amount saved successfully");
-           
+
         } catch (err) {
             console.error("Tab 2 Save Error:", err);
             Alert.alert("Error", "Failed to save Points → Amount");
@@ -343,18 +343,39 @@ const styles = StyleSheet.create({
     tabContainer: {
         flexDirection: "row",
         marginBottom: hp("2%"),
-        borderRadius: wp("2%"),
-        overflow: "hidden"
+        borderRadius: 30, // large for pill effect
+        backgroundColor: "#D9F5F7", // light background
+        padding: hp("0.5%"),
+        overflow: "hidden",
     },
+
     tabButton: {
         flex: 1,
-        backgroundColor: "#D9F5F7",
-        paddingVertical: hp("1.5%"),
         alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: hp("1.5%"),
+        borderRadius: 30, // match container radius for smooth highlight edges
     },
-    activeTab: { backgroundColor: "#006A72" },
-    tabText: { color: "#006A72", fontWeight: "bold", fontSize: wp("4%") },
-    activeTabText: { color: "#fff" },
+
+    activeTab: {
+        backgroundColor: "#006A72", // highlight color
+        shadowColor: "#000",
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 3, // Android shadow
+    },
+
+    tabText: {
+        color: "#006A72",
+        fontWeight: "bold",
+        fontSize: wp("4%"),
+    },
+
+    activeTabText: {
+        color: "#fff",
+    },
+
     inputContainer: { marginBottom: hp("1.5%") },
     label: {
         fontSize: wp("3.2%"),
