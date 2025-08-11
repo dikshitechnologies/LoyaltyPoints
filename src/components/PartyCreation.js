@@ -182,13 +182,13 @@ const PartyCreation = ({navigation}) => {
                             
                                 {/* Date Display */}
                                 <View style={styles.dateContainer}>
-                                    <Text style={styles.dateLabel}>DATE:</Text>
+                                    <Text style={styles.dateLabel}>Date:</Text>
                                     <Text style={styles.dateValue}>{currentDate}</Text>
                                 </View>
                                 
                                 {/* Form Fields */}
                                     {renderInput(
-                                        "LOYALTY NUMBER",
+                                        "Loyalty Number",
                                         loyaltyNumber,
                                         setLoyaltyNumber,
                                         "default",
@@ -202,7 +202,7 @@ const PartyCreation = ({navigation}) => {
                                     )}
 
                                     {renderInput(
-                                        "NAME",
+                                        "Name",
                                         name,
                                         setName,
                                         "default",
@@ -216,7 +216,7 @@ const PartyCreation = ({navigation}) => {
                                     )}
 
                                     {renderInput(
-                                        "PHONE NUMBER",
+                                        "Phone Number",
                                         phoneNumber,
                                         setPhoneNumber,
                                         "phone-pad",
@@ -230,7 +230,7 @@ const PartyCreation = ({navigation}) => {
                                     )}
 
                                     {renderInput(
-                                        "ADDRESS",
+                                        "Address",
                                         address,
                                         setAddress,
                                         "default",
