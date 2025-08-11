@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     View, 
@@ -11,8 +12,11 @@ import {
     SafeAreaView,
     ImageBackground,
     Keyboard,
-    TouchableWithoutFeedback
+    TouchableWithoutFeedback,
+    Alert
 } from 'react-native';
+import { BASE_URL , fcomCode } from './Services';
+import { showConfirmation } from './AlertUtils';
 
 const PartyCreation = () => {
     const [loyaltyNumber, setLoyaltyNumber] = useState('');
@@ -37,8 +41,7 @@ const PartyCreation = () => {
     }, []);
 
     const handleSave = () => {
-        // Save functionality will be implemented here
-        console.log('Save button pressed');
+    newCustomer();
     };
 
     const handleClear = () => {
@@ -48,6 +51,33 @@ const PartyCreation = () => {
         setPhoneNumber('');
         setAddress('');
     };
+
+    const newCustomer = async () => {
+        const payload = {
+            loyaltyNumber: loyaltyNumber,
+            customerName: name,
+            phonenumber: phoneNumber,
+            address: address,
+            joindate: currentDate,
+            fcompcode: fcomCode
+        };
+        console.log('Payload:', payload);
+        try{
+            const response = await axios.post(`${BASE_URL}Register/newCustomer`, payload)
+            
+                if(response.status === 200) {
+                   Alert.alert('Success', 'Customer created successfully');
+                   console.log('New customer created:', response.data);
+                   handleClear();
+                }
+                else {
+                    Alert.alert('Error', 'Failed to create new customer');
+                }
+        }
+        catch(error) {
+            console.error('Error creating new customer:', error);
+        }
+    }
     
     // Reusable input component similar to CompanyCreation
     const renderInput = (
