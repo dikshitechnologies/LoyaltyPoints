@@ -22,7 +22,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import DeviceInfo from 'react-native-device-info';
 import { showConfirmation } from "./AlertUtils";
  import {getCompanyCode } from "../store";
@@ -389,35 +389,26 @@ catch (error) {
           </View>
                       
           {/* Segmented Control */}
-          <View style={styles.segmentContainer}>
-            <Animated.View style={[styles.slider, { left: sliderLeft , zIndex: -1}]} />
-            <TouchableOpacity
-              style={styles.segmentButton}
-              onPress={() => { switchMode("add"); handleClear(); }}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  mode === "add" && styles.segmentTextActive,
-                ]}
-              >
-                Add
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.segmentButton}
-              onPress={() => { switchMode("redeem"); handleClear(); }}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  mode === "redeem" && styles.segmentTextActive,
-                ]}
-              >
-                Redeem
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <View style={styles.tabContainer}>
+  <TouchableOpacity
+    style={[styles.tabButton, mode === "add" && styles.activeTab]}
+    onPress={() => setMode("add")}
+  >
+    <Text style={[styles.tabText, mode === "add" && styles.activeTabText]}>
+      Add Points
+    </Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={[styles.tabButton, mode === "redeem" && styles.activeTab]}
+    onPress={() => setMode("redeem")}
+  >
+    <Text style={[styles.tabText, mode === "redeem" && styles.activeTabText]}>
+      Redeem Points
+    </Text>
+  </TouchableOpacity>
+</View>
+
 
           <View style={{ marginVertical: 10 }}>
             {mode === "add" ? (
@@ -563,90 +554,143 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
     backgroundColor: '#006A72',
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingTop: hp('5%'),      // 40px → hp
+    paddingBottom: hp('2.5%'), // 20px → hp
     alignItems: 'center',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: wp('5%'),
+    borderBottomRightRadius: wp('5%'),
   },
-  headerText: { fontSize: 24, color: 'white', fontWeight: 'bold' },
+  headerText: { fontSize: wp('6%'), color: 'white', fontWeight: 'bold' },
 
   card: {
     backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    margin: 15,
-    marginTop: 20,
+    borderRadius: wp('3%'),
+    padding: wp('4%'),
+    margin: wp('4%'),
+    marginTop: hp('2.5%'),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: hp('0.3%') },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: wp('1%'),
     elevation: 3,
   },
-  label: { fontSize: 12, fontWeight: "600", color: "#006A72", marginTop: 10, marginBottom: 5 },
+  label: { 
+    fontSize: wp('3.5%'), 
+    fontWeight: "600", 
+    color: "#006A72", 
+    marginTop: hp('1.5%'), 
+    marginBottom: hp('0.7%') 
+  },
   input: {
     borderWidth: 1,
     borderColor: "#8FD6DA",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
+    borderRadius: wp('2%'),
+    paddingHorizontal: wp('3%'),
+    paddingVertical: hp('1.2%'),
+    fontSize: wp('3.7%'),
     backgroundColor: "#ffffff",
     color: "#00363A",
   },
-  buttonRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
-  button: { flex: 1, paddingVertical: 12, borderRadius: 25, alignItems: "center", marginHorizontal: 5 },
+  buttonRow: { 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    marginTop: hp('2.5%') 
+  },
+  button: { 
+    flex: 1, 
+    paddingVertical: hp('1.5%'), 
+    borderRadius: wp('7%'), 
+    alignItems: "center", 
+    marginHorizontal: wp('1.2%') 
+  },
   saveBtn: { backgroundColor: "#006A72" },
-  saveText: { color: "#ffffff", fontWeight: "bold" },
+  saveText: { color: "#ffffff", fontWeight: "bold", fontSize: wp('4%') },
   clearBtn: { backgroundColor: "#D9F5F7" },
-  clearText: { color: "#006A72", fontWeight: "bold" },
-segmentContainer: {
+  clearText: { color: "#006A72", fontWeight: "bold", fontSize: wp('4%') },
+
+  segmentContainer: {
+    flexDirection: "row",
+    backgroundColor: "#d1e6e7",
+    borderRadius: wp('10%'),
+    padding: wp('0.8%'),
+    position: "relative",
+    marginBottom: hp('2%'),
+    height: hp('6%'),
+    elevation: 3,
+    marginTop: hp('1.5%'),
+    width: "100%",
+    overflow: "hidden",
+  },
+  slider: {
+    position: "absolute",
+    top: wp('0.8%'),
+    bottom: wp('0.8%'),
+    width: "48%",
+    backgroundColor: "#006A72",
+    borderRadius: wp('10%'),
+    elevation: 4,
+  },
+  segmentButton: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  segmentText: {
+    fontSize: wp('4%'),
+    fontWeight: "600",
+    color: "#444",
+  },
+  segmentTextActive: {
+    color: "#fff",
+  },
+
+  row: { flexDirection: "row", alignItems: "center" },
+  qrButton: { 
+    marginLeft: wp('2%'), 
+    paddingHorizontal: wp('1.5%'), 
+    justifyContent: "center", 
+    alignItems: "center" 
+  },
+  closeButton: {
+    position: 'absolute',
+    bottom: hp('4%'),
+    alignSelf: 'center',
+    paddingVertical: hp('1%'),
+    paddingHorizontal: wp('4%'),
+    backgroundColor: '#00000088',
+    borderRadius: wp('2%'),
+  },
+  tabContainer: {
   flexDirection: "row",
-  backgroundColor: "#d1e6e7",
-  borderRadius: 40,       // matches slider
-  padding: 3,
-  position: "relative",
-  marginBottom: 20,
-  height: 50,
-  elevation: 3,
-  marginTop: 10,
-  width: "100%",
-  overflow: "hidden",     // keeps slider inside rounded edges
+  marginHorizontal: wp("5%"),
+  marginTop: hp("2%"),
+  borderRadius: 30,
+  backgroundColor: "#D9F5F7",
+  padding: hp("0.5%"),
+  overflow: "hidden",
 },
-slider: {
-  position: "absolute",
-  top: 3,
-  bottom: 3,
-  width: "48%",
-  backgroundColor: "#006A72",
-  borderRadius: 40,
-  elevation: 4,
-},
-segmentButton: {
+tabButton: {
   flex: 1,
-  justifyContent: "center",
   alignItems: "center",
-  
+  justifyContent: "center",
+  paddingVertical: hp("1.5%"),
+  borderRadius: 30,
 },
-segmentText: {
-  fontSize: 16,
-  fontWeight: "600",
-  color: "#444",
-  
+activeTab: {
+  backgroundColor: "#006A72",
+  shadowColor: "#000",
+  shadowOpacity: 0.08,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 3,
 },
-segmentTextActive: {
+tabText: {
+  color: "#006A72",
+  fontWeight: "bold",
+  fontSize: wp("4%"),
+},
+activeTabText: {
   color: "#fff",
 },
 
-  row: { flexDirection: "row", alignItems: "center" },
-  qrButton: { marginLeft: 8, paddingHorizontal: 6, justifyContent: "center", alignItems: "center" },
-  closeButton: {
-    position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#00000088',
-    borderRadius: 5
-  },
 });

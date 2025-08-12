@@ -1,11 +1,11 @@
 import axios from 'axios';
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-    View, 
-    Text, 
-    StyleSheet, 
-    TextInput, 
-    TouchableOpacity, 
+import {
+    View,
+    Text,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
@@ -15,11 +15,13 @@ import {
     TouchableWithoutFeedback,
     Alert
 } from 'react-native';
-import { BASE_URL , fcomCode } from './Services';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
+import { BASE_URL, fcomCode } from './Services';
 import { showConfirmation } from './AlertUtils';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { handleStatusCodeError } from './ErrorHandler';
-const PartyCreation = ({navigation}) => {
+const PartyCreation = ({ navigation }) => {
     const [loyaltyNumber, setLoyaltyNumber] = useState('');
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -43,27 +45,27 @@ const PartyCreation = ({navigation}) => {
     }, []);
 
     const handleSave = () => {
-       
-         if (!name.trim()) {
-        Alert.alert("Validation Error", "Name is required");
-        return;
-    }
-    if (!/^[A-Za-z\s]+$/.test(name.trim())) {
-        Alert.alert("Validation Error", "Name must contain only letters");
-        return;
-    }
 
-    // Phone number validation
-    if (!phoneNumber.trim()) {
-        Alert.alert("Validation Error", "Phone number is required");
-        return;
-    }
-    if (!/^\d{10}$/.test(phoneNumber)) {
-        Alert.alert("Validation Error", "Phone number must be 10 digits");
-        return;
-    }
+        if (!name.trim()) {
+            Alert.alert("Validation Error", "Name is required");
+            return;
+        }
+        if (!/^[A-Za-z\s]+$/.test(name.trim())) {
+            Alert.alert("Validation Error", "Name must contain only letters");
+            return;
+        }
 
-    newCustomer();
+        // Phone number validation
+        if (!phoneNumber.trim()) {
+            Alert.alert("Validation Error", "Phone number is required");
+            return;
+        }
+        if (!/^\d{10}$/.test(phoneNumber)) {
+            Alert.alert("Validation Error", "Phone number must be 10 digits");
+            return;
+        }
+
+        newCustomer();
     };
 
     const handleClear = () => {
@@ -83,72 +85,72 @@ const PartyCreation = ({navigation}) => {
             fcomCode: fcomCode
         };
         console.log('Payload:', payload);
-        try{
+        try {
             const response = await axios.post(`${BASE_URL}Register/newCustomer`, payload)
-            
-                if(response.status === 200) {
-                   Alert.alert('Success', 'Customer created successfully');
-                   console.log('New customer created:', response.data);
-                   handleClear();
-                }
-                 else {
+
+            if (response.status === 200) {
+                Alert.alert('Success', 'Customer created successfully');
+                console.log('New customer created:', response.data);
+                handleClear();
+            }
+            else {
                 handleStatusCodeError(response.status, "Error deleting data");
             }
         }
         catch (error) {
-      if (error.response) {
-        handleStatusCodeError(
-          error.response.status,
-          error.response.data?.message || "An unexpected server error occurred."
-        );
-      } else if (error.request) {
-        alert("No response received from the server. Please check your network connection.");
-      } else {
-        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-      }
-    }
-  };
+            if (error.response) {
+                handleStatusCodeError(
+                    error.response.status,
+                    error.response.data?.message || "An unexpected server error occurred."
+                );
+            } else if (error.request) {
+                alert("No response received from the server. Please check your network connection.");
+            } else {
+                alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+            }
+        }
+    };
 
-    
+
     // Reusable input component similar to CompanyCreation
- const renderInput = (
-    label,
-    value,
-    setValue,
-    keyboard = "default",
-    refProp = null,
-    onSubmitEditing = null,
-    returnKeyType = "next",
-    multiline = false,
-    numberOfLines = 1,
-    autoCapitalize = "characters",
-    fieldKey 
-) => (
-    <View style={styles.inputContainer}>
-        <Text style={styles.label}>{label}</Text>
-        <View style={styles.inputWrapper}>
-            <TextInput
-                style={[
-                    styles.input,
-                    multiline && styles.textArea,
-                    focusedField === fieldKey && styles.inputFocused 
-                ]}
-                value={value}
-                onChangeText={setValue}
-                keyboardType={keyboard}
-                ref={refProp}
-                returnKeyType={returnKeyType}
-                onSubmitEditing={onSubmitEditing}
-                blurOnSubmit={false}
-                multiline={multiline}
-                numberOfLines={numberOfLines}
-                autoCapitalize={autoCapitalize}
-                onFocus={() => setFocusedField(fieldKey)}
-                onBlur={() => setFocusedField(null)}
-            />
+    const renderInput = (
+        label,
+        value,
+        setValue,
+        keyboard = "default",
+        refProp = null,
+        onSubmitEditing = null,
+        returnKeyType = "next",
+        multiline = false,
+        numberOfLines = 1,
+        autoCapitalize = "characters",
+        fieldKey
+    ) => (
+        <View style={styles.inputContainer}>
+            <Text style={styles.label}>{label}</Text>
+            <View style={styles.inputWrapper}>
+                <TextInput
+                    style={[
+                        styles.input,
+                        multiline && styles.textArea,
+                        focusedField === fieldKey && styles.inputFocused
+                    ]}
+                    value={value}
+                    onChangeText={setValue}
+                    keyboardType={keyboard}
+                    ref={refProp}
+                    returnKeyType={returnKeyType}
+                    onSubmitEditing={onSubmitEditing}
+                    blurOnSubmit={false}
+                    multiline={multiline}
+                    numberOfLines={numberOfLines}
+                    autoCapitalize={autoCapitalize}
+                    onFocus={() => setFocusedField(fieldKey)}
+                    onBlur={() => setFocusedField(null)}
+                />
+            </View>
         </View>
-    </View>
-);
+    );
 
 
     return (
@@ -163,87 +165,116 @@ const PartyCreation = ({navigation}) => {
                     keyboardShouldPersistTaps="handled"
                 >
                     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-                        <View style={{flex: 1}}>
+                        <View style={{ flex: 1 }}>
 
                             {/* Header */}
-                            <View style={[styles.header,{flexDirection:'row' ,alignItems:'center' , justifyContent:'center'}]}>
-                                <TouchableOpacity  onPress={()=>navigation.navigate('RateFixing')}  style={{position:'absolute' , left:20}}>
-                                     <MaterialIcons name='price-change' size={34} color="white" />
+                            <View style={[styles.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+                                <TouchableOpacity
+                                    onPress={() => navigation.navigate('RateFixing')}
+                                    style={{
+                                        position: 'absolute',
+                                        left: 20,
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <View
+                                        style={{
+                                            backgroundColor: '#FFf', // background circle color
+                                            padding: 10,
+                                            borderRadius: 50, // makes it circular
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <MaterialIcons name="price-change" size={28} color="#006A72" />
+                                    </View>
+                                    {/* <Text
+                                        style={{
+                                            color: 'white',
+                                            fontWeight: 'bold',
+                                            marginTop: 4,
+                                            fontSize: 12
+                                        }}
+                                    >
+                                        Rate Fix
+                                    </Text> */}
                                 </TouchableOpacity>
-                               
-                                <Text style={[styles.headerText,{marginBottom:10}]}>Customer Creation</Text>
+
+
+
+                                <Text style={[styles.headerText, { marginBottom: 10 }]}>Customer Creation</Text>
                             </View>
-                            
+
                             {/* Form Card */}
                             <View style={styles.card}>
                                 <Text style={styles.subtitle}>
                                     Fill in the details below to add a new Customer.
                                 </Text>
-                            
+
                                 {/* Date Display */}
                                 <View style={styles.dateContainer}>
                                     <Text style={styles.dateLabel}>Date:</Text>
                                     <Text style={styles.dateValue}>{currentDate}</Text>
                                 </View>
-                                
+
                                 {/* Form Fields */}
-                                    {renderInput(
-                                        "Loyalty Number",
-                                        loyaltyNumber,
-                                        setLoyaltyNumber,
-                                        "default",
-                                        loyaltyNumberRef,
-                                        () => nameRef.current.focus(),
-                                        "next",
-                                        false,
-                                        1,
-                                        "characters",
-                                        "loyaltyNumber"
-                                    )}
+                                {renderInput(
+                                    "Loyalty Number",
+                                    loyaltyNumber,
+                                    setLoyaltyNumber,
+                                    "default",
+                                    loyaltyNumberRef,
+                                    () => nameRef.current.focus(),
+                                    "next",
+                                    false,
+                                    1,
+                                    "characters",
+                                    "loyaltyNumber"
+                                )}
 
-                                    {renderInput(
-                                        "Name",
-                                        name,
-                                        setName,
-                                        "default",
-                                        nameRef,
-                                        () => phoneNumberRef.current.focus(),
-                                        "next",
-                                        false,
-                                        1,
-                                        "characters",
-                                        "name"
-                                    )}
+                                {renderInput(
+                                    "Name",
+                                    name,
+                                    setName,
+                                    "default",
+                                    nameRef,
+                                    () => phoneNumberRef.current.focus(),
+                                    "next",
+                                    false,
+                                    1,
+                                    "characters",
+                                    "name"
+                                )}
 
-                                    {renderInput(
-                                        "Phone Number",
-                                        phoneNumber,
-                                        setPhoneNumber,
-                                        "phone-pad",
-                                        phoneNumberRef,
-                                        () => addressRef.current.focus(),
-                                        "next",
-                                        false,
-                                        1,
-                                        "characters",
-                                        "phoneNumber"
-                                    )}
+                                {renderInput(
+                                    "Phone Number",
+                                    phoneNumber,
+                                    setPhoneNumber,
+                                    "phone-pad",
+                                    phoneNumberRef,
+                                    () => addressRef.current.focus(),
+                                    "next",
+                                    false,
+                                    1,
+                                    "characters",
+                                    "phoneNumber"
+                                )}
 
-                                    {renderInput(
-                                        "Address",
-                                        address,
-                                        setAddress,
-                                        "default",
-                                        addressRef,
-                                        () => handleSave(),
-                                        "done",
-                                        true,
-                                        3,
-                                        "sentences",
-                                        "address"
-                                    )}
+                                {renderInput(
+                                    "Address",
+                                    address,
+                                    setAddress,
+                                    "default",
+                                    addressRef,
+                                    () => handleSave(),
+                                    "done",
+                                    true,
+                                    3,
+                                    "sentences",
+                                    "address"
+                                )}
 
-                                
+
                                 {/* Buttons */}
                                 <View style={styles.buttonRow}>
                                     <TouchableOpacity
@@ -252,7 +283,7 @@ const PartyCreation = ({navigation}) => {
                                     >
                                         <Text style={styles.saveText}>SAVE</Text>
                                     </TouchableOpacity>
-                                    
+
                                     <TouchableOpacity
                                         style={[styles.button, styles.clearBtn]}
                                         onPress={handleClear}
@@ -270,69 +301,69 @@ const PartyCreation = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
+    container: {
+        flex: 1,
         backgroundColor: '#ffffff'
     },
     header: {
         backgroundColor: '#006A72ff',
-        paddingRight: 10,
-        paddingBottom: 20,
-        paddingTop: 30,
+        paddingRight: wp('2.5%'),
+        paddingBottom: hp('2.5%'),
+        paddingTop: hp('3.5%'),
         alignItems: 'center',
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
+        borderBottomLeftRadius: wp('5%'),
+        borderBottomRightRadius: wp('5%'),
     },
     headerText: {
-        fontSize: 24,
+        fontSize: wp('6%'),
         color: 'white',
         fontWeight: 'bold',
     },
     card: {
         backgroundColor: 'white',
-        borderRadius: 10,
-        padding: 15,
-        margin: 15,
-        marginTop: 20,
+        borderRadius: wp('2.5%'),
+        padding: wp('4%'),
+        margin: wp('4%'),
+        marginTop: hp('2.5%'),
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
-            height: 2,
+            height: hp('0.25%'),
         },
         shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowRadius: wp('1%'),
         elevation: 3,
     },
     subtitle: {
-        fontSize: 14,
+        fontSize: wp('3.5%'),
         color: "#006A72",
-        marginBottom: 20,
+        marginBottom: hp('2%'),
         textAlign: "center",
     },
     dateContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'flex-end',
-        marginBottom: 15,
+        marginBottom: hp('1.5%'),
     },
     dateLabel: {
-        fontSize: 12,
+        fontSize: wp('3%'),
         fontWeight: "600",
         color: "#006A72",
-        marginRight: 8,
+        marginRight: wp('2%'),
     },
     dateValue: {
-        fontSize: 14,
+        fontSize: wp('3.5%'),
         color: "#00363A",
     },
     inputContainer: {
-        marginBottom: 12,
+        marginBottom: hp('1.5%'),
     },
     label: {
-        fontSize: 12,
+        fontSize: wp('3%'),
         fontWeight: "600",
         color: "#006A72",
-        marginBottom: 5,
+        marginBottom: hp('0.5%'),
     },
     inputWrapper: {
         flexDirection: "row",
@@ -341,48 +372,51 @@ const styles = StyleSheet.create({
     input: {
         borderWidth: 1,
         borderColor: "#8FD6DA",
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        fontSize: 14,
+        borderRadius: wp('2%'),
+        paddingHorizontal: wp('3%'),
+        paddingVertical: hp('1.2%'),
+        fontSize: wp('3.5%'),
         backgroundColor: "#ffffff",
         color: "#00363A",
         flex: 1,
     },
     textArea: {
-        height: 80,
+        height: hp('10%'),
         textAlignVertical: "top",
     },
     buttonRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginTop: 20,
+        marginTop: hp('2.5%'),
     },
     button: {
         flex: 1,
-        paddingVertical: 12,
-        borderRadius: 25,
+        paddingVertical: hp('1.5%'),
+        borderRadius: wp('6%'),
         alignItems: "center",
-        marginHorizontal: 5,
+        marginHorizontal: wp('1%'),
     },
-    saveBtn: { 
-        backgroundColor: "#006A72" 
+    saveBtn: {
+        backgroundColor: "#006A72"
     },
-    saveText: { 
-        color: "#ffffff", 
-        fontWeight: "bold" 
+    saveText: {
+        color: "#ffffff",
+        fontWeight: "bold",
+        fontSize: wp('4%')
     },
-    clearBtn: { 
-        backgroundColor: "#D9F5F7" 
+    clearBtn: {
+        backgroundColor: "#D9F5F7"
     },
-    clearText: { 
-        color: "#006A72", 
-        fontWeight: "bold" 
+    clearText: {
+        color: "#006A72",
+        fontWeight: "bold",
+        fontSize: wp('4%')
     },
     inputFocused: {
-    borderColor: "#FF9800", 
-    backgroundColor: "#FFF8E1"
-}
+        borderColor: "#FF9800",
+        backgroundColor: "#FFF8E1"
+    }
 });
+
 
 export default PartyCreation;
