@@ -124,8 +124,8 @@ const AddPoints = async ()=>{
     console.log(response)
     if(response.status == 200){
       
-      setAmount1(response.data[0].amount.toString());
-      setPoints1(response.data[0].point.toString());
+      setAmount1(response.data.amount.toString());
+      setPoints1(response.data.point.toString());
     }
      else {
         handleStatusCodeError(response.status, "Error deleting data");
@@ -151,9 +151,9 @@ const RedeemAmount = async ()=>{
     const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${fcomCode}`)
        console.log(response.data)
     if(response.status == 200){
-      console.log(response.data[0]) 
-      setAmount2(response.data[0].fpointVal.toString()); 
-      setPoints2(response.data[0].point.toString());
+      console.log(response.data) 
+      setAmount2(response.data.fpointVal.toString()); 
+      setPoints2(response.data.point.toString());
     }
      else {
         handleStatusCodeError(response.status, "Error deleting data");
