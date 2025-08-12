@@ -1,8 +1,9 @@
 // PointsScreen.js
 
 import axios from "axios";
-import { BASE_URL, fcomCode } from "./Services";
-import React, { useEffect, useState, useRef } from 'react';
+import { BASE_URL } from "./Services";
+
+import React, { useEffect, useState, useRef ,useCallback  } from 'react';
 import {
   View,
   Text,
@@ -18,12 +19,24 @@ import {
   ScrollView,
   KeyboardAvoidingView,
 } from 'react-native';
+import { useFocusEffect } from "@react-navigation/native";
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import DeviceInfo from 'react-native-device-info';
+import { showConfirmation } from "./AlertUtils";
+ import {getCompanyCode } from "../store";
+
 
 export default function PointsScreen() {
+  // Add Mode State
+   const fcomCode = getCompanyCode();
+const [currentValPoint , setCurrentValPoint] = useState(null);
+const [currentValAmount , setCurrentValAmount] = useState(null);
+
+const [currentRedeemPoint , setCurrentRedeemPoint] = useState(null);
+const [currentRedeemAmount , setCurrentRedeemAmount] = useState(null);
+
   const isTablet = DeviceInfo.isTablet();
   const [addLoyaltyNumber, setAddLoyaltyNumber] = useState("");
   const [addName, setAddName] = useState("");
@@ -41,6 +54,40 @@ export default function PointsScreen() {
   const purchaseAmountRef = useRef(null);
   const redeemPointsRef = useRef(null);
 
+
+
+useFocusEffect(
+  useCallback(() => {
+    AddPoints();
+    RedeemAmount();
+  }, [])
+);
+
+
+
+
+
+
+
+
+
+
+
+useFocusEffect(
+  useCallback(() => {
+    AddPoints();
+    RedeemAmount();
+  }, [])
+);
+
+
+
+
+
+
+
+
+
   const animation = useRef(new Animated.Value(0)).current;
   const switchMode = (newMode) => {
     setMode(newMode);
@@ -57,19 +104,50 @@ export default function PointsScreen() {
   });
 
   const calculatePoints = (amount) => {
-    const points = parseFloat(amount) * 0.1;
-    setPointsEarned(points ? points.toFixed(2) : "");
+    if (!amount || isNaN(amount)) {
+      setPointsEarned("");
+      return;
+    }
+    console.log("Calculating points...",   currentValPoint);
+    const valAMT = parseFloat(currentValAmount) || 0;
+    const valPOINT = parseFloat(currentValPoint) || 0;
+    const onePointValue = valAMT / valPOINT || 0;
+    let points = parseFloat(amount) / onePointValue;
+    let VAL;
+    if (points < 1) {
+      VAL = 0;
+    } else {
+      VAL = points;
+    }
+
+    setPointsEarned(VAL.toString());
   };
   const convertPointsToAmount = (points) => {
-    const amount = parseFloat(points) * 1;
+    const RedeemvalPOINT = parseFloat(currentRedeemPoint) || 0;
+    const onePointAMT = (parseFloat(currentRedeemAmount) || 0) / RedeemvalPOINT || 0;
+    console.log("Converting points to amount...", currentRedeemAmount);
+    const amount = parseFloat(points) * onePointAMT;
     setRedeemAmount(amount ? amount.toFixed(2) : "");
   };
 
   const handleSave = () => {
+   
     if (mode === "add") {
-      addPoints();
+       if(addLoyaltyNumber === "" || (mode === "add" && purchaseAmount === "") ) {
+      Alert.alert("Error", "Please fill in all required fields");
+      return;
+    }
+      showConfirmation("Are you sure you want to add points?", addPoints);
     } else {
-      RedeemPoints();
+      if(redeemLoyaltyNumber === "" || (mode === "redeem" && redeemPoints === "" && redeemBalance === "")) {
+        Alert.alert("Error", "Please fill in all required fields");
+        return;
+      }
+      if(redeemBalance < 0 || redeemBalance == "0") {
+        Alert.alert("Error", "Redeem points must be at least 1");
+        return;
+      }
+      showConfirmation("Are you sure you want to redeem points?", RedeemPoints);
     }
   };
   const handleClear = () => {
@@ -90,73 +168,179 @@ export default function PointsScreen() {
 
   const getPoints = async () => {
     let loyaltyNumber = mode === "add" ? addLoyaltyNumber : redeemLoyaltyNumber;
+    console.log("Fetching points for loyalty number:", loyaltyNumber);
     if (!loyaltyNumber) {
       Alert.alert("Error", "Please enter a loyalty number");
       return;
     }
     try {
-      const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}`);
-      if (response.status === 200 && response.data.length > 0) {
+      const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}/${fcomCode}`);
+      if(response.status == 200){
+        if(response.data.length === 0) {
+
+        }
         const data = response.data[0];
         if (mode === "add") {
           setAddName(data.customerName);
           setAddBalance(data.balance.toString());
-        } else {
+        } else if (mode === "redeem") {
           setRedeemName(data.customerName);
           setRedeemBalance(data.balance.toString());
         }
-      } else {
-        Alert.alert("Error", "Failed to fetch points");
       }
-    } catch {
-      Alert.alert("Error", "Failed to fetch points");
+      else {
+        handleStatusCodeError(response.status, "Error deleting data");
+      }
+    }
+    catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
     }
   };
 
-  const addPoints = async () => {
-    try {
-      const todayDate = new Date().toISOString().split("T")[0];
-      const payload = {
-        loyaltyNumber: addLoyaltyNumber,
-        lAmt: Number(purchaseAmount) || 0,
-        lDate: todayDate,
-        points: Number(pointsEarned) || 0,
-        fcomCode: fcomCode
-      };
-      const response = await axios.post(`${BASE_URL}AddPoints/newPoints`, payload);
-      if (response.status === 200) {
-        Alert.alert("Success", "Points added successfully");
-        handleClear();
-      } else {
-        Alert.alert("Error", "Failed to add points");
+
+  const addPoints = async() => {
+    try{
+        const todayDate = new Date().toISOString().split("T")[0];
+        const payload = {
+            loyaltyNumber: addLoyaltyNumber,
+            lAmt: Number(purchaseAmount) || 0,
+            lDate: todayDate,
+            points: Number(pointsEarned) || 0,
+            fcomCode: fcomCode
+        }
+        console.log(payload)
+        const response = await axios.post(`${BASE_URL}AddPoints/newPoints`, payload);
+        if(response.status == 200){
+            Alert.alert("Success", "Points added successfully");
+            handleClear();
+        }
+        else {
+        handleStatusCodeError(response.status, "Error deleting data");
       }
-    } catch {
-      Alert.alert("Error", "Failed to add points");
+
+    }
+  catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
     }
   };
 
-  const RedeemPoints = async () => {
-    try {
-      const todayDate = new Date();
-      const formattedDate = `${String(todayDate.getDate()).padStart(2, "0")}/${String(todayDate.getMonth() + 1).padStart(2, "0")}/${todayDate.getFullYear()}`;
-      const payload = {
-        LoyaltyNum: redeemLoyaltyNumber,
-        RedeemDate: formattedDate,
-        RedeemAmt: Number(redeemAmount) || 0,
-        RedeemPoint: Number(redeemPoints) || 0,
-        compCode: fcomCode
-      };
-      const response = await axios.post(`${BASE_URL}RedeemPoints/RedeemPoints`, payload);
-      if (response.status === 200) {
-        Alert.alert("Success", "Points redeemed successfully");
-        handleClear();
-      } else {
-        Alert.alert("Error", "Failed to redeem points");
+  const RedeemPoints = async() => {
+    try{
+       const todayDate = new Date();
+    const formattedDate = `${String(todayDate.getDate()).padStart(2, "0")}/${String(todayDate.getMonth() + 1).padStart(2, "0")}/${todayDate.getFullYear()}`;
+
+        const payload = {
+            LoyaltyNum: redeemLoyaltyNumber,
+            RedeemDate: formattedDate,
+            RedeemAmt: Number(redeemAmount) || 0,
+            RedeemPoint: Number(redeemPoints) || 0,
+            compCode: fcomCode
+        }
+        
+        console.log(payload)
+        const response = await axios.post(`${BASE_URL}RedeemPoints/RedeemPoints`, payload);
+        if(response.status == 200){
+            Alert.alert("Success", "Points redeemed successfully");
+            handleClear();
+        }   
+         else {
+        handleStatusCodeError(response.status, "Error deleting data");
       }
-    } catch {
-      Alert.alert("Error", "Failed to redeem points");
+
+    }
+    catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
     }
   };
+//--------------------------------------------Points Value Get  ---------------------------------------
+const AddPoints = async ()=>{
+
+  try{
+    const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${fcomCode}`)
+    console.log(response)
+    if(response.status == 200){
+      
+      setCurrentValAmount(response.data[0].amount);
+      setCurrentValPoint(response.data[0].point);
+    }
+     else {
+        handleStatusCodeError(response.status, "Error deleting data");
+      }
+  }
+catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
+    }
+  };
+//--------------------------------------------Points Value Get  ---------------------------------------
+const RedeemAmount = async ()=>{
+  try{
+    const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${fcomCode}`)
+    if(response.status == 200){
+      console.log(response.data)
+      setCurrentRedeemAmount(response.data[0].fpointVal);
+      setCurrentRedeemPoint(response.data[0].point);
+    }
+     else {
+        handleStatusCodeError(response.status, "Error deleting data");
+      }
+  }
+catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
+    }
+  };
+
+
+
 
   const device = useCameraDevice('back');
   const [hasPermission, setHasPermission] = useState(false);
@@ -192,26 +376,65 @@ export default function PointsScreen() {
   });
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1,backgroundColor:'white' }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerText}>Loyalty Hub</Text>
           </View>
+                      
+          {/* Segmented Control */}
+          <View style={styles.segmentContainer}>
+            <Animated.View style={[styles.slider, { left: sliderLeft , zIndex: -1}]} />
+            <TouchableOpacity
+              style={styles.segmentButton}
+              onPress={() => { switchMode("add"); handleClear(); }}
+            >
+              <Text
+                style={[
+                  styles.segmentText,
+                  mode === "add" && styles.segmentTextActive,
+                ]}
+              >
+                Add
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.segmentButton}
+              onPress={() => { switchMode("redeem"); handleClear(); }}
+            >
+              <Text
+                style={[
+                  styles.segmentText,
+                  mode === "redeem" && styles.segmentTextActive,
+                ]}
+              >
+                Redeem
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          {/* Card */}
-          <View style={styles.card}>
-            {/* Segmented Control */}
-            <View style={styles.segmentContainer}>
-              <Animated.View style={[styles.slider, { left: sliderLeft }]} />
-              <TouchableOpacity style={styles.segmentButton} onPress={() => switchMode("add")}>
-                <Text style={[styles.segmentText, mode === "add" && styles.segmentTextActive]}>Add</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.segmentButton} onPress={() => switchMode("redeem")}>
-                <Text style={[styles.segmentText, mode === "redeem" && styles.segmentTextActive]}>Redeem</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={{ marginVertical: 10 }}>
+            {mode === "add" ? (
+              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72",position: "absolute", top: 1, right:10 }}>
+                Per Point value:{" "}
+                {currentValAmount && currentValPoint
+                  ? (parseFloat(currentValAmount) / parseFloat(currentValPoint)).toFixed(2)
+                  : "Loading..."}
+              </Text>
+            ) : (
+              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72",position: "absolute", top: 1, right:10 }}>
+                Per Redeem value:{" "}
+                {currentRedeemAmount && currentRedeemPoint
+                  ? (parseFloat(currentRedeemAmount) / parseFloat(currentRedeemPoint)).toFixed(2)
+                  : "Loading..."}
+              </Text>
+            )}
+</View>
+
+
+<View style={styles.card}>
 
             {/* ADD Mode */}
             {mode === "add" && (
@@ -265,8 +488,8 @@ export default function PointsScreen() {
                 <View style={styles.row}>
                    <TextInput
                     style={[styles.input, { flex: 1 }]}
-                    value={addLoyaltyNumber}
-                    onChangeText={setAddLoyaltyNumber}
+                    value={redeemLoyaltyNumber}
+                    onChangeText={setRedeemLoyaltyNumber}
                     onBlur={getPoints}
                     placeholder="Enter Loyalty Number"
                     returnKeyType="next"
@@ -312,8 +535,9 @@ export default function PointsScreen() {
                 <Text style={styles.clearText}>CLEAR</Text>
               </TouchableOpacity>
             </View>
-          </View>
+         
         </View>
+      </View>
       </ScrollView>
 
       {/* QR Scanner */}
@@ -398,11 +622,13 @@ segmentButton: {
   flex: 1,
   justifyContent: "center",
   alignItems: "center",
+  
 },
 segmentText: {
   fontSize: 16,
   fontWeight: "600",
   color: "#444",
+  
 },
 segmentTextActive: {
   color: "#fff",

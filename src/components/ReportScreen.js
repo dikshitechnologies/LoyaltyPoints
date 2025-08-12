@@ -7,26 +7,39 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  ImageBackground
+  ImageBackground,
+  FlatList
 } from 'react-native';
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import bgcard from '../assets/bgcard.png';
-import { BASE_URL ,fcomCode } from './Services';
+import { BASE_URL } from './Services';
 import { handleStatusCodeError } from './ErrorHandler';
+import {getCompanyCode } from "../store";
+
 import axios from 'axios';
+const COLUMN_WIDTHS = {
+  date: '13%',
+  amount: '20%',
+  type: '20%',
+  points: '20%',
+  desc: '20%',
+};
+
 const ReportScreen = () => {
   const [loyaltyNumber, setLoyaltyNumber] = useState('');
   const [customerData, setCustomerData] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+const [pageNumber, setPageNumber] = useState(1);
+const [hasMore, setHasMore] = useState(true);
+const fcomCode = getCompanyCode();
 
 const fetchUser = async (val)=>{
 
   try {
-
-    const response = await axios.get(`${BASE_URL}Register/points-summary/${val}`)
+console.log("Fetching user with loyalty number:", fcomCode);
+    const response = await axios.get(`${BASE_URL}Register/points-summary/${val}/${fcomCode}`)
     if(response.status == 200){
       console.log(response)
       const customerInfo = {
@@ -64,56 +77,51 @@ const fetchUser = async (val)=>{
 
 
 
+const fetchCustomerData = async (number, page = 1) => {
+  if (!number.trim()) return;
 
-  const fetchCustomerData = async (number,pageNumber=1) => {
-    if (!number.trim()) return;
-
-    setLoading(true);
-    setError(null);
-
-
+  if (page === 1) {
+    setTransactions([]); // reset on first page
+  }
   
-    try {
-      
-      const pageSize=20;
-      // 2️⃣ Get transaction history
-      const response = await axios(`${BASE_URL}Report/History/${number}/${fcomCode}?pageNumber=${pageNumber}&pageSize=${pageSize}`);
-            console.log(response.data)
-      if(response.status == 200){
-    
-      const formattedTransactions = response.data.data.map((item, index) => ({
-        id: index + 1,
-        date: item.lDate.split(" ")[0], 
+  setLoading(true);
+  setError(null);
+
+  try {
+    const pageSize = 10; // load 10 per request
+    const response = await axios.get(
+      `${BASE_URL}Report/History/${number}/${fcomCode}?pageNumber=${page}&pageSize=${pageSize}`
+    );
+
+    if (response.status === 200) {
+      const newTransactions = response.data.data.map((item, index) => ({
+        id: `${page}-${index}`,
+        date: item.lDate.split(" ")[0],
         amount: item.lAmt,
         points: item.points,
         type: item.sourceTable === "Y" ? "CR" : "DR",
         description: item.sourceTable === "Y" ? "Points Added" : "Points Redeemed"
       }));
 
-     
-      setTransactions(formattedTransactions);
-      setLoading(false);
-      }
-       else {
-        handleStatusCodeError(response.status, "Error deleting data");
-        setTransactions([]);
-      }
-    } catch (error) {
-      if (error.response) {
-        handleStatusCodeError(
-          error.response.status,
-          error.response.data?.message || "An unexpected server error occurred.",
-            setTransactions([])
-        );
-      } else if (error.request) {
-        alert("No response received from the server. Please check your network connection.");
-      } 
-      else {
-        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-      }
+      setTransactions(prev => [...prev, ...newTransactions]);
+      setHasMore(response.data.data.length === pageSize); // stop if no more
+    } else {
+      handleStatusCodeError(response.status, "Error fetching data");
+      setHasMore(false);
     }
-  };
-
+  } catch (error) {
+    setHasMore(false);
+    if (error.response) {
+      handleStatusCodeError(error.response.status, error.response.data?.message || "An unexpected server error occurred.");
+    } else if (error.request) {
+      alert("No response received from the server. Please check your network connection.");
+    } else {
+      alert(`Error: ${error.message}`);
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSearch = async () => {
     if(loyaltyNumber == null || loyaltyNumber== ""){
@@ -197,41 +205,51 @@ const fetchUser = async (val)=>{
       )}
 
       {/* Transactions */}
-      {customerData && (
-        <ScrollView style={styles.content} contentContainerStyle={{paddingBottom:70}}>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Transaction History</Text>
+            <FlatList
+          data={transactions}
+          style={{padding:20}}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+           <View style={styles.transactionItem}>
+  <Text style={styles.transactionDate}>{item.date}</Text>
+  <Text style={styles.transactionAmount}>{item.amount.toFixed(2)}</Text>
+  <View style={styles.typeContainer}>
+    {item.type === 'CR'
+      ? <MaterialIcons name="arrow-upward" size={20} color="#4CAF50" />
+      : <MaterialIcons name="arrow-downward" size={20} color="#F44336" />}
+    <Text style={[
+      styles.transactionType,
+      item.type === 'CR' ? styles.creditType : styles.debitType
+    ]}>{item.type}</Text>
+  </View>
+  <Text style={styles.transactionPoints}>{item.points}</Text>
+  <Text style={styles.transactionDesc}>{item.description}</Text>
+</View>
 
+          )}
+          ListHeaderComponent={() => (
             <View style={styles.transactionHeader}>
               <Text style={styles.headerDate}>Date</Text>
               <Text style={styles.headerAmount}>Amount</Text>
               <Text style={styles.headerType}>Type</Text>
+              <Text style={styles.headerType}>Point</Text>
               <Text style={styles.headerDesc}>Description</Text>
             </View>
-
-            {transactions.map((transaction) => (
-              <View key={transaction.id} style={styles.transactionItem}>
-                <Text style={styles.transactionDate}>{transaction.date}</Text>
-                <Text style={styles.transactionAmount}>{transaction.amount.toFixed(2)}</Text>
-                <View style={styles.typeContainer}>
-                  {transaction.type === 'CR' ? (
-                    <MaterialIcons name="arrow-upward" size={20} color="#4CAF50" />
-             
-                  ) : (
-                    <MaterialIcons name="arrow-downward" size={20} color="#F44336" />
-          
-                  )}
-                  <Text style={[
-                    styles.transactionType,
-                    transaction.type === 'CR' ? styles.creditType : styles.debitType
-                  ]}>{transaction.type}</Text>
-                </View>
-                <Text style={styles.transactionDesc}>{transaction.description}</Text>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
-      )}
+          )}
+          ListFooterComponent={() => (
+            loading ? <ActivityIndicator size="small" color="#006A72ff" style={{ margin: 10 }} /> : null
+          )}
+          onEndReached={() => {
+            if (!loading && hasMore) {
+              setPageNumber(prev => {
+                const nextPage = prev + 1;
+                fetchCustomerData(loyaltyNumber, nextPage);
+                return nextPage;
+              });
+            }
+          }}
+          onEndReachedThreshold={0.5}
+        />
 
       {/* Empty State */}
       {!customerData && !loading && !error && (
@@ -288,15 +306,31 @@ const styles = StyleSheet.create({
   content: { flex: 1, padding: 15, paddingTop: 5 },
   card: { backgroundColor: 'white', borderRadius: 10, padding: 15, marginBottom: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 3 },
   cardTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#333', borderBottomWidth: 1, borderBottomColor: '#F0F0F0', paddingBottom: 10 },
-  transactionHeader: { flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', marginBottom: 5 },
-  headerDate: { width: '25%', fontWeight: 'bold', color: '#666', fontSize: 13 },
-  headerAmount: { width: '20%', fontWeight: 'bold', color: '#666', fontSize: 13, textAlign: 'center' },
-  headerType: { width: '22%', fontWeight: 'bold', color: '#666', fontSize: 13, textAlign: 'center' },
-  headerDesc: { width: '40%', fontWeight: 'bold', color: '#666', fontSize: 13 },
-  transactionItem: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-  transactionDate: { width: '20%', color: '#333' },
-  transactionAmount: { width: '20%', color: '#333', textAlign: 'right' },
-  typeContainer: { width: '20%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+transactionHeader: {
+  flexDirection: 'row',
+  paddingVertical: 8,
+  borderBottomWidth: 1,
+  borderBottomColor: '#F0F0F0',
+},
+headerDate: { width: COLUMN_WIDTHS.date, fontWeight: 'bold', color: '#666', fontSize: 13 },
+headerAmount: { width: COLUMN_WIDTHS.amount, fontWeight: 'bold', color: '#666', fontSize: 13, textAlign: 'right' },
+headerType: { width: COLUMN_WIDTHS.type, fontWeight: 'bold', color: '#666', fontSize: 13, textAlign: 'center' },
+headerPoints: { width: COLUMN_WIDTHS.points, fontWeight: 'bold', color: '#666', fontSize: 13, textAlign: 'center' },
+headerDesc: { width: COLUMN_WIDTHS.desc, fontWeight: 'bold', color: '#666', fontSize: 13 },
+
+// Row
+transactionItem: {
+  flexDirection: 'row',
+  paddingVertical: 10,
+  borderBottomWidth: 1,
+  borderBottomColor: '#F0F0F0',
+  alignItems: 'center',
+},
+transactionDate: { width: COLUMN_WIDTHS.date, color: '#333' },
+transactionAmount: { width: COLUMN_WIDTHS.amount, color: '#333', textAlign: 'right' },
+typeContainer: { width: COLUMN_WIDTHS.type, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+transactionPoints: { width: COLUMN_WIDTHS.points, color: '#333', textAlign: 'center' },
+transactionDesc: { width: COLUMN_WIDTHS.desc, color: '#333' },
   transactionType: { fontWeight: 'bold'},
   creditType: { color: '#4CAF50' },
   debitType: { color: '#F44336' },

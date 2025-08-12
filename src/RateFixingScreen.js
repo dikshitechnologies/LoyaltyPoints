@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useCallback } from "react";
 import axios from "axios";
 import Video from "react-native-video";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -13,12 +13,16 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Alert
+    Alert 
 } from "react-native";
 import DatePicker from "react-native-date-picker";
-import { getCompanyCode } from "./store";
+import { useFocusEffect } from "@react-navigation/native";
+import { BASE_URL } from "./components/Services";
+import {getCompanyCode } from "./store";
+
 
 export default function RateFixingScreen() {
+    const fcomCode = getCompanyCode();
     const [activeTab, setActiveTab] = useState("amountToPoints");
 
     // Tab 1 state
@@ -33,9 +37,22 @@ export default function RateFixingScreen() {
     const [amount2, setAmount2] = useState("");
     const [openDatePicker2, setOpenDatePicker2] = useState(false);
 
-    const fcompcode = getCompanyCode();
 
-    const formatDate = (date) => date.toISOString();
+   const formatDate = (date) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+
+useFocusEffect(
+  useCallback(() => {
+    AddPoints();
+    RedeemAmount();
+  }, [])
+);
 
     const saveTab1 = async () => {
         if (!amount1 || !points1) {
@@ -47,13 +64,13 @@ export default function RateFixingScreen() {
                 amount: amount1,
                 point: points1,
                 date: formatDate(rateDate1),
-                fcompcode,
+                fcompcode: fcomCode,
 
             };
             console.log("Sending to Amount→Point API:", payload);
 
             const res = await axios.post(
-                "http://dikshi.ddns.net/loyaltypoints/api/Ratefixing/AmountPoint",
+                "https://dikshi.ddns.net/loyaltypoints/api/Ratefixing/AmountPoint",
                 payload
             );
             console.log("Tab 1 Response:", res.data);
@@ -81,13 +98,13 @@ export default function RateFixingScreen() {
                 pointAmount: amount2,
                 point: points2,
                 date: formatDate(rateDate2),
-                fcompcode,
+                fcompcode: fcomCode,
 
             };
             console.log("Sending to Point→Amount API:", payload);
 
             const res = await axios.post(
-                "http://dikshi.ddns.net/loyaltypoints/api/Ratefixing/PointAmount",
+                "http://dikshi.ddns.net/loyaltypoints/api/Ratefixing/RedeemPointAmount",
                 payload
             );
             console.log("Tab 2 Response:", res.data);
@@ -98,6 +115,64 @@ export default function RateFixingScreen() {
             Alert.alert("Error", "Failed to save Points → Amount");
         }
     };
+
+    //--------------------------------------------Points Value Get  ---------------------------------------
+const AddPoints = async ()=>{
+
+  try{
+    const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${fcomCode}`)
+    console.log(response)
+    if(response.status == 200){
+      
+      setAmount1(response.data[0].amount);
+      setPoints1(response.data[0].point);
+    }
+     else {
+        handleStatusCodeError(response.status, "Error deleting data");
+      }
+  }
+catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
+    }
+  };
+//--------------------------------------------Points Value Get  ---------------------------------------
+const RedeemAmount = async ()=>{
+  try{
+    const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${fcomCode}`)
+    if(response.status == 200){
+      console.log(response.data)
+      setAmount2(response.data[0].fpointVal);
+      setPoints2(response.data[0].point);
+    }
+     else {
+        handleStatusCodeError(response.status, "Error deleting data");
+      }
+  }
+catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
+    }
+  };
+
 
     const clearTab2 = () => {
         setRateDate2(new Date());

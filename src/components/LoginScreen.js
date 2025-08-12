@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef,useCallback } from "react";
 import {
   View,
   Text,
@@ -18,10 +18,10 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import loginVideo from "../assets/Generate.mp4";
-
+import { useFocusEffect } from "@react-navigation/native";
 
 import { Dimensions } from "react-native";
-
+import {getCompanyCode } from "../store";
 const { width, height } = Dimensions.get("window");
 const isTablet = Math.min(width, height) >= 600;
 
@@ -31,6 +31,13 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const passwordRef = useRef(null);
+
+useFocusEffect(
+  useCallback(() => {
+   setCompanyCode("");
+   console.log("Company code reset on focus" , getCompanyCode());
+  }, [])
+);
 
   useEffect(() => {
     const loadCredentials = async () => {
@@ -57,9 +64,10 @@ export default function LoginScreen({ navigation }) {
 
     try {
       const response = await axios.get(
-        `http://dikshi.ddns.net/loyaltypoints/api/LoginPage`,
+        `https://dikshi.ddns.net/loyaltypoints/api/LoginPage`,
         { params: { username, password } }
       );
+      console.log("Login response:", response);
 
       if (response.status==200) {
         const { roleFlag, username: userFromAPI, fcompcode } = response.data;
@@ -75,7 +83,9 @@ export default function LoginScreen({ navigation }) {
         if (roleFlag === "Y") {
           navigation.navigate("Company");
         } else if (roleFlag === "N") {
+          console.log(response.data.companyCode)
           setCompanyCode(response.data.companyCode);
+          console.log("Company code set:", getCompanyCode());
           navigation.navigate("Home", {
             username: userFromAPI || username,
             roleFlag,

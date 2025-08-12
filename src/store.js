@@ -6,5 +6,7 @@ export const setCompanyCode = (code) => {
 };
 
 export const getCompanyCode = () => {
+
+  console.log("Current company code:", companyCode);
   return companyCode;
 };
