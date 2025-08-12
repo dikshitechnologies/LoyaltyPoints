@@ -107,7 +107,7 @@ export default function RateFixingScreen() {
             console.log("Sending to Point→Amount API:", payload);
 
             const res = await axios.post(
-                "http://dikshi.ddns.net/loyaltypoints/api/Ratefixing/RedeemPointAmount",
+                "https://dikshi.ddns.net/loyaltypoints/api/Ratefixing/RedeemPointAmount",
                 payload
             );
             console.log("Tab 2 Response:", res.data);
@@ -122,59 +122,60 @@ export default function RateFixingScreen() {
     //--------------------------------------------Points Value Get  ---------------------------------------
     const AddPoints = async () => {
 
-        try {
-            const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${fcomCode}`)
-            console.log(response)
-            if (response.status == 200) {
-
-                setAmount1(response.data[0].amount);
-                setPoints1(response.data[0].point);
-            }
-            else {
-                handleStatusCodeError(response.status, "Error deleting data");
-            }
-        }
-        catch (error) {
-            if (error.response) {
-                handleStatusCodeError(
-                    error.response.status,
-                    error.response.data?.message || "An unexpected server error occurred."
-                );
-            } else if (error.request) {
-                alert("No response received from the server. Please check your network connection.");
-            }
-            else {
-                alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-            }
-        }
-    };
-    //--------------------------------------------Points Value Get  ---------------------------------------
-    const RedeemAmount = async () => {
-        try {
-            const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${fcomCode}`)
-            if (response.status == 200) {
-                console.log(response.data)
-                setAmount2(response.data[0].fpointVal);
-                setPoints2(response.data[0].point);
-            }
-            else {
-                handleStatusCodeError(response.status, "Error deleting data");
-            }
-        }
-        catch (error) {
-            if (error.response) {
-                handleStatusCodeError(
-                    error.response.status,
-                    error.response.data?.message || "An unexpected server error occurred."
-                );
-            } else if (error.request) {
-                alert("No response received from the server. Please check your network connection.");
-            }
-            else {
-                alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-            }
-        }
-    };
+  try{
+    const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${fcomCode}`)
+    console.log(response)
+    if(response.status == 200){
+      
+      setAmount1(response.data[0].amount.toString());
+      setPoints1(response.data[0].point.toString());
+    }
+     else {
+        handleStatusCodeError(response.status, "Error deleting data");
+      }
+  }
+catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
+    }
+  };
+//--------------------------------------------Points Value Get  ---------------------------------------
+const RedeemAmount = async ()=>{
+  try{
+    const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${fcomCode}`)
+       console.log(response.data)
+    if(response.status == 200){
+      console.log(response.data[0]) 
+      setAmount2(response.data[0].fpointVal.toString()); 
+      setPoints2(response.data[0].point.toString());
+    }
+     else {
+        handleStatusCodeError(response.status, "Error deleting data");
+      }
+  }
+catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred."
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } 
+      else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
+    }
+  };
 
 
     const clearTab2 = () => {

@@ -35,18 +35,22 @@ const ReportScreen = () => {
   const [hasMore, setHasMore] = useState(true);
   const fcomCode = getCompanyCode();
 
-  const fetchUser = async (val) => {
-    try {
-      const response = await axios.get(`${BASE_URL}Register/points-summary/${val}/${fcomCode}`);
-      if (response.status === 200) {
-        const customerInfo = {
-          name: response.data[0].customerName,
-          loyaltyNumber: val,
-          balancePoints: response.data[0].balance
-        };
-        setCustomerData(customerInfo);
-        fetchCustomerData(loyaltyNumber);
-      } else {
+const fetchUser = async (val)=>{
+
+  try {
+console.log("Fetching user with loyalty number:", fcomCode);
+    const response = await axios.get(`${BASE_URL}Register/points-summary/${val}/${fcomCode}`)
+    if(response.status == 200){
+      console.log(response)
+      const customerInfo = {
+        name: response.data.customerName,
+        loyaltyNumber: val,
+        balancePoints: response.data.balance
+      };
+       setCustomerData(customerInfo);
+       fetchCustomerData(loyaltyNumber);
+    }
+     else {
         handleStatusCodeError(response.status, "Error deleting data");
         setTransactions([]);
         setCustomerData(null);
