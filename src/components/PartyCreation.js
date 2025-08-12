@@ -89,8 +89,8 @@ const PartyCreation = ({ navigation }) => {
             const response = await axios.post(`${BASE_URL}Register/newCustomer`, payload)
 
             if (response.status === 200) {
-                Alert.alert('Success', 'Customer created successfully');
-                console.log('New customer created:', response.data);
+                Alert.alert('Success', 'Customer Registered successfully');
+                console.log('New customer registered:', response.data);
                 handleClear();
             }
             else {
@@ -202,7 +202,7 @@ const PartyCreation = ({ navigation }) => {
 
 
 
-                                <Text style={[styles.headerText, { marginBottom: 10 }]}>Customer Creation</Text>
+                                <Text style={[styles.headerText, { marginBottom: 10 }]}>Customer Registration</Text>
                             </View>
 
                             {/* Form Card */}
