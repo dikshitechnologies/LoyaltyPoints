@@ -231,7 +231,7 @@ useFocusEffect(
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center" },
-  video: { width: "100%", height: hp("50%") },
+  video: { width: "100%", height:isTablet? hp("44%"): hp("50%")},
   formContainer: {
     backgroundColor: "#fff",
     paddingHorizontal: wp("8%"),
@@ -302,8 +302,8 @@ const styles = StyleSheet.create({
   clearText: { color: "#006A72", fontWeight: "bold", fontSize: wp("4%") },
   footer: {
     fontSize: wp("3.5%"),
-    color: "#333",
-    marginTop: isTablet ? 0 : hp("7%"),
+    color: "#006A72",
+    marginTop: isTablet ?hp("3%") : hp("7%"),
     textAlign: "center",
   },
 });

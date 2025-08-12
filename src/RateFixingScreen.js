@@ -1,4 +1,4 @@
-import React, { useState,useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import axios from "axios";
 import Video from "react-native-video";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -13,15 +13,18 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Alert 
+    Alert
 } from "react-native";
 import DatePicker from "react-native-date-picker";
+import { useNavigation } from "@react-navigation/native";
+import Icon from "react-native-vector-icons/Ionicons";
 import { useFocusEffect } from "@react-navigation/native";
 import { BASE_URL } from "./components/Services";
-import {getCompanyCode } from "./store";
+import { getCompanyCode } from "./store";
 
 
 export default function RateFixingScreen() {
+    const navigation = useNavigation();
     const fcomCode = getCompanyCode();
     const [activeTab, setActiveTab] = useState("amountToPoints");
 
@@ -38,21 +41,21 @@ export default function RateFixingScreen() {
     const [openDatePicker2, setOpenDatePicker2] = useState(false);
 
 
-   const formatDate = (date) => {
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+    const formatDate = (date) => {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
 
 
-useFocusEffect(
-  useCallback(() => {
-    AddPoints();
-    RedeemAmount();
-  }, [])
-);
+    useFocusEffect(
+        useCallback(() => {
+            AddPoints();
+            RedeemAmount();
+        }, [])
+    );
 
     const saveTab1 = async () => {
         if (!amount1 || !points1) {
@@ -117,7 +120,7 @@ useFocusEffect(
     };
 
     //--------------------------------------------Points Value Get  ---------------------------------------
-const AddPoints = async ()=>{
+    const AddPoints = async () => {
 
   try{
     const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${fcomCode}`)
@@ -184,6 +187,11 @@ catch (error) {
     return (
         <SafeAreaView style={styles.container}>
             {/* Top Image */}
+            <View style={styles.backButtonContainer}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Icon name="home" size={28} color="#fff" />
+                </TouchableOpacity>
+            </View>
             <View style={styles.imageContainer}>
                 <Video
                     source={require("./assets/ratefix.mp4")} // place your video in assets folder
@@ -259,7 +267,7 @@ catch (error) {
                                         style={styles.input}
                                         onPress={() => setOpenDatePicker1(true)}
                                     >
-                                        <Text style={{ color: "#00363A" }}>
+                                        <Text style={{ color: "#00363A", fontSize: wp("3.5%") }}>
                                             {rateDate1.toLocaleDateString("en-GB", {
                                                 day: "numeric",
                                                 month: "long",
@@ -326,10 +334,10 @@ catch (error) {
                                 <View style={styles.inputContainer}>
                                     <Text style={styles.label}>DATE</Text>
                                     <TouchableOpacity
-                                        style={styles.input}
+                                        style={[styles.input]}
                                         onPress={() => setOpenDatePicker2(true)}
                                     >
-                                        <Text style={{ color: "#00363A" }}>
+                                        <Text style={{ color: "#00363A", fontSize: wp("3.5%") }}>
                                             {rateDate2.toLocaleDateString("en-GB", {
                                                 day: "numeric",
                                                 month: "long",
@@ -405,7 +413,7 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: "#fff",
         marginHorizontal: wp("5%"),
-        marginTop:hp("10%"),
+        marginTop: hp("10%"),
         borderRadius: wp("3%"),
         padding: wp("4%"),
         elevation: 4,
@@ -482,6 +490,16 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginHorizontal: wp("1.5%"),
     },
+    backButtonContainer: {
+        position: "absolute",
+        top: hp("4%"),
+        left: wp("4%"),
+        zIndex: 10,
+        backgroundColor: "rgba(0,0,0,0.4)",
+        padding: 6,
+        borderRadius: 50
+    },
+
     saveBtn: { backgroundColor: "#006A72" },
     saveText: { color: "#fff", fontWeight: "bold", fontSize: wp("4%") },
     clearBtn: { backgroundColor: "#D9F5F7" },
