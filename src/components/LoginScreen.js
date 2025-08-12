@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   clearText: { color: "#006A72", fontWeight: "bold", fontSize: wp("4%") },
   footer: {
     fontSize: wp("3.5%"),
-    color: "#333",
+    color: "#006A72",
     marginTop: isTablet ?hp("3%") : hp("7%"),
     textAlign: "center",
   },
