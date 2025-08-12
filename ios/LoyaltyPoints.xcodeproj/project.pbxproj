@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		3B7D5DFC97D5353CA8C6501C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
-		E96FAA9C554BFD43C2911C0C /* libPods-LoyaltyPoints.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 72DF205830244FF1C44B0BDD /* libPods-LoyaltyPoints.a */; };
+		8DFFAD92C84882F76BD32F3D /* libPods-LoyaltyPoints.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F9E4466ADB33C732FFC5239 /* libPods-LoyaltyPoints.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,18 +20,18 @@
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = LoyaltyPoints/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1B4D55F15F374137B906322E /* FontAwesome.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = FontAwesome.ttf; path = "../node_modules/react-native-vector-icons/Fonts/FontAwesome.ttf"; sourceTree = "<group>"; };
 		3E322ABA46EA4519958EC96F /* Zocial.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Zocial.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Zocial.ttf"; sourceTree = "<group>"; };
-		65A463054EE3181277005C95 /* Pods-LoyaltyPoints.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoyaltyPoints.release.xcconfig"; path = "Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints.release.xcconfig"; sourceTree = "<group>"; };
+		43720F0A0C1DA77EAEAA23C8 /* Pods-LoyaltyPoints.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoyaltyPoints.debug.xcconfig"; path = "Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints.debug.xcconfig"; sourceTree = "<group>"; };
 		6E5001B72800437BA279CE6A /* FontAwesome5_Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = FontAwesome5_Regular.ttf; path = "../node_modules/react-native-vector-icons/Fonts/FontAwesome5_Regular.ttf"; sourceTree = "<group>"; };
 		6E7D7F53DC6D4BCE9D10240A /* Fontisto.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Fontisto.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Fontisto.ttf"; sourceTree = "<group>"; };
-		72DF205830244FF1C44B0BDD /* libPods-LoyaltyPoints.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LoyaltyPoints.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = LoyaltyPoints/AppDelegate.swift; sourceTree = "<group>"; };
 		7A4D2538C4F2416DBABA1DE4 /* MaterialCommunityIcons.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = MaterialCommunityIcons.ttf; path = "../node_modules/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf"; sourceTree = "<group>"; };
+		7BF11CD3AA7A264C605E7B13 /* Pods-LoyaltyPoints.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoyaltyPoints.release.xcconfig"; path = "Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints.release.xcconfig"; sourceTree = "<group>"; };
+		7F9E4466ADB33C732FFC5239 /* libPods-LoyaltyPoints.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LoyaltyPoints.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7FA5D2208F864249A247F62A /* Foundation.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Foundation.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Foundation.ttf"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = LoyaltyPoints/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		90CDFB1D9D014749A8EBAF2E /* FontAwesome6_Solid.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = FontAwesome6_Solid.ttf; path = "../node_modules/react-native-vector-icons/Fonts/FontAwesome6_Solid.ttf"; sourceTree = "<group>"; };
 		9ABEF83E19204950BBCD5A11 /* FontAwesome5_Brands.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = FontAwesome5_Brands.ttf; path = "../node_modules/react-native-vector-icons/Fonts/FontAwesome5_Brands.ttf"; sourceTree = "<group>"; };
 		9CD69A05457F47E898DC3A1B /* EvilIcons.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = EvilIcons.ttf; path = "../node_modules/react-native-vector-icons/Fonts/EvilIcons.ttf"; sourceTree = "<group>"; };
-		A800EB2C64D161F0759F1F52 /* Pods-LoyaltyPoints.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoyaltyPoints.debug.xcconfig"; path = "Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints.debug.xcconfig"; sourceTree = "<group>"; };
 		AD439582164E4AFA82BF42FA /* Entypo.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Entypo.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Entypo.ttf"; sourceTree = "<group>"; };
 		B78D93537E024C4A965E262E /* FontAwesome6_Brands.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = FontAwesome6_Brands.ttf; path = "../node_modules/react-native-vector-icons/Fonts/FontAwesome6_Brands.ttf"; sourceTree = "<group>"; };
 		C04CE2EF30A5486788D1844B /* AntDesign.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = AntDesign.ttf; path = "../node_modules/react-native-vector-icons/Fonts/AntDesign.ttf"; sourceTree = "<group>"; };
@@ -49,7 +49,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E96FAA9C554BFD43C2911C0C /* libPods-LoyaltyPoints.a in Frameworks */,
+				8DFFAD92C84882F76BD32F3D /* libPods-LoyaltyPoints.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,7 +72,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				72DF205830244FF1C44B0BDD /* libPods-LoyaltyPoints.a */,
+				7F9E4466ADB33C732FFC5239 /* libPods-LoyaltyPoints.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -136,8 +136,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				A800EB2C64D161F0759F1F52 /* Pods-LoyaltyPoints.debug.xcconfig */,
-				65A463054EE3181277005C95 /* Pods-LoyaltyPoints.release.xcconfig */,
+				43720F0A0C1DA77EAEAA23C8 /* Pods-LoyaltyPoints.debug.xcconfig */,
+				7BF11CD3AA7A264C605E7B13 /* Pods-LoyaltyPoints.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -149,13 +149,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "LoyaltyPoints" */;
 			buildPhases = (
-				55300935FDA49D9E900A14BA /* [CP] Check Pods Manifest.lock */,
+				811F54244A0CB7AEC3559834 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				FC21D53E4471E32C96259FF3 /* [CP] Embed Pods Frameworks */,
-				BF6EAC2F788BAD8E1EFAA5DD /* [CP] Copy Pods Resources */,
 				523952AC2E4B13B40044E0F3 /* Resources */,
+				C9075784C403B306A7F398EF /* [CP] Embed Pods Frameworks */,
+				1D00C6B2AFF1A303FCD44503 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -225,7 +225,24 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		55300935FDA49D9E900A14BA /* [CP] Check Pods Manifest.lock */ = {
+		1D00C6B2AFF1A303FCD44503 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		811F54244A0CB7AEC3559834 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -247,24 +264,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		BF6EAC2F788BAD8E1EFAA5DD /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LoyaltyPoints/Pods-LoyaltyPoints-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		FC21D53E4471E32C96259FF3 /* [CP] Embed Pods Frameworks */ = {
+		C9075784C403B306A7F398EF /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -297,7 +297,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A800EB2C64D161F0759F1F52 /* Pods-LoyaltyPoints.debug.xcconfig */;
+			baseConfigurationReference = 43720F0A0C1DA77EAEAA23C8 /* Pods-LoyaltyPoints.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -329,7 +329,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 65A463054EE3181277005C95 /* Pods-LoyaltyPoints.release.xcconfig */;
+			baseConfigurationReference = 7BF11CD3AA7A264C605E7B13 /* Pods-LoyaltyPoints.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

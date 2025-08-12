@@ -1,3 +1,4 @@
+// PointsScreen.js
 
 import axios from "axios";
 import { BASE_URL } from "./Services";
@@ -101,34 +102,26 @@ useFocusEffect(
     inputRange: [0, 1],
     outputRange: ["2%", "50%"],
   });
-const calculatePoints = (amount) => {
-  if (!amount || isNaN(amount)) {
-    setPointsEarned("");
-    return;
-  }
 
-  console.log("Calculating points...", currentValPoint);
+  const calculatePoints = (amount) => {
+    if (!amount || isNaN(amount)) {
+      setPointsEarned("");
+      return;
+    }
+    console.log("Calculating points...",   currentValPoint);
+    const valAMT = parseFloat(currentValAmount) || 0;
+    const valPOINT = parseFloat(currentValPoint) || 0;
+    const onePointValue = valAMT / valPOINT || 0;
+    let points = parseFloat(amount) / onePointValue;
+    let VAL;
+    if (points < 1) {
+      VAL = 0;
+    } else {
+      VAL = points;
+    }
 
-  const valAMT = parseFloat(currentValAmount) || 0;
-  const valPOINT = parseFloat(currentValPoint) || 0;
-
-  // Avoid division by zero
-  if (valAMT === 0 || valPOINT === 0) {
-    console.warn("Invalid point calculation: amount or point value is zero");
-    setPointsEarned("0");
-    return;
-  }
-
-  const onePointValue = valAMT / valPOINT;
-  console.log("One point value:", onePointValue);
-
-  let points = parseFloat(amount) / onePointValue;
-  console.log("Calculated points:", points);
-
-  let VAL = points < 1 ? 0 : points;
-  setPointsEarned(VAL.toString());
-};
-
+    setPointsEarned(VAL.toString());
+  };
   const convertPointsToAmount = (points) => {
     const RedeemvalPOINT = parseFloat(currentRedeemPoint) || 0;
     const onePointAMT = (parseFloat(currentRedeemAmount) || 0) / RedeemvalPOINT || 0;
@@ -144,33 +137,14 @@ const calculatePoints = (amount) => {
       Alert.alert("Error", "Please fill in all required fields");
       return;
     }
-
-            const valAMT = parseFloat(currentValAmount) || 0;
-          const valPOINT = parseFloat(currentValPoint) || 0;
-
-           if (valAMT === 0 || valPOINT === 0) {
-            Alert.alert("Error", "Please fix Rate and continue!");
-            return;
-          }
       showConfirmation("Are you sure you want to add points?", addPoints);
     } else {
       if(redeemLoyaltyNumber === "" || (mode === "redeem" && redeemPoints === "" && redeemBalance === "")) {
         Alert.alert("Error", "Please fill in all required fields");
         return;
       }
-      const valRedeemAMT = parseFloat(currentRedeemAmount) || 0;
-      const valRedeemPOINT = parseFloat(currentRedeemPoint) || 0;
-
-      if (valRedeemAMT === 0 || valRedeemPOINT === 0) {
-        Alert.alert("Error", "Please fix Rate and continue!");
-        return;
-      }
-      // if(redeemBalance < 0 || redeemBalance == "0") {
-      //   Alert.alert("Error", "Redeem points must be at least 1");
-      //   return;
-      // }
-      if(parseFloat(redeemBalance) < parseFloat(redeemPoints)) {
-        Alert.alert("Error", "Insufficient balance");
+      if(redeemBalance < 0 || redeemBalance == "0") {
+        Alert.alert("Error", "Redeem points must be at least 1");
         return;
       }
       showConfirmation("Are you sure you want to redeem points?", RedeemPoints);
@@ -319,9 +293,9 @@ const AddPoints = async ()=>{
     const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${fcomCode}`)
     console.log(response)
     if(response.status == 200){
-      console.log(response.data.amount)
-      setCurrentValAmount(response.data.amount);
-      setCurrentValPoint(response.data.point);
+      
+      setCurrentValAmount(response.data[0].amount);
+      setCurrentValPoint(response.data[0].point);
     }
      else {
         handleStatusCodeError(response.status, "Error deleting data");
@@ -346,9 +320,9 @@ const RedeemAmount = async ()=>{
   try{
     const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${fcomCode}`)
     if(response.status == 200){
-      console.log(response.data.fpointVal)
-      setCurrentRedeemAmount(response.data.fpointVal);
-      setCurrentRedeemPoint(response.data.point);
+      console.log(response.data)
+      setCurrentRedeemAmount(response.data[0].fpointVal);
+      setCurrentRedeemPoint(response.data[0].point);
     }
      else {
         handleStatusCodeError(response.status, "Error deleting data");
@@ -442,14 +416,14 @@ catch (error) {
                 Per Point value:{" "}
                 {currentValAmount && currentValPoint
                   ? (parseFloat(currentValAmount) / parseFloat(currentValPoint)).toFixed(2)
-                  : "0"}
+                  : "Loading..."}
               </Text>
             ) : (
               <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72",position: "absolute", top: 1, right:10 }}>
                 Per Redeem value:{" "}
                 {currentRedeemAmount && currentRedeemPoint
                   ? (parseFloat(currentRedeemAmount) / parseFloat(currentRedeemPoint)).toFixed(2)
-                  : "0"}
+                  : "Loading..."}
               </Text>
             )}
 </View>
