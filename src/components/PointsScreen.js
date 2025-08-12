@@ -26,7 +26,7 @@ import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import DeviceInfo from 'react-native-device-info';
 import { showConfirmation } from "./AlertUtils";
  import {getCompanyCode } from "../store";
-
+import { handleStatusCodeError } from "./ErrorHandler";
 
 export default function PointsScreen() {
   // Add Mode State
@@ -170,16 +170,18 @@ useFocusEffect(
     let loyaltyNumber = mode === "add" ? addLoyaltyNumber : redeemLoyaltyNumber;
     console.log("Fetching points for loyalty number:", loyaltyNumber);
     if (!loyaltyNumber) {
-      Alert.alert("Error", "Please enter a loyalty number");
+      Alert.alert("Error", "Please enter a loyalty number"); 
       return;
     }
     try {
       const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}/${fcomCode}`);
+      console.log("Response:", response.data);
       if(response.status == 200){
         if(response.data.length === 0) {
-
+          Alert.alert("Error", "No points found for this loyalty number");
+          return;
         }
-        const data = response.data[0];
+        const data = response.data;
         if (mode === "add") {
           setAddName(data.customerName);
           setAddBalance(data.balance.toString());
@@ -190,13 +192,15 @@ useFocusEffect(
       }
       else {
         handleStatusCodeError(response.status, "Error deleting data");
+       handleClear();
       }
     }
     catch (error) {
       if (error.response) {
         handleStatusCodeError(
           error.response.status,
-          error.response.data?.message || "An unexpected server error occurred."
+          error.response.data?.message || "An unexpected server error occurred.",
+          handleClear()
         );
       } else if (error.request) {
         alert("No response received from the server. Please check your network connection.");

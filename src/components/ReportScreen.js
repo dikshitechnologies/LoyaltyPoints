@@ -43,9 +43,9 @@ console.log("Fetching user with loyalty number:", fcomCode);
     if(response.status == 200){
       console.log(response)
       const customerInfo = {
-        name: response.data[0].customerName,
+        name: response.data.customerName,
         loyaltyNumber: val,
-        balancePoints: response.data[0].balance
+        balancePoints: response.data.balance
       };
        setCustomerData(customerInfo);
        fetchCustomerData(loyaltyNumber);
