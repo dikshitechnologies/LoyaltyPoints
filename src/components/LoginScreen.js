@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   footer: {
     fontSize: wp("3.5%"),
     color: "#333",
-    marginTop: isTablet ? 0 : hp("5%"),
+    marginTop: isTablet ? 0 : hp("7%"),
     textAlign: "center",
   },
 });
