@@ -212,7 +212,7 @@ export default function CompanyCreationScreen({ navigation }) {
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>CREATION DATE</Text>
                             <TouchableOpacity style={styles.input} onPress={() => setOpen(true)}>
-                                <Text style={{ color: "#000" }}>
+                                <Text style={{ color: "#000", fontSize: wp("3.5%") }}>
                                     {date
                                         ? date.toLocaleDateString("en-GB", {
                                             day: "numeric",
