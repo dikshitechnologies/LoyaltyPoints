@@ -27,6 +27,7 @@ import DeviceInfo from 'react-native-device-info';
 import { showConfirmation } from "./AlertUtils";
  import {getCompanyCode } from "../store";
 import { handleStatusCodeError } from "./ErrorHandler";
+const isTablet = DeviceInfo.isTablet();
 
 export default function PointsScreen() {
   // Add Mode State
@@ -43,12 +44,14 @@ const [currentRedeemAmount , setCurrentRedeemAmount] = useState(null);
   const [addBalance, setAddBalance] = useState("");
   const [purchaseAmount, setPurchaseAmount] = useState("");
   const [pointsEarned, setPointsEarned] = useState("");
+  const [addNarration, setAddNarration] = useState("");
 
   const [redeemLoyaltyNumber, setRedeemLoyaltyNumber] = useState("");
   const [redeemName, setRedeemName] = useState("");
   const [redeemBalance, setRedeemBalance] = useState("");
   const [redeemPoints, setRedeemPoints] = useState("");
   const [redeemAmount, setRedeemAmount] = useState("");
+  const [redeemNarration, setRedeemNarration] = useState("");
 
   const [mode, setMode] = useState("add");
   const purchaseAmountRef = useRef(null);
@@ -58,32 +61,10 @@ const [currentRedeemAmount , setCurrentRedeemAmount] = useState(null);
 
 useFocusEffect(
   useCallback(() => {
-    AddPoints();
+    AddPointsget();
     RedeemAmount();
   }, [])
 );
-
-
-
-
-
-
-
-
-
-
-
-useFocusEffect(
-  useCallback(() => {
-    AddPoints();
-    RedeemAmount();
-  }, [])
-);
-
-
-
-
-
 
 
 
@@ -220,7 +201,8 @@ useFocusEffect(
             lAmt: Number(purchaseAmount) || 0,
             lDate: todayDate,
             points: Number(pointsEarned) || 0,
-            fcomCode: fcomCode
+            fcomCode: fcomCode,
+            narration : addNarration
         }
         console.log(payload)
         const response = await axios.post(`${BASE_URL}AddPoints/newPoints`, payload);
@@ -258,7 +240,8 @@ useFocusEffect(
             RedeemDate: formattedDate,
             RedeemAmt: Number(redeemAmount) || 0,
             RedeemPoint: Number(redeemPoints) || 0,
-            compCode: fcomCode
+            compCode: fcomCode,
+            narration : redeemNarration
         }
         
         console.log(payload)
@@ -287,15 +270,15 @@ useFocusEffect(
     }
   };
 //--------------------------------------------Points Value Get  ---------------------------------------
-const AddPoints = async ()=>{
+const AddPointsget = async ()=>{
 
   try{
     const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${fcomCode}`)
     console.log(response)
     if(response.status == 200){
       
-      setCurrentValAmount(response.data[0].amount);
-      setCurrentValPoint(response.data[0].point);
+      setCurrentValAmount(response.data.amount);
+      setCurrentValPoint(response.data.point);
     }
      else {
         handleStatusCodeError(response.status, "Error deleting data");
@@ -321,8 +304,8 @@ const RedeemAmount = async ()=>{
     const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${fcomCode}`)
     if(response.status == 200){
       console.log(response.data)
-      setCurrentRedeemAmount(response.data[0].fpointVal);
-      setCurrentRedeemPoint(response.data[0].point);
+      setCurrentRedeemAmount(response.data.fpointVal);
+      setCurrentRedeemPoint(response.data.point);
     }
      else {
         handleStatusCodeError(response.status, "Error deleting data");
@@ -426,10 +409,10 @@ catch (error) {
                   : "Loading..."}
               </Text>
             )}
-</View>
+          </View>
 
 
-<View style={styles.card}>
+          <View style={styles.card}>
 
             {/* ADD Mode */}
             {mode === "add" && (
@@ -459,7 +442,7 @@ catch (error) {
                 <Text style={styles.label}>Balance Points</Text>
                 <TextInput style={styles.input} value={addBalance} editable={false} />
 
-                <Text style={styles.label}>Purchase Amount</Text>
+                <Text style={styles.label}>Amount</Text>
                 <TextInput
                   ref={purchaseAmountRef}
                   style={styles.input}
@@ -473,6 +456,9 @@ catch (error) {
 
                 <Text style={styles.label}>Points Earned</Text>
                 <TextInput style={styles.input} value={pointsEarned} editable={false} />
+
+                <Text style={styles.label}>Narration</Text>
+                <TextInput style={styles.input} value={addNarration} onChangeText={setAddNarration} multiline={true} numberOfLines={4} />
               </>
             )}
 
@@ -518,7 +504,10 @@ catch (error) {
 
                 <Text style={styles.label}>Amount</Text>
                 <TextInput style={styles.input} value={redeemAmount} editable={false} />
+                <Text style={styles.label}>Narration</Text>
+                <TextInput style={styles.input} value={redeemNarration} onChangeText={setRedeemNarration} multiline={true} numberOfLines={4} />
               </>
+              
             )}
 
             {/* Buttons */}
@@ -574,23 +563,24 @@ const styles = StyleSheet.create({
     shadowRadius: wp('1%'),
     elevation: 3,
   },
-  label: { 
-    fontSize: wp('3.5%'), 
-    fontWeight: "600", 
-    color: "#006A72", 
-    marginTop: hp('1.5%'), 
-    marginBottom: hp('0.7%') 
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#8FD6DA",
-    borderRadius: wp('2%'),
-    paddingHorizontal: wp('3%'),
-    paddingVertical: hp('1.2%'),
-    fontSize: wp('3.7%'),
-    backgroundColor: "#ffffff",
-    color: "#00363A",
-  },
+ label: { 
+  fontSize: isTablet ? wp('3.8%') : wp('3.9%'), 
+  fontWeight: "600", 
+  color: "#006A72", 
+  marginTop: hp('1.5%'), 
+  marginBottom: hp('0.7%')
+},
+
+input: {
+  borderWidth: 1,
+  borderColor: "#8FD6DA",
+  borderRadius: wp('2%'),
+  paddingHorizontal: wp('3%'),
+  paddingVertical: hp('1.2%'),
+  fontSize: isTablet ? wp('4.2%') : wp('3.9%'), 
+  backgroundColor: "#ffffff",
+  color: "#00363A",
+},
   buttonRow: { 
     flexDirection: "row", 
     justifyContent: "space-between", 
