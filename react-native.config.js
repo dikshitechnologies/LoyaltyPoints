@@ -1,8 +1,10 @@
-// react-native.config.js
 module.exports = {
-  project: {
-    ios: {},
-    android: {},
+  assets: ['./assets/fonts'], // keep your fonts
+  dependencies: {
+    'react-native-vector-icons': {
+      platforms: {
+        android: null, // disable android auto-linking
+      },
+    },
   },
-  assets: ['./assets/fonts/'],
 };
