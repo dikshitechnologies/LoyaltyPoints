@@ -25,13 +25,14 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import DeviceInfo from 'react-native-device-info';
 import { showConfirmation } from "./AlertUtils";
- import {getCompanyCode } from "../store";
+ import {getCompanyCode,getGroupCode } from "../store";
 import { handleStatusCodeError } from "./ErrorHandler";
 const isTablet = DeviceInfo.isTablet();
 
 export default function PointsScreen() {
   // Add Mode State
    const fcomCode = getCompanyCode();
+   const groupCode = getGroupCode();
 const [currentValPoint , setCurrentValPoint] = useState(null);
 const [currentValAmount , setCurrentValAmount] = useState(null);
 
@@ -155,7 +156,7 @@ useFocusEffect(
       return;
     }
     try {
-      const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}/${fcomCode}`);
+      const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}/${groupCode}`);
       console.log("Response:", response.data);
       if(response.status == 200){
         if(response.data.length === 0) {
@@ -194,6 +195,10 @@ useFocusEffect(
 
 
   const addPoints = async() => {
+    if(purchaseAmount == Infinity) {
+      Alert.alert("Error", "Invalid purchase amount");
+      return;
+    }
     try{
         const todayDate = new Date().toISOString().split("T")[0];
         const payload = {
@@ -202,7 +207,8 @@ useFocusEffect(
             lDate: todayDate,
             points: Number(pointsEarned) || 0,
             fcomCode: fcomCode,
-            narration : addNarration
+            narration : addNarration,
+            fGroupCode: groupCode
         }
         console.log(payload)
         const response = await axios.post(`${BASE_URL}AddPoints/newPoints`, payload);
@@ -241,7 +247,8 @@ useFocusEffect(
             RedeemAmt: Number(redeemAmount) || 0,
             RedeemPoint: Number(redeemPoints) || 0,
             compCode: fcomCode,
-            narration : redeemNarration
+            narration : redeemNarration,
+            fGroupCode: groupCode
         }
         
         console.log(payload)
@@ -273,7 +280,7 @@ useFocusEffect(
 const AddPointsget = async ()=>{
 
   try{
-    const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${fcomCode}`)
+    const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${groupCode}`)
     console.log(response)
     if(response.status == 200){
       
@@ -301,7 +308,7 @@ catch (error) {
 //--------------------------------------------Points Value Get  ---------------------------------------
 const RedeemAmount = async ()=>{
   try{
-    const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${fcomCode}`)
+    const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${groupCode}`)
     if(response.status == 200){
       console.log(response.data)
       setCurrentRedeemAmount(response.data.fpointVal);

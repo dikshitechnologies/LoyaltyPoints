@@ -10,7 +10,7 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
-import { setCompanyCode } from "../store";
+import { setCompanyCode , setGroupCode} from "../store";
 import axios from "axios";
 import Video from "react-native-video";
 import LinearGradient from "react-native-linear-gradient";
@@ -85,6 +85,7 @@ useFocusEffect(
         } else if (roleFlag === "N") {
           console.log(response.data.companyCode)
           setCompanyCode(response.data.companyCode);
+          setGroupCode(response.data.groupCode);
           console.log("Company code set:", getCompanyCode());
           navigation.navigate("Home", {
             username: userFromAPI || username,

@@ -20,12 +20,13 @@ import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useFocusEffect } from "@react-navigation/native";
 import { BASE_URL } from "./components/Services";
-import { getCompanyCode } from "./store";
+import { getCompanyCode , getGroupCode } from "./store";
 
 
 export default function RateFixingScreen() {
     const navigation = useNavigation();
     const fcomCode = getCompanyCode();
+    const groupCode = getGroupCode();
     const [activeTab, setActiveTab] = useState("amountToPoints");
 
     // Tab 1 state
@@ -68,6 +69,7 @@ export default function RateFixingScreen() {
                 point: points1,
                 date: formatDate(rateDate1),
                 fcompcode: fcomCode,
+                fGroupCode: groupCode
 
             };
             console.log("Sending to Amount→Point API:", payload);
@@ -102,6 +104,7 @@ export default function RateFixingScreen() {
                 point: points2,
                 date: formatDate(rateDate2),
                 fcompcode: fcomCode,
+                fGroupCode: groupCode
 
             };
             console.log("Sending to Point→Amount API:", payload);
@@ -123,7 +126,7 @@ export default function RateFixingScreen() {
     const AddPoints = async () => {
 
   try{
-    const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${fcomCode}`)
+    const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${groupCode}`)
     console.log(response)
     if(response.status == 200){
       
@@ -151,7 +154,7 @@ catch (error) {
 //--------------------------------------------Points Value Get  ---------------------------------------
 const RedeemAmount = async ()=>{
   try{
-    const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${fcomCode}`)
+    const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${groupCode}`)
        console.log(response.data)
     if(response.status == 200){
       console.log(response.data) 

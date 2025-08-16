@@ -17,10 +17,11 @@ import {
 } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
-import { BASE_URL, fcomCode } from './Services';
+import { BASE_URL } from './Services';
 import { showConfirmation } from './AlertUtils';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { handleStatusCodeError } from './ErrorHandler';
+import { getGroupCode , getCompanyCode } from '../store';
 const PartyCreation = ({ navigation }) => {
     const [loyaltyNumber, setLoyaltyNumber] = useState('');
     const [name, setName] = useState('');
@@ -28,6 +29,8 @@ const PartyCreation = ({ navigation }) => {
     const [address, setAddress] = useState('');
     const [currentDate, setCurrentDate] = useState('');
     const [focusedField, setFocusedField] = useState(null);
+    const groupCode = getGroupCode();
+    const fcomCode = getCompanyCode();
 
     // Refs for focus navigation
     const loyaltyNumberRef = useRef();
@@ -82,7 +85,8 @@ const PartyCreation = ({ navigation }) => {
             customerName: name,
             phonenumber: phoneNumber,
             address: address,
-            fcomCode: fcomCode
+            fcomCode: fcomCode,
+            groupCode: groupCode
         };
         console.log('Payload:', payload);
         try {

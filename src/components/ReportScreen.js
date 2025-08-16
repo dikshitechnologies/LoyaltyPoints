@@ -14,7 +14,7 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import bgcard from '../assets/bgcard.png';
 import { BASE_URL } from './Services';
 import { handleStatusCodeError } from './ErrorHandler';
-import { getCompanyCode } from "../store";
+import { getCompanyCode  , getGroupCode} from "../store";
 import axios from 'axios';
 
 const COLUMN_WIDTHS = {
@@ -34,12 +34,13 @@ const ReportScreen = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const fcomCode = getCompanyCode();
+  const groupCode = getGroupCode();
 
 const fetchUser = async (val)=>{
 
   try {
 console.log("Fetching user with loyalty number:", fcomCode);
-    const response = await axios.get(`${BASE_URL}Register/points-summary/${val}/${fcomCode}`)
+    const response = await axios.get(`${BASE_URL}Register/points-summary/${val}/${groupCode}`)
     if(response.status == 200){
       console.log(response)
       const customerInfo = {
@@ -80,7 +81,7 @@ console.log("Fetching user with loyalty number:", fcomCode);
     try {
       const pageSize = 10;
       const response = await axios.get(
-        `${BASE_URL}Report/History/${number}/${fcomCode}?pageNumber=${page}&pageSize=${pageSize}`
+        `${BASE_URL}Report/History/${number}/${groupCode}?pageNumber=${page}&pageSize=${pageSize}`
       );
 
       if (response.status === 200) {
