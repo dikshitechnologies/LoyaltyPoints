@@ -18,6 +18,11 @@ import CompanyCreationScreen from './src/CompanyCreation';
 import TabNavigator from './src/components/TabNavigator';
 import PointsScreen from './src/components/PointsScreen'; 
 import RateFixingScreen from './src/RateFixingScreen';
+import ReportScreen from './src/components/ReportScreen';
+import TotalCustomers from './src/components/TotalCustomers';
+import IndividualCustomer from './src/components/IndividualCustomer';
+import BirthdayReport from './src/components/BirthdayReport';
+import AnniversaryReport from './src/components/AnniversaryReport';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,7 +41,12 @@ function App() {
 
          <Stack.Screen name="Company" component={CompanyCreationScreen} />
            <Stack.Screen name="RateFixing" component={RateFixingScreen} />
-      </Stack.Navigator>
+           <Stack.Screen name="ReportDashboard" component={ReportScreen} />
+           <Stack.Screen name="TotalCustomers" component={TotalCustomers} />
+           <Stack.Screen name="IndividualCustomer" component={IndividualCustomer} />
+           <Stack.Screen name="BirthdayReport" component={BirthdayReport} />
+           <Stack.Screen name="AnniversaryReport" component={AnniversaryReport} />
+         </Stack.Navigator>
     </NavigationContainer>
   );
 }
