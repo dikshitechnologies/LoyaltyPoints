@@ -178,15 +178,13 @@ console.log(payload)
     };
 
     const registerGroup = async () => {
-        if (!groupName.trim() || !groupCode.trim()) {
+        if (!groupName.trim()) {
             Alert.alert("Missing Fields", "Please enter both Group Name and Group Code.");
             return;
         }
 
         try {
             const payload = {
-                fid: 0,
-                fGroupCode: groupCode.trim(),
                 fGroupName: groupName.trim(),
             };
 
@@ -393,7 +391,7 @@ console.log(payload)
         <>
             {renderInput("GROUP NAME", groupName, setGroupName, false, "default", {}, null, () => groupCodeRef.current.focus())}
 
-            {renderInput("GROUP CODE", groupCode, setGroupCode, false, "default", {}, groupCodeRef, registerGroup, false, null, "done")}
+        
 
             <View style={styles.buttonRow}>
                 <TouchableOpacity style={[styles.button, styles.registerBtn]} onPress={registerGroup}>

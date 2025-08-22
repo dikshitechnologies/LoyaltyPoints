@@ -21,13 +21,15 @@ import { BASE_URL } from './Services';
 import { showConfirmation } from './AlertUtils';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { handleStatusCodeError } from './ErrorHandler';
-import { getGroupCode , getCompanyCode } from '../store';
+import { getGroupCode, getCompanyCode } from '../store';
 const PartyCreation = ({ navigation }) => {
     const [loyaltyNumber, setLoyaltyNumber] = useState('');
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
     const [currentDate, setCurrentDate] = useState('');
+    const [birthDate, setBirthDate] = useState('');
+    const [weddingDate, setWeddingDate] = useState('');
     const [focusedField, setFocusedField] = useState(null);
     const groupCode = getGroupCode();
     const fcomCode = getCompanyCode();
@@ -37,6 +39,8 @@ const PartyCreation = ({ navigation }) => {
     const nameRef = useRef();
     const phoneNumberRef = useRef();
     const addressRef = useRef();
+    const birthDateRef = useRef();
+    const weddingDateRef = useRef();
 
     useEffect(() => {
         // Set today's date when component mounts
@@ -256,12 +260,38 @@ const PartyCreation = ({ navigation }) => {
                                     setPhoneNumber,
                                     "phone-pad",
                                     phoneNumberRef,
-                                    () => addressRef.current.focus(),
+                                    () => birthDateRef.current.focus(),
                                     "next",
                                     false,
                                     1,
                                     "characters",
                                     "phoneNumber"
+                                )}
+                                {renderInput(
+                                    "Birth Date",
+                                    birthDate,
+                                    setBirthDate,
+                                    "date",
+                                    birthDateRef,
+                                    () => weddingDateRef.current.focus(),
+                                    "next",
+                                    false,
+                                    1,
+                                    "characters",
+                                    "birthDate"
+                                )}
+                                {renderInput(
+                                    "Wedding Date",
+                                    weddingDate,
+                                    setWeddingDate,
+                                    "date",
+                                    weddingDateRef,
+                                    () => addressRef.current.focus(),
+                                    "next",
+                                    false,
+                                    1,
+                                    "characters",
+                                    "weddingDate"
                                 )}
 
                                 {renderInput(
@@ -339,7 +369,7 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     subtitle: {
-        fontSize: wp('3.5%'),
+        fontSize: wp('4.5%'),
         color: "#006A72",
         marginBottom: hp('2%'),
         textAlign: "center",
@@ -351,20 +381,20 @@ const styles = StyleSheet.create({
         marginBottom: hp('1.5%'),
     },
     dateLabel: {
-        fontSize: wp('3%'),
+        fontSize: wp('4%'),
         fontWeight: "600",
         color: "#006A72",
         marginRight: wp('2%'),
     },
     dateValue: {
-        fontSize: wp('3.5%'),
+        fontSize: wp('4%'),
         color: "#00363A",
     },
     inputContainer: {
         marginBottom: hp('1.5%'),
     },
     label: {
-        fontSize: wp('3%'),
+        fontSize: wp('4%'),
         fontWeight: "600",
         color: "#006A72",
         marginBottom: hp('0.5%'),
@@ -379,7 +409,7 @@ const styles = StyleSheet.create({
         borderRadius: wp('2%'),
         paddingHorizontal: wp('3%'),
         paddingVertical: hp('1.2%'),
-        fontSize: wp('3.5%'),
+        fontSize: wp('4%'),
         backgroundColor: "#ffffff",
         color: "#00363A",
         flex: 1,
