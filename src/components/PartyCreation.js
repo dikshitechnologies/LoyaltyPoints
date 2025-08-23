@@ -10,7 +10,6 @@ import {
     KeyboardAvoidingView,
     Platform,
     SafeAreaView,
-    ImageBackground,
     Keyboard,
     TouchableWithoutFeedback,
     Alert
@@ -22,7 +21,9 @@ import { showConfirmation } from './AlertUtils';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { handleStatusCodeError } from './ErrorHandler';
 import { getGroupCode, getCompanyCode } from '../store';
+
 const PartyCreation = ({ navigation }) => {
+    // Existing States
     const [loyaltyNumber, setLoyaltyNumber] = useState('');
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -31,6 +32,11 @@ const PartyCreation = ({ navigation }) => {
     const [birthDate, setBirthDate] = useState('');
     const [weddingDate, setWeddingDate] = useState('');
     const [focusedField, setFocusedField] = useState(null);
+
+    // New States for Edit/Delete
+    const [customerId, setCustomerId] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+
     const groupCode = getGroupCode();
     const fcomCode = getCompanyCode();
 
@@ -51,76 +57,161 @@ const PartyCreation = ({ navigation }) => {
         setCurrentDate(formattedDate);
     }, []);
 
-    const handleSave = () => {
-
+    const handleValidation = () => {
         if (!name.trim()) {
             Alert.alert("Validation Error", "Name is required");
-            return;
+            return false;
         }
         if (!/^[A-Za-z\s]+$/.test(name.trim())) {
             Alert.alert("Validation Error", "Name must contain only letters");
-            return;
+            return false;
         }
-
-        // Phone number validation
         if (!phoneNumber.trim()) {
             Alert.alert("Validation Error", "Phone number is required");
-            return;
+            return false;
         }
         if (!/^\d{10}$/.test(phoneNumber)) {
             Alert.alert("Validation Error", "Phone number must be 10 digits");
-            return;
+            return false;
         }
+        return true;
+    };
 
-        newCustomer();
+    const handleSave = () => {
+        if (!handleValidation()) return;
+
+        if (isEditing) {
+            handleUpdate();
+        } else {
+            newCustomer();
+        }
     };
 
     const handleClear = () => {
-        // Clear all form inputs
+        // Clear all form inputs and reset state
         setLoyaltyNumber('');
         setName('');
         setPhoneNumber('');
         setAddress('');
+        setBirthDate('');
+        setWeddingDate('');
+        setCustomerId(null);
+        setIsEditing(false); // Exit editing mode
+    };
+
+    const handleApiError = (error) => {
+        if (error.response) {
+            handleStatusCodeError(
+                error.response.status,
+                error.response.data?.message || "An unexpected server error occurred."
+            );
+        } else if (error.request) {
+            Alert.alert("Network Error", "No response received from the server. Please check your network connection.");
+        } else {
+            Alert.alert("Request Error", `Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+        }
     };
 
     const newCustomer = async () => {
         const payload = {
-            loyaltyNumber: loyaltyNumber,
+            loyaltyNumber,
             customerName: name,
             phonenumber: phoneNumber,
-            address: address,
-            fcomCode: fcomCode,
-            groupCode: groupCode
+            address,
+            fcomCode,
+            groupCode,
+            fBirth: birthDate,
+            fWedding: weddingDate
         };
-        console.log('Payload:', payload);
         try {
-            const response = await axios.post(`${BASE_URL}Register/newCustomer`, payload)
-
+            const response = await axios.post(`${BASE_URL}Register/newCustomer`, payload);
             if (response.status === 200) {
-                Alert.alert('Success', 'Customer Registered successfully');
-                console.log('New customer registered:', response.data);
+                Alert.alert('Success', 'Customer registered successfully');
                 handleClear();
-            }
-            else {
-                handleStatusCodeError(response.status, "Error deleting data");
-            }
-        }
-        catch (error) {
-            if (error.response) {
-                handleStatusCodeError(
-                    error.response.status,
-                    error.response.data?.message || "An unexpected server error occurred."
-                );
-            } else if (error.request) {
-                alert("No response received from the server. Please check your network connection.");
             } else {
-                alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+                handleStatusCodeError(response.status, "Error saving data");
             }
+        } catch (error) {
+            handleApiError(error);
         }
     };
 
+    const handleUpdate = async () => {
+        const payload = {
+            customerId,
+            loyaltyNumber,
+            customerName: name,
+            phonenumber: phoneNumber,
+            address,
+            fcomCode,
+            groupCode,
+            fBirth: birthDate,
+            fWedding: weddingDate
+        };
+        try {
+            const response = await axios.put(`${BASE_URL}Register/updateCustomer/${customerId}`, payload);
+            if (response.status === 200) {
+                Alert.alert('Success', 'Customer updated successfully');
+                handleClear();
+            } else {
+                handleStatusCodeError(response.status, "Error updating data");
+            }
+        } catch (error) {
+            handleApiError(error);
+        }
+    };
 
-    // Reusable input component similar to CompanyCreation
+    const handleDelete = async () => {
+        if (!customerId) {
+            Alert.alert("Error", "No customer is loaded to delete.");
+            return;
+        }
+
+        showConfirmation('Confirm Deletion', 'Are you sure you want to delete this customer?', async () => {
+            try {
+                const response = await axios.delete(`${BASE_URL}Register/deleteCustomer/${customerId}`);
+                if (response.status === 200) {
+                    Alert.alert('Success', 'Customer deleted successfully');
+                    handleClear();
+                } else {
+                    handleStatusCodeError(response.status, "Error deleting data");
+                }
+            } catch (error) {
+                handleApiError(error);
+            }
+        });
+    };
+
+    const handleSearch = async () => {
+        // Search by the first available criteria
+        const searchTerm = loyaltyNumber || phoneNumber || name;
+        if (!searchTerm.trim()) {
+            Alert.alert("Search Error", "Please enter a Loyalty Number, Phone Number, or Name to search.");
+            return;
+        }
+
+        try {
+            const response = await axios.get(`${BASE_URL}Register/getCustomerByTerm?term=${searchTerm}`);
+            if (response.status === 200 && response.data) {
+                const customer = response.data;
+                setCustomerId(customer.customerId);
+                setLoyaltyNumber(customer.loyaltyNumber || '');
+                setName(customer.customerName || '');
+                setPhoneNumber(customer.phonenumber || '');
+                setAddress(customer.address || '');
+                setBirthDate(customer.fBirth || '');
+                setWeddingDate(customer.fWedding || '');
+                setIsEditing(true); // Enter editing mode
+                Alert.alert("Success", "Customer data loaded.");
+            } else {
+                Alert.alert("Not Found", "No customer found with the provided details.");
+            }
+        } catch (error) {
+            handleApiError(error);
+        }
+    };
+
+    // Reusable input component
     const renderInput = (
         label,
         value,
@@ -160,7 +251,6 @@ const PartyCreation = ({ navigation }) => {
         </View>
     );
 
-
     return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView
@@ -169,161 +259,60 @@ const PartyCreation = ({ navigation }) => {
                 keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
             >
                 <ScrollView
-                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }} // Extra padding at bottom
+                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
                     keyboardShouldPersistTaps="handled"
                 >
                     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                         <View style={{ flex: 1 }}>
-
-                            {/* Header */}
                             <View style={[styles.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
                                 <TouchableOpacity
                                     onPress={() => navigation.navigate('RateFixing')}
-                                    style={{
-                                        position: 'absolute',
-                                        left: 20,
-                                        alignItems: 'center'
-                                    }}
+                                    style={{ position: 'absolute', left: 20, alignItems: 'center' }}
                                 >
-                                    <View
-                                        style={{
-                                            backgroundColor: '#FFf', // background circle color
-                                            padding: 10,
-                                            borderRadius: 50, // makes it circular
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}
-                                    >
+                                    <View style={{ backgroundColor: '#FFf', padding: 10, borderRadius: 50 }}>
                                         <MaterialIcons name="price-change" size={28} color="#006A72" />
                                     </View>
-                                    {/* <Text
-                                        style={{
-                                            color: 'white',
-                                            fontWeight: 'bold',
-                                            marginTop: 4,
-                                            fontSize: 12
-                                        }}
-                                    >
-                                        Rate Fix
-                                    </Text> */}
                                 </TouchableOpacity>
-
-
-
                                 <Text style={[styles.headerText, { marginBottom: 10 }]}>Customer Registration</Text>
                             </View>
 
-                            {/* Form Card */}
                             <View style={styles.card}>
                                 <Text style={styles.subtitle}>
-                                    Fill in the details below to add a new Customer.
+                                    {isEditing ? 'Update or Delete Customer Details' : 'Fill in the details to add a new Customer.'}
                                 </Text>
 
-                                {/* Date Display */}
                                 <View style={styles.dateContainer}>
                                     <Text style={styles.dateLabel}>Date:</Text>
                                     <Text style={styles.dateValue}>{currentDate}</Text>
                                 </View>
 
                                 {/* Form Fields */}
-                                {renderInput(
-                                    "Loyalty Number",
-                                    loyaltyNumber,
-                                    setLoyaltyNumber,
-                                    "default",
-                                    loyaltyNumberRef,
-                                    () => nameRef.current.focus(),
-                                    "next",
-                                    false,
-                                    1,
-                                    "characters",
-                                    "loyaltyNumber"
-                                )}
+                                {renderInput("Loyalty Number", loyaltyNumber, setLoyaltyNumber, "default", loyaltyNumberRef, () => nameRef.current.focus(), "next", false, 1, "characters", "loyaltyNumber")}
+                                {renderInput("Name", name, setName, "default", nameRef, () => phoneNumberRef.current.focus(), "next", false, 1, "characters", "name")}
+                                {renderInput("Phone Number", phoneNumber, setPhoneNumber, "phone-pad", phoneNumberRef, () => birthDateRef.current.focus(), "next", false, 1, "characters", "phoneNumber")}
+                                {renderInput("Birth Date", birthDate, setBirthDate, "default", birthDateRef, () => weddingDateRef.current.focus(), "next", false, 1, "characters", "birthDate")}
+                                {renderInput("Wedding Date", weddingDate, setWeddingDate, "default", weddingDateRef, () => addressRef.current.focus(), "next", false, 1, "characters", "weddingDate")}
+                                {renderInput("Address", address, setAddress, "default", addressRef, () => handleSave(), "done", true, 3, "sentences", "address")}
 
-                                {renderInput(
-                                    "Name",
-                                    name,
-                                    setName,
-                                    "default",
-                                    nameRef,
-                                    () => phoneNumberRef.current.focus(),
-                                    "next",
-                                    false,
-                                    1,
-                                    "characters",
-                                    "name"
-                                )}
-
-                                {renderInput(
-                                    "Phone Number",
-                                    phoneNumber,
-                                    setPhoneNumber,
-                                    "phone-pad",
-                                    phoneNumberRef,
-                                    () => birthDateRef.current.focus(),
-                                    "next",
-                                    false,
-                                    1,
-                                    "characters",
-                                    "phoneNumber"
-                                )}
-                                {renderInput(
-                                    "Birth Date",
-                                    birthDate,
-                                    setBirthDate,
-                                    "date",
-                                    birthDateRef,
-                                    () => weddingDateRef.current.focus(),
-                                    "next",
-                                    false,
-                                    1,
-                                    "characters",
-                                    "birthDate"
-                                )}
-                                {renderInput(
-                                    "Wedding Date",
-                                    weddingDate,
-                                    setWeddingDate,
-                                    "date",
-                                    weddingDateRef,
-                                    () => addressRef.current.focus(),
-                                    "next",
-                                    false,
-                                    1,
-                                    "characters",
-                                    "weddingDate"
-                                )}
-
-                                {renderInput(
-                                    "Address",
-                                    address,
-                                    setAddress,
-                                    "default",
-                                    addressRef,
-                                    () => handleSave(),
-                                    "done",
-                                    true,
-                                    3,
-                                    "sentences",
-                                    "address"
-                                )}
-
-
-                                {/* Buttons */}
+                                {/* Action Buttons */}
                                 <View style={styles.buttonRow}>
-                                    <TouchableOpacity
-                                        style={[styles.button, styles.saveBtn]}
-                                        onPress={handleSave}
-                                    >
-                                        <Text style={styles.saveText}>SAVE</Text>
+                                    <TouchableOpacity style={[styles.button, styles.saveBtn]} onPress={handleSave}>
+                                        <Text style={styles.saveText}>{isEditing ? 'UPDATE' : 'SAVE'}</Text>
                                     </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        style={[styles.button, styles.clearBtn]}
-                                        onPress={handleClear}
-                                    >
+                                    <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={handleClear}>
                                         <Text style={styles.clearText}>CLEAR</Text>
                                     </TouchableOpacity>
+                                </View>
+
+                                {/* Search and Delete Buttons */}
+                                <View style={styles.buttonRow}>
+                                    <TouchableOpacity style={[styles.button, styles.searchBtn]} onPress={handleSearch}>
+                                        <Text style={styles.saveText}>Edit</Text>
+                                    </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={handleDelete}>
+                                            <Text style={styles.saveText}>DELETE</Text>
+                                        </TouchableOpacity>
+                                 
                                 </View>
                             </View>
                         </View>
@@ -333,6 +322,7 @@ const PartyCreation = ({ navigation }) => {
         </SafeAreaView>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {
@@ -420,7 +410,7 @@ const styles = StyleSheet.create({
     },
     buttonRow: {
         flexDirection: "row",
-        justifyContent: "space-between",
+        justifyContent: "space-around", // Changed to space-around for better spacing
         marginTop: hp('2.5%'),
     },
     button: {
@@ -449,8 +439,14 @@ const styles = StyleSheet.create({
     inputFocused: {
         borderColor: "#FF9800",
         backgroundColor: "#FFF8E1"
-    }
+    },
+    // New styles for Search and Delete buttons
+    searchBtn: {
+        backgroundColor: '#FFA500', // Orange color for search
+    },
+    deleteBtn: {
+        backgroundColor: '#FF4136', // Red color for delete
+    },
 });
-
 
 export default PartyCreation;
