@@ -298,7 +298,7 @@ catch (error) {
                                         style={styles.input}
                                         value={amount1}
                                         onChangeText={setAmount1}
-                                        keyboardType="numeric"
+                                        keyboardType="phone-pad"
                                         placeholder="Enter amount"
                                     />
                                 </View>
@@ -310,7 +310,7 @@ catch (error) {
                                         style={styles.input}
                                         value={points1}
                                         onChangeText={setPoints1}
-                                        keyboardType="numeric"
+                                        keyboardType="phone-pad"
                                         placeholder="Enter points"
                                     />
                                 </View>
@@ -368,7 +368,7 @@ catch (error) {
                                         style={styles.input}
                                         value={points2}
                                         onChangeText={setPoints2}
-                                        keyboardType="numeric"
+                                        keyboardType="phone-pad"
                                         placeholder="Enter points"
                                     />
                                 </View>
@@ -380,7 +380,7 @@ catch (error) {
                                         style={styles.input}
                                         value={amount2}
                                         onChangeText={setAmount2}
-                                        keyboardType="numeric"
+                                        keyboardType="phone-pad"
                                         placeholder="Enter amount"
                                     />
                                 </View>

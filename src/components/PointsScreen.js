@@ -30,6 +30,8 @@ import { handleStatusCodeError } from "./ErrorHandler";
 const isTablet = DeviceInfo.isTablet();
 
 export default function PointsScreen() {
+
+   const loyaltyNumberRef = useRef(null);
   // Add Mode State
    const fcomCode = getCompanyCode();
    const groupCode = getGroupCode();
@@ -96,11 +98,9 @@ useFocusEffect(
     const onePointValue = valAMT / valPOINT || 0;
     let points = parseFloat(amount) / onePointValue;
     let VAL;
-    if (points < 1) {
-      VAL = 0;
-    } else {
+  
       VAL = points;
-    }
+    
 
     setPointsEarned(VAL.toString());
   };
@@ -139,12 +139,14 @@ useFocusEffect(
       setAddBalance("");
       setPurchaseAmount("");
       setPointsEarned("");
+      setAddNarration("");
     } else {
       setRedeemLoyaltyNumber("");
       setRedeemName("");
       setRedeemBalance("");
       setRedeemPoints("");
       setRedeemAmount("");
+      setRedeemNarration("");
     }
   };
 
@@ -364,9 +366,11 @@ catch (error) {
         const value = codes[0].value;
         setAddLoyaltyNumber(value);
         setShowScanner(false);
-        getPoints();
+        loyaltyNumberRef.current.focus();
       }
+       
     }
+    
   });
 
   return (
@@ -427,12 +431,13 @@ catch (error) {
                 <Text style={styles.label}>Loyalty Number</Text>
                 <View style={styles.row}>
                   <TextInput
+                    ref={loyaltyNumberRef}
                     style={[styles.input, { flex: 1 }]}
                     value={addLoyaltyNumber}
                     onChangeText={setAddLoyaltyNumber}
                     onBlur={getPoints}
                     placeholder="Enter Loyalty Number"
-                    returnKeyType="next"
+                    returnKeyType="Done"
                     onSubmitEditing={() => purchaseAmountRef.current.focus()}
                   />
                   <TouchableOpacity
