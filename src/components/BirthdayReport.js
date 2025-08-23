@@ -8,11 +8,17 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Platform,
+  ImageBackground,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 import { BASE_URL } from "./Services";
+import { handleStatusCodeError } from "./ErrorHandler";
+import { getCompanyCode, getGroupCode } from "../store";
 
 const COLUMN_WIDTHS = {
   sno: wp("10%"),
@@ -45,11 +51,12 @@ const BirthdayReport = () => {
   const fetchCustomers = async (page = 1) => {
     if (!hasMore && page !== 1) return;
     if (!fromDate || !toDate) return;
-
+    const startdate = formatDate(fromDate);
+    const enddate = formatDate(toDate);
     setLoading(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}BirthWedding/ByBirthDate?fromDate=${formatDate(fromDate)}&toDate=${formatDate(toDate)}&pageNumber=${page}&pageSize=${pageSize}`
+        `${BASE_URL}BirthWedding/ByBirthDate?fromDate=${startdate}&toDate=${enddate}&pageNumber=${page}&pageSize=${pageSize}`
       );
 
       if (response.status === 200) {
@@ -62,11 +69,31 @@ const BirthdayReport = () => {
           address: item.address,
         }));
 
-        setCustomerData(prev => (page === 1 ? newData : [...prev, ...newData]));
+        setCustomerData((prev) =>
+          page === 1 ? newData : [...prev, ...newData]
+        );
         setHasMore(page < response.data.totalPages);
+      } else {
+        handleStatusCodeError(response.status, "Error fetching data");
+        setCustomerData([]);
       }
     } catch (error) {
-      console.error("Error fetching birthday data:", error);
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message ||
+            "An unexpected server error occurred.",
+          setCustomerData([])
+        );
+      } else if (error.request) {
+        alert(
+          "No response received from the server. Please check your network connection."
+        );
+      } else {
+        alert(
+          `Error: ${error.message}. This might be due to an invalid URL or network issue.`
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -75,27 +102,62 @@ const BirthdayReport = () => {
   const renderHeader = () => (
     <View style={styles.headerRow}>
       <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.sno }]}>S.No</Text>
-      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.loyalty }]}>Loyalty No</Text>
-      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.name }]}>Name</Text>
-      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.phone }]}>Ph.No</Text>
-      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.birth }]}>Birth Date</Text>
-      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.address }]}>Address</Text>
+      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.loyalty }]}>
+        Loyalty No
+      </Text>
+      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.name }]}>
+        Name
+      </Text>
+      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.phone }]}>
+        Ph.No
+      </Text>
+      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.birth }]}>
+        Birth Date
+      </Text>
+      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.address }]}>
+        Address
+      </Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🎂 Birthday Report</Text>
+      {/* 🎂 Heading Background */}
+      <ImageBackground
+        source={require("../assets/birthday-header.png")}
+        style={styles.titleBackground}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay}>
+          <Text style={styles.title}>🎂 Birthday Report</Text>
+        </View>
+      </ImageBackground>
 
       {/* Date Pickers */}
       <View style={styles.inputRow}>
-        <TouchableOpacity style={styles.dateButton} onPress={() => setShowFromPicker(true)}>
-          <Text style={styles.dateText}>{fromDate ? formatDate(fromDate) : "From Date"}</Text>
+        <TouchableOpacity
+          style={styles.dateButton}
+          onPress={() => setShowFromPicker(true)}
+        >
+          <Text style={styles.dateText}>
+            {fromDate ? formatDate(fromDate) : "From Date"}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.dateButton} onPress={() => setShowToPicker(true)}>
-          <Text style={styles.dateText}>{toDate ? formatDate(toDate) : "To Date"}</Text>
+        <TouchableOpacity
+          style={styles.dateButton}
+          onPress={() => setShowToPicker(true)}
+        >
+          <Text style={styles.dateText}>
+            {toDate ? formatDate(toDate) : "To Date"}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.searchButton} onPress={() => { setPageNumber(1); fetchCustomers(1); }}>
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={() => {
+            setPageNumber(1);
+            fetchCustomers(1);
+          }}
+        >
           <Text style={styles.searchText}>Search</Text>
         </TouchableOpacity>
       </View>
@@ -133,12 +195,24 @@ const BirthdayReport = () => {
           keyExtractor={(item) => item.sno.toString()}
           renderItem={({ item }) => (
             <View style={styles.row}>
-              <Text style={[styles.cell, { width: COLUMN_WIDTHS.sno }]}>{item.sno}</Text>
-              <Text style={[styles.cell, { width: COLUMN_WIDTHS.loyalty }]}>{item.loyalty}</Text>
-              <Text style={[styles.cell, { width: COLUMN_WIDTHS.name }]}>{item.name}</Text>
-              <Text style={[styles.cell, { width: COLUMN_WIDTHS.phone }]}>{item.phone}</Text>
-              <Text style={[styles.cell, { width: COLUMN_WIDTHS.birth }]}>{item.birth}</Text>
-              <Text style={[styles.cell, { width: COLUMN_WIDTHS.address }]}>{item.address}</Text>
+              <Text style={[styles.cell, { width: COLUMN_WIDTHS.sno }]}>
+                {item.sno}
+              </Text>
+              <Text style={[styles.cell, { width: COLUMN_WIDTHS.loyalty }]}>
+                {item.loyalty}
+              </Text>
+              <Text style={[styles.cell, { width: COLUMN_WIDTHS.name }]}>
+                {item.name}
+              </Text>
+              <Text style={[styles.cell, { width: COLUMN_WIDTHS.phone }]}>
+                {item.phone}
+              </Text>
+              <Text style={[styles.cell, { width: COLUMN_WIDTHS.birth }]}>
+                {item.birth}
+              </Text>
+              <Text style={[styles.cell, { width: COLUMN_WIDTHS.address }]}>
+                {item.address}
+              </Text>
             </View>
           )}
           ListHeaderComponent={renderHeader}
@@ -152,7 +226,13 @@ const BirthdayReport = () => {
           }}
           onEndReachedThreshold={0.5}
           ListFooterComponent={() =>
-            loading ? <ActivityIndicator size="small" color="#006A72" style={{ margin: hp("1%") }} /> : null
+            loading ? (
+              <ActivityIndicator
+                size="small"
+                color="#006A72"
+                style={{ margin: hp("1%") }}
+              />
+            ) : null
           }
         />
       </ScrollView>
@@ -161,31 +241,118 @@ const BirthdayReport = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: wp("4%") },
-  title: { fontSize: hp("2.5%"), fontWeight: "bold", color: "#006A72", marginBottom: hp("2%") },
-  inputRow: { flexDirection: "row", alignItems: "center", marginBottom: hp("2%") },
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+    padding: wp("4%"),
+  },
+
+  // 🎂 Title Background
+  titleBackground: {
+    width: "100%",
+    height: hp("18%"),
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: hp("2%"),
+  },
+
+  overlay: {
+    backgroundColor: "rgba(0,0,0,0.3)", // transparent overlay for text readability
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: wp("4%"),
+    paddingTop: hp("11%"),
+  },
+
+  title: {
+    fontSize: hp("3.2%"),
+    fontWeight: "700",
+    color: "#fff",
+    textAlign: "center",
+    letterSpacing: 0.5,
+  },
+
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: hp("2%"),
+    justifyContent: "space-between",
+  },
+
   dateButton: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: wp("3%"),
+    borderColor: "#D1D5DB",
+    borderRadius: 10,
+    paddingVertical: hp("1.2%"),
+    paddingHorizontal: wp("3%"),
     marginRight: wp("2%"),
     flex: 1,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
     alignItems: "center",
   },
-  dateText: { color: "#333", fontSize: hp("1.8%") },
-  searchButton: { backgroundColor: "#006A72", paddingVertical: hp("1%"), paddingHorizontal: wp("4%"), borderRadius: 8 },
-  searchText: { color: "#fff", fontWeight: "bold" },
+
+  dateText: {
+    color: "#374151",
+    fontSize: hp("1.9%"),
+    fontWeight: "500",
+  },
+
+  searchButton: {
+    backgroundColor: "#006A72",
+    paddingVertical: hp("1.2%"),
+    paddingHorizontal: wp("5%"),
+    borderRadius: 10,
+    shadowColor: "#006A72",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  searchText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: hp("1.9%"),
+    letterSpacing: 0.5,
+  },
+
   headerRow: {
     flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    backgroundColor: "#f2f2f2",
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#E5E7EB",
+    backgroundColor: "#E0F7F6",
     paddingVertical: hp("1%"),
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
   },
-  headerCell: { fontWeight: "bold", fontSize: hp("1.6%"), color: "#333" },
-  row: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#f0f0f0", paddingVertical: hp("1%") },
-  cell: { fontSize: hp("1.8%"), color: "#333" },
+
+  headerCell: {
+    fontWeight: "700",
+    fontSize: hp("1.8%"),
+    color: "#004D61",
+    textAlign: "center",
+  },
+
+  row: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+    paddingVertical: hp("1.2%"),
+    backgroundColor: "#fff",
+  },
+
+  cell: {
+    fontSize: hp("1.8%"),
+    color: "#374151",
+    textAlign: "center",
+  },
 });
 
 export default BirthdayReport;
