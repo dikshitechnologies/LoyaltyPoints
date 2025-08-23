@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: wp("5%"),
     borderBottomRightRadius: wp("5%")
   },
-  headerText: { fontSize: hp("2.6%"), color: "#fff", fontWeight: "bold" },
+  headerText: { fontSize: hp("3%"), color: "#fff", fontWeight: "bold" },
 
   grid: { padding: wp("3%") },
   row: { justifyContent: "space-between" },

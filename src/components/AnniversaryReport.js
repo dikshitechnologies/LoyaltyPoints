@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Platform,
+  ImageBackground,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
@@ -63,7 +64,7 @@ const AnniversaryReport = () => {
           loyalty: item.loyaltyNumber,
           name: item.customerName,
           phone: item.phonenumber,
-          anniversary: item.fWed, // anniversary field
+          anniversary: item.fWed,
           address: item.address,
         }));
 
@@ -103,7 +104,16 @@ const AnniversaryReport = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>💍 Anniversary Report</Text>
+      {/* 💍 Heading Background */}
+      <ImageBackground
+        source={require("../assets/anniversary-header.png")} // 👉 use your heart balloon background here
+        style={styles.titleBackground}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay}>
+          <Text style={styles.title}>💍 Anniversary Report</Text>
+        </View>
+      </ImageBackground>
 
       {/* Date Pickers */}
       <View style={styles.inputRow}>
@@ -179,31 +189,51 @@ const AnniversaryReport = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#F9FAFB",  // soft light background
-    padding: wp("4%") 
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+    padding: wp("4%"),
   },
 
-  title: { 
-    fontSize: hp("3%"), 
-    fontWeight: "700", 
-    color: "#004D61", 
+  // 💍 Title Background
+  titleBackground: {
+    width: "100%",
+    height: hp("18%"),
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    overflow: "hidden",
     marginBottom: hp("2%"),
-    textAlign: "center",
-    letterSpacing: 0.5 
   },
 
-  inputRow: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    marginBottom: hp("2%"), 
-    justifyContent: "space-between" 
+  overlay: {
+    backgroundColor: "rgba(0,0,0,0.3)",
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: wp("4%"),
+    paddingTop: hp("11%"), // pushes heading a bit lower
+  },
+
+  title: {
+    fontSize: hp("3.2%"),
+    fontWeight: "700",
+    color: "#fff",
+    textAlign: "center",
+    letterSpacing: 0.5,
+  },
+
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: hp("2%"),
+    justifyContent: "space-between",
   },
 
   dateButton: {
     borderWidth: 1,
-    borderColor: "#D1D5DB", 
+    borderColor: "#D1D5DB",
     borderRadius: 10,
     paddingVertical: hp("1.2%"),
     paddingHorizontal: wp("3%"),
@@ -217,16 +247,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  dateText: { 
-    color: "#374151", 
-    fontSize: hp("1.9%"), 
-    fontWeight: "500" 
+  dateText: {
+    color: "#374151",
+    fontSize: hp("1.9%"),
+    fontWeight: "500",
   },
 
-  searchButton: { 
-    backgroundColor: "#006A72", 
-    paddingVertical: hp("1.2%"), 
-    paddingHorizontal: wp("5%"), 
+  searchButton: {
+    backgroundColor: "#006A72",
+    paddingVertical: hp("1.2%"),
+    paddingHorizontal: wp("5%"),
     borderRadius: 10,
     shadowColor: "#006A72",
     shadowOpacity: 0.3,
@@ -234,11 +264,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  searchText: { 
-    color: "#fff", 
-    fontWeight: "700", 
-    fontSize: hp("1.9%"), 
-    letterSpacing: 0.5 
+  searchText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: hp("1.9%"),
+    letterSpacing: 0.5,
   },
 
   headerRow: {
@@ -251,32 +281,26 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 6,
   },
 
-  headerCell: { 
-    fontWeight: "700", 
-    fontSize: hp("1.8%"), 
+  headerCell: {
+    fontWeight: "700",
+    fontSize: hp("1.8%"),
     color: "#004D61",
-    textAlign: "center"
+    textAlign: "center",
   },
 
-  row: { 
-    flexDirection: "row", 
-    borderBottomWidth: 1, 
-    borderBottomColor: "#F1F5F9", 
+  row: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
     paddingVertical: hp("1.2%"),
     backgroundColor: "#fff",
   },
 
-  cell: { 
-    fontSize: hp("1.8%"), 
-    color: "#374151", 
-    textAlign: "center"
+  cell: {
+    fontSize: hp("1.8%"),
+    color: "#374151",
+    textAlign: "center",
   },
-
-  // Optional alternate row shading
-  alternateRow: {
-    backgroundColor: "#F9FAFB",
-  }
 });
-
 
 export default AnniversaryReport;
