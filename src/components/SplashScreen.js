@@ -5,7 +5,7 @@ import Video from 'react-native-video';
 const SplashScreen = ({ navigation }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.replace('Login');
+      navigation.replace('UserAuth');
     }, 8000); // 8 seconds
 
     return () => clearTimeout(timer);
@@ -21,7 +21,7 @@ const SplashScreen = ({ navigation }) => {
         resizeMode="cover"
         rate={1.0}
         ignoreSilentSwitch="obey"
-        onEnd={() => navigation.replace('Login')} // navigate on video end as fallback
+        onEnd={() => navigation.replace('UserAuth')} // navigate on video end as fallback
       />
     </View>
   );

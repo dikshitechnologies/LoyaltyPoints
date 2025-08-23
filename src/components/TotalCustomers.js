@@ -202,7 +202,7 @@ const TotalCustomers = () => {
         onEndReachedThreshold={0.5}
         ListHeaderComponent={
           <>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: wp('4%') }}>
+            {/* <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: wp('4%') }}> */}
               <ChartCard title="Top 5 Customers (by Sales)">
                 <BarChart
                   data={barData}
@@ -214,7 +214,7 @@ const TotalCustomers = () => {
                   fromZero
                 />
               </ChartCard>
-              <ChartCard title="Points Summary">
+              {/* <ChartCard title="Points Summary">
                 <PieChart
                   data={pieData}
                   width={screenWidth * 0.9}
@@ -225,8 +225,8 @@ const TotalCustomers = () => {
                   chartConfig={chartConfig}
                   absolute
                 />
-              </ChartCard>
-            </ScrollView>
+              </ChartCard> */}
+            {/* </ScrollView> */}
             <Text style={styles.listTitle}>All Customers</Text>
           </>
         }
