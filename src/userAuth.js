@@ -10,26 +10,29 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
-import { setCompanyCode , setGroupCode} from "../store";
+import { setCompanyCode , setGroupCode} from "./store";
 import axios from "axios";
 import Video from "react-native-video";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
-import loginVideo from "../assets/Generate.mp4";
+import loginVideo from "./assets/Generate.mp4";
 import { useFocusEffect } from "@react-navigation/native";
-import { handleStatusCodeError } from "./ErrorHandler";
-import { BASE_URL } from "./Services";
-
+import { handleStatusCodeError } from "./components/ErrorHandler";
+import { BASE_URL } from "./components/Services";
+import { BackHandler, Alert } from "react-native";
 import { Dimensions } from "react-native";
-import {getCompanyCode } from "../store";
+import {getCompanyCode } from "./store";
+
+
+
 const { width, height } = Dimensions.get("window");
 const isTablet = Math.min(width, height) >= 600;
 
-export default function LoginScreen({ navigation }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+export default function userAuth({ navigation }) {
+  const [loyaltyNumber, setLoyaltyNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const passwordRef = useRef(null);
@@ -40,15 +43,38 @@ useFocusEffect(
    console.log("Company code reset on focus" , getCompanyCode());
   }, [])
 );
+useFocusEffect(
+  useCallback(() => {
+    const onBackPress = () => {
+      // Optionally show a confirmation before exit
+      Alert.alert(
+        "Exit App",
+        "Do you want to close the app?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Exit", onPress: () => BackHandler.exitApp() },
+        ],
+        { cancelable: true }
+      );
+      return true; // Prevent default back behavior
+    };
 
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress
+    );
+
+    return () => subscription.remove(); // Cleanup on blur
+  }, [])
+);
   useEffect(() => {
     const loadCredentials = async () => {
       try {
-        const savedUsername = await AsyncStorage.getItem("username");
-        const savedPassword = await AsyncStorage.getItem("password");
-        if (savedUsername && savedPassword) {
-          setUsername(savedUsername);
-          setPassword(savedPassword);
+        const savedLoyaltyNumber = await AsyncStorage.getItem("loyaltyNumber");
+        const savedPhoneNumber = await AsyncStorage.getItem("phoneNumber");
+        if (savedLoyaltyNumber && savedPhoneNumber) {
+          setLoyaltyNumber(savedLoyaltyNumber);
+          setPhoneNumber(savedPhoneNumber);
           setRememberMe(true);
         }
       } catch (error) {
@@ -59,43 +85,39 @@ useFocusEffect(
   }, []);
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      alert("Please enter username and password");
+    if (!loginVideo || !phoneNumber) {
+      alert("Please enter loyalty number and phone number");
       return;
     }
 
     try {
-      const response = await axios.get(
-        `${BASE_URL}LoginPage`,
-        { params: { username, password } }
+      const response = await axios.post(
+        `${BASE_URL}Auth/Login?loyaltyNumber=${loyaltyNumber}&phoneNumber=${phoneNumber}`
       );
       console.log("Login response:", response);
 
       if (response.status==200) {
-        const { roleFlag, username: userFromAPI, fcompcode } = response.data;
 
         if (rememberMe) {
-          await AsyncStorage.setItem("username", username);
-          await AsyncStorage.setItem("password", password);
+          await AsyncStorage.setItem("loyaltyNumber", loyaltyNumber);
+          await AsyncStorage.setItem("phoneNumber", phoneNumber);
         } else {
-          await AsyncStorage.removeItem("username");
-          await AsyncStorage.removeItem("password");
+          await AsyncStorage.removeItem("loyaltyNumber");
+          await AsyncStorage.removeItem("phoneNumber");
         }
 
-        if (roleFlag === "Y") {
-          navigation.navigate("Company");
-        } else if (roleFlag === "N") {
-          console.log(response.data.companyCode)
-          setCompanyCode(response.data.companyCode);
-          setGroupCode(response.data.groupCode);
-          console.log("Company code set:", getCompanyCode());
-          navigation.navigate("Home", {
-            username: userFromAPI || username,
-            roleFlag,
-            companyCode: fcompcode,
-            fullPayload: response.data
-          });
-        }
+
+          console.log(response.data.fcompcode)
+          setCompanyCode(response.data.fcompcode);
+          setGroupCode(response.data.fGroupCode);
+         navigation.navigate("LoyaltyReport", {
+            companyName: response.data.companyName,
+            companyPhone: response.data.companyPhone,
+            loyaltyNumber: response.data.loyaltyNumber
+            });
+
+       
+
         handleCancel();
       } else {
         handleStatusCodeError(response.status, "Error deleting data");
@@ -117,8 +139,8 @@ useFocusEffect(
 
 
   const handleCancel = () => {
-    setUsername("");
-    setPassword("");
+    setLoyaltyNumber("");
+    setPhoneNumber("");
   };
 
   return (
@@ -154,7 +176,7 @@ useFocusEffect(
 
             {/* Username */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>USERNAME</Text>
+              <Text style={styles.label}>loyalty Number</Text>
               <View style={styles.inputBox}>
                 <Icon name="person" size={wp("5%")} color="#006A72" style={styles.leftIcon} />
                 <TextInput
@@ -163,15 +185,15 @@ useFocusEffect(
                   onSubmitEditing={() => passwordRef.current?.focus()}
 
                   returnKeyType="next"
-                  value={username}
-                  onChangeText={setUsername}
+                  value={loyaltyNumber}
+                  onChangeText={setLoyaltyNumber}
                 />
               </View>
             </View>
 
-            {/* Password */}
+            {/* Phone Number */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>PASSWORD</Text>
+              <Text style={styles.label}>Phone Number</Text>
               <View style={styles.inputBox}>
                 <Icon name="lock" size={wp("5%")} color="#006A72" style={styles.leftIcon} />
                 <TextInput
@@ -179,8 +201,8 @@ useFocusEffect(
                   style={styles.textField}
                   placeholderTextColor="#888"
                   secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                   <Icon
@@ -221,6 +243,12 @@ useFocusEffect(
                 <Text style={styles.clearText}>CANCEL</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity 
+                style={styles.adminLoginContainer} 
+                onPress={() => navigation.navigate("Login")} 
+                >
+                <Text style={styles.adminLoginText}>Admin Login</Text>
+                </TouchableOpacity>
 
             <Text style={styles.footer}>
               © Dikshi Technologies - 9841419981
@@ -309,4 +337,16 @@ const styles = StyleSheet.create({
     marginTop: isTablet ?hp("3%") : hp("7%"),
     textAlign: "center",
   },
+
+  adminLoginContainer: {
+  alignItems: "center",
+  marginTop: hp("2%"),
+  marginBottom: hp("1%"),
+},
+adminLoginText: {
+  fontSize: wp("3.5%"),
+  color: "#080072ff",
+  textDecorationLine: "underline",
+},
+
 });
