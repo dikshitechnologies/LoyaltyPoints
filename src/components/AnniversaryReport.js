@@ -9,10 +9,12 @@ import {
   TouchableOpacity,
   Platform,
   ImageBackground,
+  Image,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { useNavigation } from "@react-navigation/native";
 import { BASE_URL } from "./Services";
 import { handleStatusCodeError } from "./ErrorHandler";
 
@@ -26,6 +28,8 @@ const COLUMN_WIDTHS = {
 };
 
 const AnniversaryReport = () => {
+  const navigation = useNavigation(); // <-- added navigation
+
   const [customerData, setCustomerData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
@@ -49,8 +53,6 @@ const AnniversaryReport = () => {
     if (!fromDate || !toDate) return;
     const startdate = formatDate(fromDate);
     const enddate = formatDate(toDate);
-
-    console.log(`${BASE_URL}BirthWedding/ByWeddingDate?fromDate=${startdate}&toDate=${enddate}&pageNumber=${page}&pageSize=${pageSize}`);
 
     setLoading(true);
     try {
@@ -104,17 +106,26 @@ const AnniversaryReport = () => {
 
   return (
     <View style={styles.container}>
-      {/* 💍 Heading Background */}
+      {/* 💍 Heading Background with Back Button */}
       <ImageBackground
-        source={require("../assets/anniversary-header.png")} // 👉 use your heart balloon background here
+        source={require("../assets/anniversary-header.png")}
         style={styles.titleBackground}
         resizeMode="cover"
       >
-        <View style={styles.overlay}>
+        <View style={styles.headerRowInside}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Image
+              source={require("../assets/backicon.png")}
+              style={styles.backIcon}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
           <Text style={styles.title}>💍 Anniversary Report</Text>
         </View>
       </ImageBackground>
-
       {/* Date Pickers */}
       <View style={styles.inputRow}>
         <TouchableOpacity style={styles.dateButton} onPress={() => setShowFromPicker(true)}>
@@ -195,33 +206,49 @@ const styles = StyleSheet.create({
     padding: wp("4%"),
   },
 
-  // 💍 Title Background
+  // Header inside Image
+  headerRowInside: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: wp("4%"),
+    flex: 1,
+    paddingTop: hp("5%"),
+  },
+
+  backButton: {
+    width: hp("5%"),
+    height: hp("5%"),
+    borderRadius: hp("2.5%"),
+    backgroundColor: "#006A72",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: wp("7%"),
+    marginTop: hp("7%"),
+    marginLeft: wp("-3%"),
+  },
+
+  backIcon: {
+    width: hp("2.5%"),
+    height: hp("2.5%"),
+    tintColor: "#fff",
+  },
+
   titleBackground: {
     width: "100%",
     height: hp("18%"),
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: "flex-end",
     borderRadius: 12,
     overflow: "hidden",
     marginBottom: hp("2%"),
   },
 
-  overlay: {
-    backgroundColor: "rgba(0,0,0,0.3)",
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: wp("4%"),
-    paddingTop: hp("11%"), // pushes heading a bit lower
-  },
-
   title: {
-    fontSize: hp("3.2%"),
+    fontSize: hp("3.3%"),
     fontWeight: "700",
-    color: "#fff",
-    textAlign: "center",
-    letterSpacing: 0.5,
+    color: "#006A72",
+    textAlign: "left",
+    flex: 1,
+    marginTop: hp("6%"),
   },
 
   inputRow: {

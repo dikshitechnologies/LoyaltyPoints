@@ -22,7 +22,7 @@ const ReportScreen = () => {
     {
       id: 1,
       title: "Total Customers",
-      image: require("../assets/total_customers.png"),
+      image: require("../assets/total-customer.png"),
       screen: "TotalCustomers"
     },
     {
@@ -75,41 +75,65 @@ const ReportScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    backgroundColor: "#006A72ff",
-    padding: wp("5%"),
-    paddingTop: hp("5%"),
-    alignItems: "center",
-    borderBottomLeftRadius: wp("5%"),
-    borderBottomRightRadius: wp("5%")
-  },
-  headerText: { fontSize: hp("3%"), color: "#fff", fontWeight: "bold" },
+  container: { flex: 1, backgroundColor: "#f2f5f8" },
 
-  grid: { padding: wp("3%") },
+  header: {
+    backgroundColor: "#006A72",
+    paddingVertical: hp("4%"),
+    alignItems: "center",
+    borderBottomLeftRadius: wp("7%"),
+    borderBottomRightRadius: wp("7%"),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  headerText: {
+    fontSize: hp("3%"),
+    color: "#fff",
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+    
+  },
+
+  grid: { padding: wp("4%") },
   row: { justifyContent: "space-between" },
 
   card: {
+    flex: 1,
     margin: wp("2%"),
-    backgroundColor: "#f8f8f8",
-    borderRadius: wp("3%"),
-    elevation: 3,
+    backgroundColor: "#fff",
+    borderRadius: wp("4%"),
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
     alignItems: "center",
-    padding: wp("3%"),
-    minHeight: hp("18%")
+    paddingVertical: hp("1.5%"),
+    paddingHorizontal: wp("2%"),
+    minHeight: hp("16%"),   // reduced card height
+    maxWidth: wp("40%"),    // makes grid tighter
   },
+
   cardImage: {
-    width: "70%",
-    height: hp("10%"),
-    resizeMode: "contain"
+    width: wp("18%"),
+    height: wp("18%"),
+    resizeMode: "contain",
+    borderRadius: wp("3%"),
+    marginBottom: hp("0.8%"),
   },
+
   cardTitle: {
-    marginTop: hp("1%"),
-    fontSize: hp("1.8%"),
+    marginTop: hp("0.5%"),
+    fontSize: hp("1.7%"),
     fontWeight: "600",
-    color: "#333",
-    textAlign: "center"
-  }
+    color: "#004d50",
+    textAlign: "center",
+  },
 });
 
+
 export default ReportScreen;
+
