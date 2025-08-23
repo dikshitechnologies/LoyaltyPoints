@@ -205,7 +205,7 @@ const IndividualCustomer = () => {
       {/* Loyalty Number Input + Barcode Scanner */}
       <View style={styles.inputRow}>
         <TextInput
-          placeholder="Enter Loyalty Number or Scan Barcode/QR"
+          placeholder="Enter Loyalty Number or Scan "
           value={loyaltyNumber}
           onChangeText={setLoyaltyNumber}
           style={styles.input}

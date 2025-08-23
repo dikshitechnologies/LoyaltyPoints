@@ -307,7 +307,7 @@ const PartyCreation = ({ navigation }) => {
                                 {/* Search and Delete Buttons */}
                                 <View style={styles.buttonRow}>
                                     <TouchableOpacity style={[styles.button, styles.searchBtn]} onPress={handleSearch}>
-                                        <Text style={styles.saveText}>Edit</Text>
+                                        <Text style={styles.Text}>EDIT</Text>
                                     </TouchableOpacity>
                                         <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={handleDelete}>
                                             <Text style={styles.saveText}>DELETE</Text>
@@ -421,18 +421,23 @@ const styles = StyleSheet.create({
         marginHorizontal: wp('1%'),
     },
     saveBtn: {
-        backgroundColor: "#006A72"
+        backgroundColor: "#15a0aaff"
     },
     saveText: {
         color: "#ffffff",
         fontWeight: "bold",
         fontSize: wp('4%')
     },
+    Text: {
+        color: "#ffffff",
+        fontWeight: "bold",
+        fontSize: wp('4%')
+    },
     clearBtn: {
-        backgroundColor: "#D9F5F7"
+        backgroundColor: "#15a0aaff"
     },
     clearText: {
-        color: "#006A72",
+        color: "#ffffff",
         fontWeight: "bold",
         fontSize: wp('4%')
     },
@@ -442,10 +447,10 @@ const styles = StyleSheet.create({
     },
     // New styles for Search and Delete buttons
     searchBtn: {
-        backgroundColor: '#FFA500', // Orange color for search
+        backgroundColor: '#15a0aaff', // Light blue color for search
     },
     deleteBtn: {
-        backgroundColor: '#FF4136', // Red color for delete
+        backgroundColor: '#15a0aaff', // Teal color for delete
     },
 });
 
