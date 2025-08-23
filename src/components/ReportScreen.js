@@ -1,98 +1,3 @@
-// import React from "react";
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   TouchableOpacity,
-//   Image,
-//   ScrollView
-// } from "react-native";
-// import { useNavigation } from "@react-navigation/native";
-// import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
-
-// const ReportScreen = () => {
-//   const navigation = useNavigation();
-
-//   const reportOptions = [
-//     {
-//       id: 1,
-//       title: "Total Customers Report",
-//       image: require("../assets/total_customers.png"),
-//       screen: "TotalCustomers"
-//     },
-//     {
-//       id: 2,
-//       title: "Individual Customer Report",
-//       image: require("../assets/individual.png"),
-//       screen: "IndividualCustomer"
-//     },
-//     {
-//       id: 3,
-//       title: "Birthday Report",
-//       image: require("../assets/birthday.png"),
-//       screen: "BirthdayReport"
-//     },
-//     {
-//       id: 4,
-//       title: "Wedding Anniversary Report",
-//       image: require("../assets/anniversary.png"),
-//       screen: "AnniversaryReport"
-//     }
-//   ];
-
-//   return (
-//     <ScrollView style={styles.container}>
-//       <View style={styles.header}>
-//         <Text style={styles.headerText}>Loyalty Reports</Text>
-//       </View>
-
-//       {reportOptions.map((item) => (
-//         <TouchableOpacity
-//           key={item.id}
-//           style={styles.card}
-//           onPress={() => navigation.navigate(item.screen)}
-//         >
-//           <Image source={item.image} style={styles.cardImage} />
-//           <Text style={styles.cardTitle}>{item.title}</Text>
-//         </TouchableOpacity>
-//       ))}
-//     </ScrollView>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: { flex: 1, backgroundColor: "#fff" },
-//   header: {
-//     backgroundColor: "#006A72ff",
-//     padding: wp("5%"),
-//     paddingTop: hp("6%"),
-//     alignItems: "center",
-//     borderBottomLeftRadius: wp("5%"),
-//     borderBottomRightRadius: wp("5%")
-//   },
-//   headerText: { fontSize: hp("3%"), color: "#fff", fontWeight: "bold" },
-//   card: {
-//     margin: wp("5%"),
-//     backgroundColor: "#f8f8f8",
-//     borderRadius: wp("4%"),
-//     elevation: 4,
-//     alignItems: "center",
-//     padding: wp("4%")
-//   },
-//   cardImage: { width: wp("60%"), height: hp("20%"), resizeMode: "contain" },
-//   cardTitle: {
-//     marginTop: hp("2%"),
-//     fontSize: hp("2.2%"),
-//     fontWeight: "bold",
-//     color: "#333"
-//   }
-// });
-
-// export default ReportScreen;
-
-
-
-
 import React from "react";
 import {
   View,
@@ -138,12 +43,7 @@ const ReportScreen = () => {
       image: require("../assets/anniversary.png"),
       screen: "AnniversaryReport"
     },
-    // {
-    //   id: 5,
-    //   title: "Upcoming Report",
-    //   image: require("../assets/new_report.png"),
-    //   screen: "NewReport"
-    // }
+    
   ];
 
   const renderCard = ({ item }) => (
