@@ -12,7 +12,8 @@ import {
     SafeAreaView,
     Keyboard,
     TouchableWithoutFeedback,
-    Alert
+    Alert,
+    Image
 } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
@@ -23,7 +24,7 @@ import { handleStatusCodeError } from './ErrorHandler';
 import { getGroupCode, getCompanyCode } from '../store';
 
 const PartyCreation = ({ navigation }) => {
-    // Existing States
+    // States
     const [loyaltyNumber, setLoyaltyNumber] = useState('');
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -33,14 +34,14 @@ const PartyCreation = ({ navigation }) => {
     const [weddingDate, setWeddingDate] = useState('');
     const [focusedField, setFocusedField] = useState(null);
 
-    // New States for Edit/Delete
+    // For Edit/Delete
     const [customerId, setCustomerId] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
 
     const groupCode = getGroupCode();
     const fcomCode = getCompanyCode();
 
-    // Refs for focus navigation
+    // Refs
     const loyaltyNumberRef = useRef();
     const nameRef = useRef();
     const phoneNumberRef = useRef();
@@ -49,7 +50,7 @@ const PartyCreation = ({ navigation }) => {
     const weddingDateRef = useRef();
 
     useEffect(() => {
-        // Set today's date when component mounts
+        // Set today's date
         const today = new Date();
         const day = String(today.getDate()).padStart(2, '0');
         const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -88,7 +89,6 @@ const PartyCreation = ({ navigation }) => {
     };
 
     const handleClear = () => {
-        // Clear all form inputs and reset state
         setLoyaltyNumber('');
         setName('');
         setPhoneNumber('');
@@ -96,7 +96,7 @@ const PartyCreation = ({ navigation }) => {
         setBirthDate('');
         setWeddingDate('');
         setCustomerId(null);
-        setIsEditing(false); // Exit editing mode
+        setIsEditing(false);
     };
 
     const handleApiError = (error) => {
@@ -108,7 +108,7 @@ const PartyCreation = ({ navigation }) => {
         } else if (error.request) {
             Alert.alert("Network Error", "No response received from the server. Please check your network connection.");
         } else {
-            Alert.alert("Request Error", `Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+            Alert.alert("Request Error", `Error: ${error.message}`);
         }
     };
 
@@ -183,7 +183,6 @@ const PartyCreation = ({ navigation }) => {
     };
 
     const handleSearch = async () => {
-        // Search by the first available criteria
         const searchTerm = loyaltyNumber || phoneNumber || name;
         if (!searchTerm.trim()) {
             Alert.alert("Search Error", "Please enter a Loyalty Number, Phone Number, or Name to search.");
@@ -201,7 +200,7 @@ const PartyCreation = ({ navigation }) => {
                 setAddress(customer.address || '');
                 setBirthDate(customer.fBirth || '');
                 setWeddingDate(customer.fWedding || '');
-                setIsEditing(true); // Enter editing mode
+                setIsEditing(true);
                 Alert.alert("Success", "Customer data loaded.");
             } else {
                 Alert.alert("Not Found", "No customer found with the provided details.");
@@ -211,7 +210,7 @@ const PartyCreation = ({ navigation }) => {
         }
     };
 
-    // Reusable input component
+    // Reusable Input
     const renderInput = (
         label,
         value,
@@ -294,25 +293,39 @@ const PartyCreation = ({ navigation }) => {
                                 {renderInput("Wedding Date", weddingDate, setWeddingDate, "default", weddingDateRef, () => addressRef.current.focus(), "next", false, 1, "characters", "weddingDate")}
                                 {renderInput("Address", address, setAddress, "default", addressRef, () => handleSave(), "done", true, 3, "sentences", "address")}
 
-                                {/* Action Buttons */}
-                                <View style={styles.buttonRow}>
-                                    <TouchableOpacity style={[styles.button, styles.saveBtn]} onPress={handleSave}>
-                                        <Text style={styles.saveText}>{isEditing ? 'UPDATE' : 'SAVE'}</Text>
+                                {/* Rounded Buttons Row */}
+                                <View style={styles.actionRow}>
+                                    {/* Save */}
+                                    <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
+                                        <View style={styles.iconCircle}>
+                                            <Image source={require('../assets/save.png')} style={styles.icon} />
+                                        </View>
+                                        <Text style={styles.actionLabel}>{isEditing ? 'Update' : 'Save'}</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={handleClear}>
-                                        <Text style={styles.clearText}>CLEAR</Text>
-                                    </TouchableOpacity>
-                                </View>
 
-                                {/* Search and Delete Buttons */}
-                                <View style={styles.buttonRow}>
-                                    <TouchableOpacity style={[styles.button, styles.searchBtn]} onPress={handleSearch}>
-                                        <Text style={styles.Text}>EDIT</Text>
+                                    {/* Clear */}
+                                    <TouchableOpacity style={styles.actionButton} onPress={handleClear}>
+                                        <View style={styles.iconCircle}>
+                                            <Image source={require('../assets/clear.png')} style={styles.icon} />
+                                        </View>
+                                        <Text style={styles.actionLabel}>Clear</Text>
                                     </TouchableOpacity>
-                                        <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={handleDelete}>
-                                            <Text style={styles.saveText}>DELETE</Text>
-                                        </TouchableOpacity>
-                                 
+
+                                    {/* Edit */}
+                                    <TouchableOpacity style={styles.actionButton} onPress={handleSearch}>
+                                        <View style={styles.iconCircle}>
+                                            <Image source={require('../assets/edit.png')} style={styles.icon} />
+                                        </View>
+                                        <Text style={styles.actionLabel}>Edit</Text>
+                                    </TouchableOpacity>
+
+                                    {/* Delete */}
+                                    <TouchableOpacity style={styles.actionButton} onPress={handleDelete}>
+                                        <View style={styles.iconCircle}>
+                                            <Image source={require('../assets/delete.png')} style={styles.icon} />
+                                        </View>
+                                        <Text style={styles.actionLabel}>Delete</Text>
+                                    </TouchableOpacity>
                                 </View>
                             </View>
                         </View>
@@ -322,7 +335,6 @@ const PartyCreation = ({ navigation }) => {
         </SafeAreaView>
     );
 };
-
 
 const styles = StyleSheet.create({
     container: {
@@ -350,10 +362,7 @@ const styles = StyleSheet.create({
         margin: wp('4%'),
         marginTop: hp('2.5%'),
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: hp('0.25%'),
-        },
+        shadowOffset: { width: 0, height: hp('0.25%') },
         shadowOpacity: 0.1,
         shadowRadius: wp('1%'),
         elevation: 3,
@@ -408,50 +417,45 @@ const styles = StyleSheet.create({
         height: hp('10%'),
         textAlignVertical: "top",
     },
-    buttonRow: {
-        flexDirection: "row",
-        justifyContent: "space-around", // Changed to space-around for better spacing
-        marginTop: hp('2.5%'),
-    },
-    button: {
-        flex: 1,
-        paddingVertical: hp('1.5%'),
-        borderRadius: wp('6%'),
-        alignItems: "center",
-        marginHorizontal: wp('1%'),
-    },
-    saveBtn: {
-        backgroundColor: "#15a0aaff"
-    },
-    saveText: {
-        color: "#ffffff",
-        fontWeight: "bold",
-        fontSize: wp('4%')
-    },
-    Text: {
-        color: "#ffffff",
-        fontWeight: "bold",
-        fontSize: wp('4%')
-    },
-    clearBtn: {
-        backgroundColor: "#15a0aaff"
-    },
-    clearText: {
-        color: "#ffffff",
-        fontWeight: "bold",
-        fontSize: wp('4%')
-    },
     inputFocused: {
         borderColor: "#FF9800",
         backgroundColor: "#FFF8E1"
     },
-    // New styles for Search and Delete buttons
-    searchBtn: {
-        backgroundColor: '#15a0aaff', // Light blue color for search
+
+    // 🔹 Rounded Buttons Row
+    actionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: hp('3%'),
+        marginHorizontal: wp('2%'),
     },
-    deleteBtn: {
-        backgroundColor: '#15a0aaff', // Teal color for delete
+    actionButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
     },
+   icon: {
+    width: wp('6%'),   // smaller size so it fits inside
+    height: wp('6%'),
+    tintColor: '#fff', // make icon white
+    resizeMode: 'contain',
+},
+iconCircle: {
+    width: wp('12%'),
+    height: wp('12%'),
+    borderRadius: wp('6%'),
+    backgroundColor: '#15a0aa',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp('0.5%'),
+},
+    actionLabel: {
+        fontSize: wp('3.2%'),
+        color: '#006A72',
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    
 });
 
 export default PartyCreation;
