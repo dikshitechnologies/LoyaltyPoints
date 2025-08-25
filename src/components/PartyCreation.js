@@ -17,6 +17,7 @@ import {
     FlatList
 } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { useDebounce } from 'use-debounce';
 
 import { BASE_URL } from './Services';
 import { showConfirmation } from './AlertUtils';
@@ -42,7 +43,14 @@ const PartyCreation = ({ navigation }) => {
     // Modal states
     const [modalVisible, setModalVisible] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
+
+//---------------PAGINATION SEARCH STATE  ------------------
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm] = useDebounce(searchTerm, 500); 
+    const [pageNumber, setPageNumber] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+
 
     const groupCode = getGroupCode();
     const fcomCode = getCompanyCode();
@@ -54,6 +62,7 @@ const PartyCreation = ({ navigation }) => {
     const addressRef = useRef();
     const birthDateRef = useRef();
     const weddingDateRef = useRef();
+
 
     useEffect(() => {
         // Set today's date when component mounts
@@ -193,65 +202,126 @@ const handleDelete = async () => {
   
 };
 
-    const handleEdit = () => {
-        setModalVisible(true);
-        setSearchTerm('');
-        setSearchResults([]);
-    };
-
-    const searchCustomers = async () => {
-        if (!searchTerm.trim()) {
-            Alert.alert("Search Error", "Please enter a Loyalty Number, Phone Number, or Name to search.");
-            return;
-        }
-
-        try {
-            const pageSize = 20;
-            const response = await axios.get(
-                `${BASE_URL}Register/CustomerList/${groupCode}?pageNumber=1&pageSize=${pageSize}`
-            );
-
-            if (response.status === 200 && response.data && response.data.data) {
-                const customers = response.data.data;
-
-                // Filter customers based on search term
-                const filteredCustomers = customers.filter(
-                    (c) =>
-                        (c.loyaltyNumber && c.loyaltyNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                        (c.phonenumber && c.phonenumber.includes(searchTerm)) ||
-                        (c.customerName && c.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
-                );
-
-                setSearchResults(filteredCustomers);
-
-                if (filteredCustomers.length === 0) {
-                    Alert.alert("Not Found", "No customers found with the provided search term.");
-                }
+//-----------------------------------------------Search Field Value  Track ------------------------------
+        useEffect(() => {
+            if (debouncedSearchTerm) {
+               
+                
+                setPageNumber(1);
+                searchCustomers(true, 1);
             } else {
-                Alert.alert("Error", "Failed to fetch customer data.");
+                setSearchResults([]);
             }
-        } catch (error) {
-            handleApiError(error);
+        }, [debouncedSearchTerm]);
+
+            const handleEdit = () => {
+                setModalVisible(true);
+                setSearchTerm('');
+                setSearchResults([]);
+            };
+            //-------------------------------------Filter Values Api  -------------------------------------
+     const searchCustomers = async (reset = false, page = 1) => {
+    const term = debouncedSearchTerm.trim();
+    if (!term) {
+        setSearchResults([]);
+        setHasMore(false);
+        return;
+    }
+
+    if (loading || (!hasMore && !reset)) return;
+
+    try {
+        setLoading(true);
+        const pageSize = 2;
+        const currentPage = reset ? 1 : page;
+        
+        const response = await axios.get(
+            `${BASE_URL}Register/CustomerFilterData/${groupCode}?search=${term}&pageNumber=${currentPage}&pageSize=${pageSize}`
+        );
+
+        if (response.status === 200 && response.data) {
+            const customers = response.data.data || [];
+
+            if (reset) {
+                setSearchResults(customers);
+                setPageNumber(2); 
+            } else {
+                setSearchResults(prev => [...prev, ...customers]);
+                setPageNumber(prev => prev + 1);
+            } 
+
+            setHasMore(customers.length === pageSize);
+        } else {
+            setSearchResults([]);
+            setHasMore(false);
         }
-    };
+    } catch (error) {
+        if (error.response) {
+            handleStatusCodeError(
+              error.response.status,
+              error.response.data?.message || "An unexpected server error occurred.",
+              handleClear()
+            );
+          } else if (error.request) {
+            alert("No response received from the server. Please check your network connection.");
+          } 
+          else {
+            alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+          }
+        }
+      
+     finally {
+        setLoading(false);
+    }
+};
+
+
+        const customerSelect = async (customerCode) => {
+            try {
+                const response = await axios.get(`${BASE_URL}Register/CustomerSelect/${customerCode}`);
+
+                    if (response.status === 200 && response.data && response.data.data) {
+                        const customers = response.data;
+                        selectCustomer(customers);
+
+                    } else {
+                         handleStatusCodeError(response.status, "Error deleting data");
+                    }
+                }  catch (error) {
+            if (error.response) {
+                handleStatusCodeError(
+                error.response.status,
+                error.response.data?.message || "An unexpected server error occurred.",
+                handleClear()
+                );
+            } else if (error.request) {
+                alert("No response received from the server. Please check your network connection.");
+            } 
+            else {
+                alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+            }
+            }
+        };
+
+
+
 
     const selectCustomer = (customer) => {
-        setCustomerCode(customer.customerCode); // ✅ FIXED
         setLoyaltyNumber(customer.loyaltyNumber || '');
         setName(customer.customerName || '');
         setPhoneNumber(customer.phonenumber || '');
         setAddress(customer.address || '');
         setBirthDate(customer.fBirth || '');
-        setWeddingDate(customer.fWedding || '');
+        setWeddingDate(customer.fWed || '');
         setIsEditing(true);
         setModalVisible(false);
-        Alert.alert("Success", "Customer data loaded.");
+
     };
 
     const renderCustomerItem = ({ item }) => (
         <TouchableOpacity
             style={styles.customerItem}
-            onPress={() => selectCustomer(item)}
+            onPress={() => {setCustomerCode(item.customerCode); customerSelect(item.customerCode)}}
         >
             <Text style={styles.customerName}>{item.customerName}</Text>
             <Text style={styles.customerDetail}>Loyalty: {item.loyaltyNumber || 'N/A'}</Text>
@@ -384,26 +454,50 @@ const handleDelete = async () => {
                             <Text style={styles.modalTitle}>Search Customer</Text>
 
                             <View style={styles.searchContainer}>
-                                <TextInput
+                               <TextInput
                                     style={styles.searchInput}
                                     placeholder="Enter Loyalty Number, Name, or Phone"
                                     value={searchTerm}
-                                    onChangeText={setSearchTerm}
+                                    onChangeText={(text) => {
+                                        setSearchTerm(text);
+                                        setPageNumber(1);
+                                    }}
                                 />
-                                <TouchableOpacity
+
+                               <TouchableOpacity
                                     style={styles.searchButton}
-                                    onPress={searchCustomers}
+                                    onPress={() => searchCustomers(true)} // reset search
                                 >
                                     <Text style={styles.searchButtonText}>Search</Text>
                                 </TouchableOpacity>
+
                             </View>
 
-                            <FlatList
-                                data={searchResults}
-                                renderItem={renderCustomerItem}
-                                keyExtractor={(item) => item.customerCode.toString()}
-                                style={styles.customerList}
-                            />
+                         <FlatList
+                            data={searchResults}
+                            renderItem={renderCustomerItem}
+                            keyExtractor={(item, index) => (index + 1).toString()}
+                            style={styles.customerList}
+                            onEndReached={() => {
+                                if (!loading && hasMore) {
+                                    searchCustomers(false, pageNumber);
+                                }
+                            }}
+                            onEndReachedThreshold={0.5}
+                            ListEmptyComponent={
+                                !loading ? (
+                                    <Text style={{ textAlign: 'center', padding: 10, color: '#666' }}>
+                                        No customers found
+                                    </Text>
+                                ) : null
+                            }
+                            ListFooterComponent={
+                                loading ? (
+                                    <Text style={{ textAlign: 'center', padding: 10 }}>Loading...</Text>
+                                ) : null
+                            }
+                        />
+
 
                             <TouchableOpacity
                                 style={styles.closeButton}
