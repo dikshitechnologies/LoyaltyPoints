@@ -12,7 +12,9 @@ import {
     SafeAreaView,
     Keyboard,
     TouchableWithoutFeedback,
-    Alert
+    Alert,
+    Modal,
+    FlatList
 } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
@@ -33,9 +35,14 @@ const PartyCreation = ({ navigation }) => {
     const [weddingDate, setWeddingDate] = useState('');
     const [focusedField, setFocusedField] = useState(null);
 
-    // New States for Edit/Delete
-    const [customerId, setCustomerId] = useState(null);
+    // States for Edit/Delete
+    const [customerCode, setCustomerCode] = useState(null); // ✅ FIXED: store customerCode instead of id
     const [isEditing, setIsEditing] = useState(false);
+
+    // Modal states
+    const [modalVisible, setModalVisible] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const groupCode = getGroupCode();
     const fcomCode = getCompanyCode();
@@ -79,7 +86,6 @@ const PartyCreation = ({ navigation }) => {
 
     const handleSave = () => {
         if (!handleValidation()) return;
-
         if (isEditing) {
             handleUpdate();
         } else {
@@ -88,15 +94,14 @@ const PartyCreation = ({ navigation }) => {
     };
 
     const handleClear = () => {
-        // Clear all form inputs and reset state
         setLoyaltyNumber('');
         setName('');
         setPhoneNumber('');
         setAddress('');
         setBirthDate('');
         setWeddingDate('');
-        setCustomerId(null);
-        setIsEditing(false); // Exit editing mode
+        setCustomerCode(null);
+        setIsEditing(false);
     };
 
     const handleApiError = (error) => {
@@ -137,8 +142,13 @@ const PartyCreation = ({ navigation }) => {
     };
 
     const handleUpdate = async () => {
+        if (!customerCode) {
+            Alert.alert("Error", "No customer selected for update.");
+            return;
+        }
+
         const payload = {
-            customerId,
+            customerCode, // ✅ using customerCode
             loyaltyNumber,
             customerName: name,
             phonenumber: phoneNumber,
@@ -149,7 +159,7 @@ const PartyCreation = ({ navigation }) => {
             fWedding: weddingDate
         };
         try {
-            const response = await axios.put(`${BASE_URL}Register/updateCustomer/${customerId}`, payload);
+            const response = await axios.put(`${BASE_URL}Register/updateCustomer/${customerCode}`, payload);
             if (response.status === 200) {
                 Alert.alert('Success', 'Customer updated successfully');
                 handleClear();
@@ -161,55 +171,93 @@ const PartyCreation = ({ navigation }) => {
         }
     };
 
-    const handleDelete = async () => {
-        if (!customerId) {
-            Alert.alert("Error", "No customer is loaded to delete.");
-            return;
-        }
+const handleDelete = async () => {
+    if (!customerCode) {
+        Alert.alert("Error", "No customer is loaded to delete.");
+        return;
+    }
 
-        showConfirmation('Confirm Deletion', 'Are you sure you want to delete this customer?', async () => {
-            try {
-                const response = await axios.delete(`${BASE_URL}Register/deleteCustomer/${customerId}`);
-                if (response.status === 200) {
-                    Alert.alert('Success', 'Customer deleted successfully');
-                    handleClear();
-                } else {
-                    handleStatusCodeError(response.status, "Error deleting data");
-                }
-            } catch (error) {
-                handleApiError(error);
+
+        try {
+            const response = await axios.delete(`${BASE_URL}Register/RemoveCustomer${customerCode}`);
+            
+            if (response.status === 200) {
+                Alert.alert('Success', 'Customer deleted successfully');
+                handleClear();
+            } else {
+                handleStatusCodeError(response.status, "Error deleting data");
             }
-        });
+        } catch (error) {
+            handleApiError(error);
+        }
+  
+};
+
+    const handleEdit = () => {
+        setModalVisible(true);
+        setSearchTerm('');
+        setSearchResults([]);
     };
 
-    const handleSearch = async () => {
-        // Search by the first available criteria
-        const searchTerm = loyaltyNumber || phoneNumber || name;
+    const searchCustomers = async () => {
         if (!searchTerm.trim()) {
             Alert.alert("Search Error", "Please enter a Loyalty Number, Phone Number, or Name to search.");
             return;
         }
 
         try {
-            const response = await axios.get(`${BASE_URL}Register/getCustomerByTerm?term=${searchTerm}`);
-            if (response.status === 200 && response.data) {
-                const customer = response.data;
-                setCustomerId(customer.customerId);
-                setLoyaltyNumber(customer.loyaltyNumber || '');
-                setName(customer.customerName || '');
-                setPhoneNumber(customer.phonenumber || '');
-                setAddress(customer.address || '');
-                setBirthDate(customer.fBirth || '');
-                setWeddingDate(customer.fWedding || '');
-                setIsEditing(true); // Enter editing mode
-                Alert.alert("Success", "Customer data loaded.");
+            const pageSize = 20;
+            const response = await axios.get(
+                `${BASE_URL}Register/CustomerList/${groupCode}?pageNumber=1&pageSize=${pageSize}`
+            );
+
+            if (response.status === 200 && response.data && response.data.data) {
+                const customers = response.data.data;
+
+                // Filter customers based on search term
+                const filteredCustomers = customers.filter(
+                    (c) =>
+                        (c.loyaltyNumber && c.loyaltyNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                        (c.phonenumber && c.phonenumber.includes(searchTerm)) ||
+                        (c.customerName && c.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
+
+                setSearchResults(filteredCustomers);
+
+                if (filteredCustomers.length === 0) {
+                    Alert.alert("Not Found", "No customers found with the provided search term.");
+                }
             } else {
-                Alert.alert("Not Found", "No customer found with the provided details.");
+                Alert.alert("Error", "Failed to fetch customer data.");
             }
         } catch (error) {
             handleApiError(error);
         }
     };
+
+    const selectCustomer = (customer) => {
+        setCustomerCode(customer.customerCode); // ✅ FIXED
+        setLoyaltyNumber(customer.loyaltyNumber || '');
+        setName(customer.customerName || '');
+        setPhoneNumber(customer.phonenumber || '');
+        setAddress(customer.address || '');
+        setBirthDate(customer.fBirth || '');
+        setWeddingDate(customer.fWedding || '');
+        setIsEditing(true);
+        setModalVisible(false);
+        Alert.alert("Success", "Customer data loaded.");
+    };
+
+    const renderCustomerItem = ({ item }) => (
+        <TouchableOpacity
+            style={styles.customerItem}
+            onPress={() => selectCustomer(item)}
+        >
+            <Text style={styles.customerName}>{item.customerName}</Text>
+            <Text style={styles.customerDetail}>Loyalty: {item.loyaltyNumber || 'N/A'}</Text>
+            <Text style={styles.customerDetail}>Phone: {item.phonenumber || 'N/A'}</Text>
+        </TouchableOpacity>
+    );
 
     // Reusable input component
     const renderInput = (
@@ -280,10 +328,17 @@ const PartyCreation = ({ navigation }) => {
                                 <Text style={styles.subtitle}>
                                     {isEditing ? 'Update or Delete Customer Details' : 'Fill in the details to add a new Customer.'}
                                 </Text>
+                                <View style={styles.headerRow}>
+                                    <View style={styles.dateContainer}>
+                                        <Text style={styles.dateLabel}>Date:</Text>
+                                        <Text style={styles.dateValue}>{currentDate}</Text>
+                                    </View>
 
-                                <View style={styles.dateContainer}>
-                                    <Text style={styles.dateLabel}>Date:</Text>
-                                    <Text style={styles.dateValue}>{currentDate}</Text>
+                                    <View style={styles.editContainer}>
+                                        <TouchableOpacity onPress={handleEdit}>
+                                            <MaterialIcons name="edit" size={28} color="#ffff" />
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
 
                                 {/* Form Fields */}
@@ -304,25 +359,65 @@ const PartyCreation = ({ navigation }) => {
                                     </TouchableOpacity>
                                 </View>
 
-                                {/* Search and Delete Buttons */}
+                                {/* Delete Button */}
                                 <View style={styles.buttonRow}>
-                                    <TouchableOpacity style={[styles.button, styles.searchBtn]} onPress={handleSearch}>
-                                        <Text style={styles.Text}>EDIT</Text>
-                                    </TouchableOpacity>
-                                        <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={handleDelete}>
+                                    {isEditing && (
+                                        <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={()=>{showConfirmation('Confirm ', handleDelete)}}>
                                             <Text style={styles.saveText}>DELETE</Text>
                                         </TouchableOpacity>
-                                 
+                                    )}
                                 </View>
                             </View>
                         </View>
                     </TouchableWithoutFeedback>
                 </ScrollView>
+
+                {/* Customer Search Modal */}
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => setModalVisible(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Search Customer</Text>
+
+                            <View style={styles.searchContainer}>
+                                <TextInput
+                                    style={styles.searchInput}
+                                    placeholder="Enter Loyalty Number, Name, or Phone"
+                                    value={searchTerm}
+                                    onChangeText={setSearchTerm}
+                                />
+                                <TouchableOpacity
+                                    style={styles.searchButton}
+                                    onPress={searchCustomers}
+                                >
+                                    <Text style={styles.searchButtonText}>Search</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <FlatList
+                                data={searchResults}
+                                renderItem={renderCustomerItem}
+                                keyExtractor={(item) => item.customerCode.toString()}
+                                style={styles.customerList}
+                            />
+
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={() => setModalVisible(false)}
+                            >
+                                <Text style={styles.closeButtonText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
-
 
 const styles = StyleSheet.create({
     container: {
@@ -350,10 +445,7 @@ const styles = StyleSheet.create({
         margin: wp('4%'),
         marginTop: hp('2.5%'),
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: hp('0.25%'),
-        },
+        shadowOffset: { width: 0, height: hp('0.25%') },
         shadowOpacity: 0.1,
         shadowRadius: wp('1%'),
         elevation: 3,
@@ -410,7 +502,7 @@ const styles = StyleSheet.create({
     },
     buttonRow: {
         flexDirection: "row",
-        justifyContent: "space-around", // Changed to space-around for better spacing
+        justifyContent: "space-around",
         marginTop: hp('2.5%'),
     },
     button: {
@@ -421,23 +513,20 @@ const styles = StyleSheet.create({
         marginHorizontal: wp('1%'),
     },
     saveBtn: {
-        backgroundColor: "#15a0aaff"
+        backgroundColor: "#006A72"
     },
     saveText: {
         color: "#ffffff",
         fontWeight: "bold",
         fontSize: wp('4%')
     },
-    Text: {
-        color: "#ffffff",
-        fontWeight: "bold",
-        fontSize: wp('4%')
-    },
     clearBtn: {
-        backgroundColor: "#15a0aaff"
+        backgroundColor: "#D9F5F7"
     },
+    
+
     clearText: {
-        color: "#ffffff",
+        color: "#006A72",
         fontWeight: "bold",
         fontSize: wp('4%')
     },
@@ -445,13 +534,99 @@ const styles = StyleSheet.create({
         borderColor: "#FF9800",
         backgroundColor: "#FFF8E1"
     },
-    // New styles for Search and Delete buttons
     searchBtn: {
-        backgroundColor: '#15a0aaff', // Light blue color for search
+        backgroundColor: '#FFA500',
     },
     deleteBtn: {
-        backgroundColor: '#15a0aaff', // Teal color for delete
+        backgroundColor: '#FF4136',
     },
+    // Modal styles
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        width: wp('90%'),
+        backgroundColor: 'white',
+        borderRadius: wp('4%'),
+        padding: wp('5%'),
+        maxHeight: hp('80%'),
+    },
+    modalTitle: {
+        fontSize: wp('5%'),
+        fontWeight: 'bold',
+        color: '#006A72',
+        textAlign: 'center',
+        marginBottom: hp('2%'),
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        marginBottom: hp('2%'),
+    },
+    searchInput: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#8FD6DA',
+        borderRadius: wp('2%'),
+        paddingHorizontal: wp('3%'),
+        paddingVertical: hp('1%'),
+        marginRight: wp('2%'),
+    },
+    searchButton: {
+        backgroundColor: '#006A72',
+        paddingHorizontal: wp('4%'),
+        paddingVertical: hp('1%'),
+        borderRadius: wp('2%'),
+        justifyContent: 'center',
+    },
+    searchButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    customerList: {
+        maxHeight: hp('40%'),
+        marginBottom: hp('2%'),
+    },
+    customerItem: {
+        padding: wp('3%'),
+        borderBottomWidth: 1,
+        borderBottomColor: '#E0E0E0',
+    },
+    customerName: {
+        fontSize: wp('4%'),
+        fontWeight: 'bold',
+        color: '#00363A',
+    },
+    customerDetail: {
+        fontSize: wp('3.5%'),
+        color: '#666',
+    },
+    closeButton: {
+        backgroundColor: '#D9F5F7',
+        padding: wp('3%'),
+        borderRadius: wp('2%'),
+        alignItems: 'center',
+    },
+    closeButtonText: {
+        color: '#006A72',
+        fontWeight: 'bold',
+    },
+    headerRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginVertical: 8,
+    },
+    editContainer: {
+        paddingHorizontal: 8,
+        backgroundColor: '#006A72',
+        borderRadius: wp('6%'),
+        padding:wp('2%')
+        
+    },
+
 });
 
 export default PartyCreation;
