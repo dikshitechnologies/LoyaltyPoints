@@ -587,7 +587,7 @@ input: {
   borderWidth: 1,
   borderColor: "#8FD6DA",
   borderRadius: wp('2%'),
-  paddingHorizontal: wp('3%'),
+  paddingHorizontal: wp('3%'),                 
   paddingVertical: hp('1.2%'),
   fontSize: isTablet ? wp('4.2%') : wp('3.9%'), 
   backgroundColor: "#ffffff",

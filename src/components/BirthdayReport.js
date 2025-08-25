@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#006A72",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: wp("11%"),
+    marginRight: wp("13%"),
     marginTop: hp("7%"),
     marginLeft: wp("-3%"),
   },
