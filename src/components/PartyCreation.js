@@ -96,9 +96,9 @@ const PartyCreation = ({ navigation }) => {
     const handleSave = () => {
         if (!handleValidation()) return;
         if (isEditing) {
-            handleUpdate();
+            showConfirmation('Do You Want to Update This Customer?', handleUpdate);
         } else {
-            newCustomer();
+            showConfirmation('Do You Want to Create a New Customer?', newCustomer);
         }
     };
 
@@ -203,16 +203,35 @@ const handleDelete = async () => {
 };
 
 //-----------------------------------------------Search Field Value  Track ------------------------------
-        useEffect(() => {
-            if (debouncedSearchTerm) {
-               
-                
-                setPageNumber(1);
-                searchCustomers(true, 1);
-            } else {
-                setSearchResults([]);
-            }
-        }, [debouncedSearchTerm]);
+            useEffect(() => {
+                let isCancelled = false;
+
+                const fetchCustomers = async () => {
+                    const term = debouncedSearchTerm.trim();
+                    if (!term) {
+                        setSearchResults([]);
+                        setHasMore(false);
+                        return;
+                    }
+
+                    setPageNumber(1);
+                    setHasMore(true);
+
+                    try {
+                        await searchCustomers({ reset: true, page: 1, term, isCancelled });
+                    } catch (err) {
+                        if (!isCancelled) console.error(err);
+                    }
+                };
+
+                fetchCustomers();
+
+                return () => {
+                    // Cancel any ongoing fetch
+                    isCancelled = true;
+                };
+            }, [debouncedSearchTerm]);
+
 
             const handleEdit = () => {
                 setModalVisible(true);
@@ -220,8 +239,8 @@ const handleDelete = async () => {
                 setSearchResults([]);
             };
             //-------------------------------------Filter Values Api  -------------------------------------
-     const searchCustomers = async (reset = false, page = 1) => {
-    const term = debouncedSearchTerm.trim();
+const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = false }) => {
+      if (!term || isCancelled) return;
     if (!term) {
         setSearchResults([]);
         setHasMore(false);
@@ -232,35 +251,36 @@ const handleDelete = async () => {
 
     try {
         setLoading(true);
-        const pageSize = 2;
+        const pageSize = 30;
         const currentPage = reset ? 1 : page;
-        
-        const response = await axios.get(
-            `${BASE_URL}Register/CustomerFilterData/${groupCode}?search=${term}&pageNumber=${currentPage}&pageSize=${pageSize}`
-        );
+        const url = `${BASE_URL}Register/CustomerFilterData/${groupCode}?search=${encodeURIComponent(term)}&pageNumber=${currentPage}&pageSize=${pageSize}`;
+
+        const response = await axios.get(url);
 
         if (response.status === 200 && response.data) {
             const customers = response.data.data || [];
 
             if (reset) {
-                setSearchResults(customers);
-                setPageNumber(2); 
+                setSearchResults(customers); 
+                setPageNumber(2);             
             } else {
                 setSearchResults(prev => [...prev, ...customers]);
                 setPageNumber(prev => prev + 1);
-            } 
+            }
 
             setHasMore(customers.length === pageSize);
         } else {
+            handleStatusCodeError(response.status, "Error fetching data");
             setSearchResults([]);
             setHasMore(false);
         }
-    } catch (error) {
-        if (error.response) {
+    }  catch (error) {
+          if (error.response) {
             handleStatusCodeError(
               error.response.status,
               error.response.data?.message || "An unexpected server error occurred.",
-              handleClear()
+               setSearchResults([]),
+            setHasMore(false),
             );
           } else if (error.request) {
             alert("No response received from the server. Please check your network connection.");
@@ -269,18 +289,17 @@ const handleDelete = async () => {
             alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
           }
         }
-      
-     finally {
+    finally {
         setLoading(false);
     }
 };
 
-
         const customerSelect = async (customerCode) => {
+            const customerCodeString = customerCode.toString();
             try {
-                const response = await axios.get(`${BASE_URL}Register/CustomerSelect/${customerCode}`);
+                const response = await axios.get(`${BASE_URL}Register/CustomerSelect/${customerCodeString}`);
 
-                    if (response.status === 200 && response.data && response.data.data) {
+                    if (response.status === 200 && response.data) {
                         const customers = response.data;
                         selectCustomer(customers);
 
@@ -304,6 +323,16 @@ const handleDelete = async () => {
         };
 
 
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date)) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+
 
 
     const selectCustomer = (customer) => {
@@ -311,8 +340,8 @@ const handleDelete = async () => {
         setName(customer.customerName || '');
         setPhoneNumber(customer.phonenumber || '');
         setAddress(customer.address || '');
-        setBirthDate(customer.fBirth || '');
-        setWeddingDate(customer.fWed || '');
+        setBirthDate(formatDate(customer.fBirth));
+        setWeddingDate(formatDate(customer.fWed));
         setIsEditing(true);
         setModalVisible(false);
 
@@ -432,7 +461,7 @@ const handleDelete = async () => {
                                 {/* Delete Button */}
                                 <View style={styles.buttonRow}>
                                     {isEditing && (
-                                        <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={()=>{showConfirmation('Confirm ', handleDelete)}}>
+                                        <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={()=>{showConfirmation('Do You Want to Delete This Customer?', handleDelete)}}>
                                             <Text style={styles.saveText}>DELETE</Text>
                                         </TouchableOpacity>
                                     )}
@@ -458,15 +487,13 @@ const handleDelete = async () => {
                                     style={styles.searchInput}
                                     placeholder="Enter Loyalty Number, Name, or Phone"
                                     value={searchTerm}
-                                    onChangeText={(text) => {
-                                        setSearchTerm(text);
-                                        setPageNumber(1);
-                                    }}
+                                    onChangeText={setSearchTerm} 
                                 />
+
 
                                <TouchableOpacity
                                     style={styles.searchButton}
-                                    onPress={() => searchCustomers(true)} // reset search
+                                    onPress={() => searchCustomers(true,1)} // reset search
                                 >
                                     <Text style={styles.searchButtonText}>Search</Text>
                                 </TouchableOpacity>
