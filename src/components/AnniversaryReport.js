@@ -108,7 +108,7 @@ const AnniversaryReport = () => {
     <View style={styles.container}>
       {/* 💍 Heading Background with Back Button */}
       <ImageBackground
-        source={require("../assets/anniversary-header.png")}
+        source={require("../assets/birthday-header.png")}
         style={styles.titleBackground}
         resizeMode="cover"
       >
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#006A72",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: wp("7%"),
+    marginRight: wp("11%"),
     marginTop: hp("7%"),
     marginLeft: wp("-3%"),
   },
