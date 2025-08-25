@@ -45,12 +45,47 @@ const IndividualCustomer = () => {
   const device = useCameraDevice('back');
 
   // Function to extract loyalty number
-  const extractLoyaltyNumber = (value) => {
-    if (!value) return null;
-    console.log('Raw scanned value:', value);
-    // Return the original value without any processing
-    return value;
-  };
+  // Function to extract loyalty number from Code 39 barcode
+const extractLoyaltyNumber = (value, format) => {
+  if (!value) return null;
+  let cleaned = value.trim();
+
+  switch (format.toLowerCase()) {
+    case 'code-39':
+      // Remove everything except digits
+      cleaned = cleaned.replace(/[^0-9]/g, '');
+      // Remove potential start/stop *
+      if (cleaned.startsWith('*') && cleaned.endsWith('*')) {
+        cleaned = cleaned.slice(1, -1);
+      }
+      break;
+
+    case 'codabar':
+      if (/^[A-D].*[A-D]$/i.test(cleaned)) {
+        cleaned = cleaned.slice(1, -1);
+      }
+      break;
+
+    case 'upc-a':
+    case 'ean-13':
+    case 'ean-8':
+    case 'upc-e':
+    case 'itf':
+      cleaned = cleaned.replace(/\D/g, '');
+      break;
+
+    case 'code-128':
+    case 'code-93':
+    case 'qr':
+      break;
+
+    default:
+      break;
+  }
+
+  return cleaned;
+};
+
 
   // Request camera permission
   useEffect(() => {
@@ -77,21 +112,36 @@ const IndividualCustomer = () => {
 
   // Fixed code scanner configuration
   const codeScanner = useCodeScanner({
-    codeTypes: ['qr', 'code-128', 'code-39', 'ean-13', 'ean-8', 'upc-a', 'upc-e', 'codabar', 'code-93', 'itf'],
-    onCodeScanned: (codes) => {
-      if (codes.length > 0 && scannerVisible && isScanning) {
-        const scannedValue = codes[0].value;
-        if (scannedValue) {
-          setScannedValue(scannedValue);
-          const extractedNumber = extractLoyaltyNumber(scannedValue);
-          if (extractedNumber) {
-            setIsScanning(false);
-            setShowManualInput(true);
-            setManualInput(scannedValue);
-          }
-        }
-      }
+  codeTypes: [
+     'codabar', 
+    'qr', 
+    'code-128', 
+    'code-39', 
+    'ean-13', 
+    'ean-8', 
+    'upc-a',  
+    'upc-e', 
+
+    'code-93', 
+    'itf'
+  ],
+  onCodeScanned: (codes) => {
+  if (codes.length > 0 && scannerVisible && isScanning) {
+    const code = codes[0];
+    const scannedValue = code.value;
+    const format = code.type; // important!
+    
+    const extractedNumber = extractLoyaltyNumber(scannedValue, format);
+    
+    if (extractedNumber) {
+      setScannedValue(extractedNumber);
+      setIsScanning(false);
+      setShowManualInput(true);
+      setManualInput(extractedNumber);
     }
+  }
+}
+
   });
 
   // Reset scanning state when scanner opens/closes
@@ -229,15 +279,18 @@ const IndividualCustomer = () => {
         <View style={styles.cameraContainer}>
           {hasPermission ? (
             <>
-              <Camera
-                ref={camera}
-                style={StyleSheet.absoluteFill}
-                device={device}
-                isActive={scannerVisible}
-                codeScanner={codeScanner}
-                audio={false}
-                zoom={0.5}
-              />
+             <Camera
+              ref={camera}
+              style={StyleSheet.absoluteFill}
+              device={device}
+              isActive={scannerVisible}
+              codeScanner={codeScanner}
+              audio={false}
+              zoom={0.7}
+              flash="torch"
+
+            />
+
               
               <View style={styles.scannerOverlay}>
                 {/* Top overlay */}
