@@ -214,7 +214,7 @@ const TotalCustomers = () => {
                   fromZero
                 />
               </ChartCard>
-              {/* <ChartCard title="Points Summary">
+               <ChartCard title="Points Summary">
                 <PieChart
                   data={pieData}
                   width={screenWidth * 0.9}
@@ -225,7 +225,7 @@ const TotalCustomers = () => {
                   chartConfig={chartConfig}
                   absolute
                 />
-              </ChartCard> */}
+              </ChartCard> 
             {/* </ScrollView> */}
             <Text style={styles.listTitle}>All Customers</Text>
           </>

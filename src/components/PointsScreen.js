@@ -80,10 +80,40 @@ export default function PointsScreen({ navigation }) {
   const purchaseAmountRef = useRef(null);
   const redeemPointsRef = useRef(null);
   const animation = useRef(new Animated.Value(0)).current;
-
+    const [isEditing, setIsEditing] = useState(false);
+    const [Id, setId] = useState(null);
   // Animation for mode switching
   const switchMode = (newMode) => {
     setMode(newMode);
+
+    if (newMode === "add") {
+      setAddLoyaltyNumber("");
+      setAddName("");
+      setAddBalance("");
+      setPurchaseAmount("");
+      setPointsEarned("");
+      setAddNarration("");
+      setSearchResults([]);
+      setLoading(false);
+      setHasMore(true);
+      setPageNumber(1);
+      setSearchTerm("");
+       setIsEditing(false);
+    }
+    else{
+      setRedeemLoyaltyNumber("");
+      setRedeemName("");
+      setRedeemBalance("");
+      setRedeemPoints("");
+      setRedeemAmount("");
+      setRedeemNarration("");
+       setSearchResults([]);
+      setLoading(false);
+      setHasMore(true);
+      setPageNumber(1);
+      setSearchTerm("");
+       setIsEditing(false);
+    }
     Animated.timing(animation, {
       toValue: newMode === "add" ? 0 : 1,
       duration: 300,
@@ -141,6 +171,8 @@ export default function PointsScreen({ navigation }) {
     }
   });
 
+  
+
   // Calculate points based on purchase amount
   const calculatePoints = (amount) => {
     if (!amount || isNaN(amount)) {
@@ -164,14 +196,20 @@ export default function PointsScreen({ navigation }) {
     setRedeemAmount(amount ? amount.toFixed(2) : "");
   };
 
+ 
   // Handle save action
   const handleSave = () => {
     if (mode === "add") {
-      if (addLoyaltyNumber === "" || purchaseAmount === "") {
-        Alert.alert("Error", "Please fill in all required fields");
-        return;
-      }
-      showConfirmation("Are you sure you want to add points?", addPoints);
+        if (isEditing) {
+            showConfirmation('Do You Want to Update ?', handleUpdate);
+        } else {
+          if (addLoyaltyNumber === "" || purchaseAmount === "") {
+            Alert.alert("Error", "Please fill in all required fields");
+            return;
+          }
+            showConfirmation('Are you sure you want to add points?', addPoints);
+        }
+      
     } else {
       if (redeemLoyaltyNumber === "" || redeemPoints === "") {
         Alert.alert("Error", "Please fill in all required fields");
@@ -181,9 +219,86 @@ export default function PointsScreen({ navigation }) {
         Alert.alert("Error", "Redeem points must be at least 1");
         return;
       }
-      showConfirmation("Are you sure you want to redeem points?", RedeemPoints);
+
+      if (isEditing) {
+            showConfirmation('Do You Want to Update ?', handleUpdate);
+        } else {
+          if (redeemLoyaltyNumber === "" || redeemPoints === "") {
+            Alert.alert("Error", "Please fill in all required fields");
+            return;
+          }
+            showConfirmation('Are you sure you want to redeem points?', RedeemPoints);
+        }
     }
   };
+
+
+
+
+
+
+ const handleUpdate = async () => {
+        if (!Id) {
+            Alert.alert("Error", "No customer selected for update.");
+            return;
+        }
+      if(mode == "add"){
+            if (addLoyaltyNumber === "" ) {
+              Alert.alert("Error", "Please fill in all required fields");
+              return;
+            }
+          }
+          else {
+            if (redeemLoyaltyNumber === "") {
+              Alert.alert("Error", "Please fill in all required fields");
+              return;
+            }
+          }
+          let payload;
+          if(mode=="add"){
+         payload = {
+        loyaltyNumber: addLoyaltyNumber,
+        lAmt: Number(purchaseAmount) || 0,
+        lDate: new Date().toISOString().split("T")[0],
+        points: Number(pointsEarned) || 0,
+        fcomCode: fcomCode,
+        narration: addNarration,
+        fGroupCode: groupCode
+        }
+      }
+        else{
+           payload = {
+        LoyaltyNum: redeemLoyaltyNumber,
+        RedeemDate: new Date().toISOString().split("T")[0],
+         RedeemAmt: Number(redeemAmount) || 0,
+        RedeemPoint: Number(redeemPoints) || 0,
+        compCode: fcomCode,
+        narration: redeemNarration,
+        fGroupCode: groupCode
+        }
+          
+        }
+        console.log(JSON.stringify(payload))
+        let response;
+        try {
+          if(mode=="add"){
+             response = await axios.put(`${BASE_URL}AddPoints/updatePoints/${Id}`, payload);
+          }
+          else{
+             response = await axios.put(`${BASE_URL}RedeemPoints/UpdateRedeem/${Id}`, payload);
+          }
+            if (response.status === 200) {
+                Alert.alert('Success', 'Customer updated successfully');
+                handleClear();
+            } else {
+                handleStatusCodeError(response.status, "Error updating data");
+            }
+        } catch (error) {
+            handleApiError(error);
+        }
+    };
+
+
 
   // Clear form fields
   const handleClear = () => {
@@ -194,6 +309,7 @@ export default function PointsScreen({ navigation }) {
       setPurchaseAmount("");
       setPointsEarned("");
       setAddNarration("");
+      setIsEditing(false);
     } else {
       setRedeemLoyaltyNumber("");
       setRedeemName("");
@@ -201,6 +317,7 @@ export default function PointsScreen({ navigation }) {
       setRedeemPoints("");
       setRedeemAmount("");
       setRedeemNarration("");
+        setIsEditing(false);
     }
   };
 
@@ -238,6 +355,7 @@ export default function PointsScreen({ navigation }) {
       handleApiError(error);
     }
   };
+  
 
   // Add points API call
   const addPoints = async () => {
@@ -345,75 +463,124 @@ export default function PointsScreen({ navigation }) {
       Alert.alert("Request Error", `Error: ${error.message}. This might be due to an invalid URL or network issue.`);
     }
   };
+//-----------------------------------------------Search Field Value  Track ------------------------------
+            useEffect(() => {
+                let isCancelled = false;
 
-  // Search customers
-  useEffect(() => {
-    if (debouncedSearchTerm) {
-      setPageNumber(1);
-      searchCustomers(true, 1);
-    } else {
-      setSearchResults([]);
-    }
-  }, [debouncedSearchTerm]);
+                const fetchCustomers = async () => {
+                    const term = debouncedSearchTerm.trim();
+                    if (!term) {
+                        setSearchResults([]);
+                        setHasMore(false);
+                        return;
+                    }
 
-  const searchCustomers = async (reset = false, page = 1) => {
-    const term = debouncedSearchTerm.trim();
-    
+                    setPageNumber(1);
+                    setHasMore(true);
+
+                    try {
+                        await searchCustomers({ reset: true, page: 1, term, isCancelled });
+                    } catch (err) {
+                        if (!isCancelled) console.error(err);
+                    }
+                };
+
+                fetchCustomers();
+
+                return () => {
+                    // Cancel any ongoing fetch
+                    isCancelled = true;
+                };
+            }, [debouncedSearchTerm]);
+
+
+            //-------------------------------------Filter Values Api  -------------------------------------
+const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = false }) => {
+      if (!term || isCancelled) return;
     if (!term) {
-      setSearchResults([]);
-      setHasMore(false);
-      return;
+        setSearchResults([]);
+        setHasMore(false);
+        return;
     }
 
     if (loading || (!hasMore && !reset)) return;
 
     try {
-      setLoading(true);
-      const pageSize = 10;
-      const currentPage = reset ? 1 : page;
-      
-      const response = await axios.get(
-        `${BASE_URL}AddPoints/SearchCustomersWithPoints/${groupCode}?search=${term}&pageNumber=${currentPage}&pageSize=${pageSize}`
-      );
-
-      if (response.status === 200 && response.data) {
-        const customers = response.data.data || [];
-
-        if (reset) {
-          setSearchResults(customers);
-          setPageNumber(2);
-        } else {
-          setSearchResults(prev => [...prev, ...customers]);
-          setPageNumber(prev => prev + 1);
+        setLoading(true);
+        const pageSize = 30;
+        const currentPage = reset ? 1 : page;
+        let url ;
+        if (mode === "add"){
+           url = `${BASE_URL}AddPoints/SearchCustomersWithPoints/${groupCode}?searchTerm=${encodeURIComponent(term)}&page=${currentPage}&pageSize=${pageSize}`;
         }
+        else{
+           url = `${BASE_URL}RedeemPoints/SearchRedeemPoints/${groupCode}?searchTerm=${encodeURIComponent(term)}&page=${currentPage}&pageSize=${pageSize}`;
+        }
+     
 
-        setHasMore(customers.length === pageSize);
-      } else {
-        setSearchResults([]);
-        setHasMore(false);
-      }
-    } catch (error) {
-      handleApiError(error);
-    } finally {
-      setLoading(false);
+        const response = await axios.get(url);
+
+        if (response.status === 200 && response.data) {
+            const customers = response.data.data || [];
+
+            if (reset) {
+                setSearchResults(customers); 
+                setPageNumber(2);             
+            } else {
+                setSearchResults(prev => [...prev, ...customers]);
+                setPageNumber(prev => prev + 1);
+            }
+
+            setHasMore(customers.length === pageSize);
+        } else {
+            handleStatusCodeError(response.status, "Error fetching data");
+            setSearchResults([]);
+            setHasMore(false);
+        }
+    }  catch (error) {
+          if (error.response) {
+            handleStatusCodeError(
+              error.response.status,
+              error.response.data?.message || "An unexpected server error occurred.",
+               setSearchResults([]),
+            setHasMore(false),
+            );
+          } else if (error.request) {
+            alert("No response received from the server. Please check your network connection.");
+          } 
+          else {
+            alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+          }
+        }
+    finally {
+        setLoading(false);
     }
-  };
+};
 
   // Select customer from search results
   const selectCustomer = (customer) => {
     if (mode === "add") {
       setAddLoyaltyNumber(customer.loyaltyNumber || '');
       setAddName(customer.customerName || '');
-      setAddBalance(customer.balance || '');
+ 
+      setPointsEarned(customer.points.toString() || '');
+    setPurchaseAmount(customer.lAmt.toString() || '');
+      setAddNarration(customer.fnarration || '');
+      setId(Number(customer.fID) || null);
+       setIsEditing(true);
     } else {
       setRedeemLoyaltyNumber(customer.loyaltyNumber || '');
       setRedeemName(customer.customerName || '');
-      setRedeemBalance(customer.balance || '');
+      setRedeemAmount(customer.lAmt.toString() || '');
+      setRedeemPoints(customer.points.toString() || '');
+      setId(Number(customer.id) || null);
     }
     
     setModalAddVisible(false);
     setModalRedeemVisible(false);
+     setIsEditing(true);
   };
+         
 
   // Render customer item in search results
   const renderCustomerItem = ({ item }) => (
@@ -423,8 +590,9 @@ export default function PointsScreen({ navigation }) {
     >
       <Text style={styles.customerName}>{item.customerName}</Text>
       <Text style={styles.customerDetail}>Loyalty: {item.loyaltyNumber || 'N/A'}</Text>
-      <Text style={styles.customerDetail}>Phone: {item.phonenumber || 'N/A'}</Text>
-      <Text style={styles.customerDetail}>Balance: {item.balance || '0'}</Text>
+      <Text style={styles.customerDetail}>Date: {item.lDate || 'N/A'}</Text>
+      <Text style={styles.customerDetail}>Amount: {item.lAmt || '0'}</Text>
+      <Text style={styles.customerDetail}>Points: {item.points || '0'}</Text>
     </TouchableOpacity>
   );
 
@@ -617,14 +785,24 @@ export default function PointsScreen({ navigation }) {
                 />
 
                 {/* Action Buttons */}
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity style={[styles.button, styles.saveBtn]} onPress={handleSave}>
-                    <Text style={styles.saveText}>SAVE</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={handleClear}>
-                    <Text style={styles.clearText}>CLEAR</Text>
-                  </TouchableOpacity>
-                </View>
+                {/* Action Buttons */}
+                                              <View style={styles.buttonRow}>
+                                                  <TouchableOpacity style={[styles.button, styles.saveBtn]} onPress={handleSave}>
+                                                      <Text style={styles.saveText}>{isEditing ? 'UPDATE' : 'SAVE'}</Text>
+                                                  </TouchableOpacity>
+                                                  <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={handleClear}>
+                                                      <Text style={styles.clearText}>CLEAR</Text>
+                                                  </TouchableOpacity>
+                                              </View>
+              
+                                              {/* Delete Button */}
+                                              <View style={styles.buttonRow}>
+                                                  {isEditing && (
+                                                      <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={()=>{showConfirmation('Do You Want to Delete This Customer?', handleDelete)}}>
+                                                          <Text style={styles.saveText}>DELETE</Text>
+                                                      </TouchableOpacity>
+                                                  )}
+                                              </View>
               </View>
             </View>
           </TouchableWithoutFeedback>
