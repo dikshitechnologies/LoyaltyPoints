@@ -74,14 +74,19 @@ const AnniversaryReport = () => {
         setHasMore(page < response.data.totalPages);
       } else {
         handleStatusCodeError(response.status, "Error fetching data");
-        setCustomerData([]);
+        setCustomerData([]),
+        setHasMore(false),
+        setPageNumber(1)
+        
       }
     } catch (error) {
       if (error.response) {
         handleStatusCodeError(
           error.response.status,
           error.response.data?.message || "An unexpected server error occurred.",
-          setCustomerData([])
+          setCustomerData([]),
+          setHasMore(false),
+          setPageNumber(1)
         );
       } else if (error.request) {
         alert("No response received from the server. Please check your network connection.");

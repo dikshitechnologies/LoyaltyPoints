@@ -57,6 +57,7 @@ const BirthdayReport = () => {
     const startdate = formatDate(fromDate);
     const enddate = formatDate(toDate);
     setLoading(true);
+    console.log(page)
     try {
       const response = await axios.get(
         `${BASE_URL}BirthWedding/ByBirthDate?fromDate=${startdate}&toDate=${enddate}&pageNumber=${page}&pageSize=${pageSize}`
@@ -79,6 +80,8 @@ const BirthdayReport = () => {
       } else {
         handleStatusCodeError(response.status, "Error fetching data");
         setCustomerData([]);
+        setHasMore(false);
+        setPageNumber(1);
       }
     } catch (error) {
       if (error.response) {
@@ -86,7 +89,9 @@ const BirthdayReport = () => {
           error.response.status,
           error.response.data?.message ||
             "An unexpected server error occurred.",
-          setCustomerData([])
+          setCustomerData([]),
+          setHasMore(false),
+          setPageNumber(1)
         );
       } else if (error.request) {
         alert(
