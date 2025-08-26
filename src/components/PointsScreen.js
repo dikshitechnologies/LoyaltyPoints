@@ -154,23 +154,82 @@ export default function PointsScreen({ navigation }) {
     setHasPermission(status === 'authorized');
   };
 
+
+  
+
   // QR Code Scanner
   const device = useCameraDevice('back');
   const codeScanner = useCodeScanner({
-    codeTypes: ['qr', 'ean-13', 'code-128'],
+  codeTypes: [
+     'codabar', 
+    'qr', 
+    'code-128', 
+    'code-39', 
+    'ean-13', 
+    'ean-8', 
+    'upc-a',  
+    'upc-e', 
+
+    'code-93', 
+    'itf'
+  ],
     onCodeScanned: (codes) => {
       if (codes.length > 0 && codes[0].value) {
-        const value = codes[0].value;
+          const code = codes[0];
+           console.log(code);
+        const scannedValue = code.value;
+        const format = code.type; // important!
+        
+        const extractedNumber = extractLoyaltyNumber(scannedValue, format);
         if (mode === "add") {
-          setAddLoyaltyNumber(value);
+          setAddLoyaltyNumber(extractedNumber);
         } else {
-          setRedeemLoyaltyNumber(value);
+          setRedeemLoyaltyNumber(extractedNumber);
         }
         setShowScanner(false);
         loyaltyNumberRef.current.focus();
       }
     }
   });
+  const extractLoyaltyNumber = (value, format) => {
+  if (!value) return null;
+  let cleaned = value.trim();
+
+  switch (format.toLowerCase()) {
+    case 'code-39':
+      // Remove everything except digits
+      cleaned = cleaned.replace(/[^0-9]/g, '');
+      // Remove potential start/stop *
+      if (cleaned.startsWith('*') && cleaned.endsWith('*')) {
+        cleaned = cleaned.slice(1, -1);
+      }
+      break;
+
+    case 'codabar':
+      if (/^[A-D].*[A-D]$/i.test(cleaned)) {
+        cleaned = cleaned.slice(1, -1);
+      }
+      break;
+
+    case 'upc-a':
+    case 'ean-13':
+    case 'ean-8':
+    case 'upc-e':
+    case 'itf':
+      cleaned = cleaned.replace(/\D/g, '');
+      break;
+
+    case 'code-128':
+    case 'code-93':
+    case 'qr':
+      break;
+
+    default:
+      break;
+  }
+
+  return cleaned;
+};
 
   
 
