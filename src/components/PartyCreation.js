@@ -151,6 +151,8 @@ const PartyCreation = ({ navigation }) => {
     };
 
     const handleUpdate = async () => {
+                if (!handleValidation()) return;
+
         if (!customerCode) {
             Alert.alert("Error", "No customer selected for update.");
             return;

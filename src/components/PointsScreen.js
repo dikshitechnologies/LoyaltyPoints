@@ -1,4 +1,3 @@
-// PointsScreen.js
 import axios from "axios";
 import { BASE_URL } from "./Services";
 import React, { useEffect, useState, useRef, useCallback } from 'react';
@@ -80,11 +79,16 @@ export default function PointsScreen({ navigation }) {
   const purchaseAmountRef = useRef(null);
   const redeemPointsRef = useRef(null);
   const animation = useRef(new Animated.Value(0)).current;
-    const [isEditing, setIsEditing] = useState(false);
-    const [Id, setId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [Id, setId] = useState(null);
+  
+  // Validation errors
+  const [validationErrors, setValidationErrors] = useState({});
+
   // Animation for mode switching
   const switchMode = (newMode) => {
     setMode(newMode);
+    setValidationErrors({}); // Clear validation errors when switching modes
 
     if (newMode === "add") {
       setAddLoyaltyNumber("");
@@ -98,21 +102,20 @@ export default function PointsScreen({ navigation }) {
       setHasMore(true);
       setPageNumber(1);
       setSearchTerm("");
-       setIsEditing(false);
-    }
-    else{
+      setIsEditing(false);
+    } else {
       setRedeemLoyaltyNumber("");
       setRedeemName("");
       setRedeemBalance("");
       setRedeemPoints("");
       setRedeemAmount("");
       setRedeemNarration("");
-       setSearchResults([]);
+      setSearchResults([]);
       setLoading(false);
       setHasMore(true);
       setPageNumber(1);
       setSearchTerm("");
-       setIsEditing(false);
+      setIsEditing(false);
     }
     Animated.timing(animation, {
       toValue: newMode === "add" ? 0 : 1,
@@ -231,8 +234,6 @@ export default function PointsScreen({ navigation }) {
   return cleaned;
 };
 
-  
-
   // Calculate points based on purchase amount
   const calculatePoints = (amount) => {
     if (!amount || isNaN(amount)) {
@@ -256,39 +257,139 @@ export default function PointsScreen({ navigation }) {
     setRedeemAmount(amount ? amount.toFixed(2) : "");
   };
 
- 
+  // Validation functions
+  const validateLoyaltyNumber = (number) => {
+    if (!number || number.trim() === '') {
+      return 'Loyalty number is required';
+    }
+    if (!/^[a-zA-Z0-9]+$/.test(number)) {
+      return 'Loyalty number can only contain letters and numbers';
+    }
+    if (number.length < 3 || number.length > 20) {
+      return 'Loyalty number must be between 3 and 20 characters';
+    }
+    return null;
+  };
+
+  const validateAmount = (amount, fieldName) => {
+    if (!amount || amount.trim() === '') {
+      return `${fieldName} is required`;
+    }
+    if (isNaN(amount) || parseFloat(amount) <= 0) {
+      return `${fieldName} must be a valid positive number`;
+    }
+    if (parseFloat(amount) > 1000000) {
+      return `${fieldName} cannot exceed 1,000,000`;
+    }
+    return null;
+  };
+
+  const validatePoints = (points, fieldName) => {
+    if (!points || points.trim() === '') {
+      return `${fieldName} is required`;
+    }
+    if (isNaN(points) || parseFloat(points) <= 0) {
+      return `${fieldName} must be a valid positive number`;
+    }
+    if (!Number.isInteger(parseFloat(points))) {
+      return `${fieldName} must be a whole number`;
+    }
+    if (parseFloat(points) > 1000000) {
+      return `${fieldName} cannot exceed 1,000,000`;
+    }
+    return null;
+  };
+
+  const validateNarration = (narration) => {
+    if (narration && narration.length > 200) {
+      return 'Narration cannot exceed 200 characters';
+    }
+    if (narration && !/^[a-zA-Z0-9\s.,!?-]*$/.test(narration)) {
+      return 'Narration contains invalid characters';
+    }
+    return null;
+  };
+
+  const validateAddMode = () => {
+    const errors = {};
+    
+    // Validate loyalty number
+    const loyaltyError = validateLoyaltyNumber(addLoyaltyNumber);
+    if (loyaltyError) errors.addLoyaltyNumber = loyaltyError;
+    
+    // Validate purchase amount
+    const amountError = validateAmount(purchaseAmount, 'Purchase amount');
+    if (amountError) errors.purchaseAmount = amountError;
+    
+    // Validate narration
+    const narrationError = validateNarration(addNarration);
+    if (narrationError) errors.addNarration = narrationError;
+    
+    // Validate points earned (calculated field)
+    if (!pointsEarned || isNaN(pointsEarned) || parseFloat(pointsEarned) <= 0) {
+      errors.pointsEarned = 'Valid points must be calculated from purchase amount';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateRedeemMode = () => {
+    const errors = {};
+    
+    // Validate loyalty number
+    const loyaltyError = validateLoyaltyNumber(redeemLoyaltyNumber);
+    if (loyaltyError) errors.redeemLoyaltyNumber = loyaltyError;
+    
+    // Validate redeem points
+    const pointsError = validatePoints(redeemPoints, 'Redeem points');
+    if (pointsError) errors.redeemPoints = pointsError;
+    
+    // Validate narration
+    const narrationError = validateNarration(redeemNarration);
+    if (narrationError) errors.redeemNarration = narrationError;
+    
+    // Check if redeem points exceed balance
+    if (redeemBalance && redeemPoints) {
+      const balance = parseFloat(redeemBalance);
+      const points = parseFloat(redeemPoints);
+      if (points > balance) {
+        errors.redeemPoints = 'Redeem points cannot exceed available balance';
+      }
+    }
+    
+    // Validate redeem amount (calculated field)
+    if (!redeemAmount || isNaN(redeemAmount) || parseFloat(redeemAmount) <= 0) {
+      errors.redeemAmount = 'Valid amount must be calculated from redeem points';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Handle save action
   const handleSave = () => {
+    let isValid = false;
+    
     if (mode === "add") {
-        if (isEditing) {
-            showConfirmation('Do You Want to Update ?', handleUpdate);
-        } else {
-          if (addLoyaltyNumber === "" || purchaseAmount === "") {
-            Alert.alert("Error", "Please fill in all required fields");
-            return;
-          }
-            showConfirmation('Are you sure you want to add points?', addPoints);
-        }
-      
+      isValid = validateAddMode();
     } else {
-      if (redeemLoyaltyNumber === "" || redeemPoints === "") {
-        Alert.alert("Error", "Please fill in all required fields");
-        return;
+      isValid = validateRedeemMode();
+    }
+    
+    if (!isValid) {
+      Alert.alert("Validation Error", "Please fix the errors before saving");
+      return;
+    }
+    
+    if (isEditing) {
+      showConfirmation('Do You Want to Update?', handleUpdate);
+    } else {
+      if (mode === "add") {
+        showConfirmation('Are you sure you want to add points?', addPoints);
+      } else {
+        showConfirmation('Are you sure you want to redeem points?', RedeemPoints);
       }
-      if (redeemBalance < 0 || redeemBalance == "0") {
-        Alert.alert("Error", "Redeem points must be at least 1");
-        return;
-      }
-
-      if (isEditing) {
-            showConfirmation('Do You Want to Update ?', handleUpdate);
-        } else {
-          if (redeemLoyaltyNumber === "" || redeemPoints === "") {
-            Alert.alert("Error", "Please fill in all required fields");
-            return;
-          }
-            showConfirmation('Are you sure you want to redeem points?', RedeemPoints);
-        }
     }
   };
 
@@ -323,26 +424,28 @@ const handleDelete = async () => {
 
 
 
- const handleUpdate = async () => {
-        if (!Id) {
-            Alert.alert("Error", "No customer selected for update.");
-            return;
-        }
-      if(mode == "add"){
-            if (addLoyaltyNumber === "" ) {
-              Alert.alert("Error", "Please fill in all required fields");
-              return;
-            }
-          }
-          else {
-            if (redeemLoyaltyNumber === "") {
-              Alert.alert("Error", "Please fill in all required fields");
-              return;
-            }
-          }
-          let payload;
-          if(mode=="add"){
-         payload = {
+
+  const handleUpdate = async () => {
+    if (!Id) {
+      Alert.alert("Error", "No customer selected for update.");
+      return;
+    }
+    
+    let isValid = false;
+    if (mode === "add") {
+      isValid = validateAddMode();
+    } else {
+      isValid = validateRedeemMode();
+    }
+    
+    if (!isValid) {
+      Alert.alert("Validation Error", "Please fix the errors before updating");
+      return;
+    }
+    
+    let payload;
+    if (mode === "add") {
+      payload = {
         loyaltyNumber: addLoyaltyNumber,
         lAmt: Number(purchaseAmount) || 0,
         lDate: new Date().toISOString().split("T")[0],
@@ -350,44 +453,41 @@ const handleDelete = async () => {
         fcomCode: fcomCode,
         narration: addNarration,
         fGroupCode: groupCode
-        }
-      }
-        else{
-           payload = {
+      };
+    } else {
+      payload = {
         LoyaltyNum: redeemLoyaltyNumber,
         RedeemDate: new Date().toISOString().split("T")[0],
-         RedeemAmt: Number(redeemAmount) || 0,
+        RedeemAmt: Number(redeemAmount) || 0,
         RedeemPoint: Number(redeemPoints) || 0,
         compCode: fcomCode,
         narration: redeemNarration,
         fGroupCode: groupCode
-        }
-          
-        }
-        console.log(JSON.stringify(payload))
-        let response;
-        try {
-          if(mode=="add"){
-             response = await axios.put(`${BASE_URL}AddPoints/updatePoints/${Id}`, payload);
-          }
-          else{
-             response = await axios.put(`${BASE_URL}RedeemPoints/UpdateRedeem/${Id}`, payload);
-          }
-            if (response.status === 200) {
-                Alert.alert('Success', 'Customer updated successfully');
-                handleClear();
-            } else {
-                handleStatusCodeError(response.status, "Error updating data");
-            }
-        } catch (error) {
-            handleApiError(error);
-        }
-    };
-
-
+      };
+    }
+    
+    console.log(JSON.stringify(payload));
+    let response;
+    try {
+      if (mode === "add") {
+        response = await axios.put(`${BASE_URL}AddPoints/updatePoints/${Id}`, payload);
+      } else {
+        response = await axios.put(`${BASE_URL}RedeemPoints/UpdateRedeem/${Id}`, payload);
+      }
+      if (response.status === 200) {
+        Alert.alert('Success', 'Customer updated successfully');
+        handleClear();
+      } else {
+        handleStatusCodeError(response.status, "Error updating data");
+      }
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
 
   // Clear form fields
   const handleClear = () => {
+    setValidationErrors({});
     if (mode === "add") {
       setAddLoyaltyNumber("");
       setAddName("");
@@ -403,7 +503,7 @@ const handleDelete = async () => {
       setRedeemPoints("");
       setRedeemAmount("");
       setRedeemNarration("");
-        setIsEditing(false);
+      setIsEditing(false);
     }
   };
 
@@ -413,6 +513,16 @@ const handleDelete = async () => {
     
     if (!loyaltyNumber) {
       Alert.alert("Error", "Please enter a loyalty number");
+      return;
+    }
+    
+    // Validate loyalty number before API call
+    const loyaltyError = validateLoyaltyNumber(loyaltyNumber);
+    if (loyaltyError) {
+      setValidationErrors({
+        ...validationErrors,
+        [mode === "add" ? "addLoyaltyNumber" : "redeemLoyaltyNumber"]: loyaltyError
+      });
       return;
     }
     
@@ -441,7 +551,6 @@ const handleDelete = async () => {
       handleApiError(error);
     }
   };
-  
 
   // Add points API call
   const addPoints = async () => {
@@ -549,111 +658,104 @@ const handleDelete = async () => {
       Alert.alert("Request Error", `Error: ${error.message}. This might be due to an invalid URL or network issue.`);
     }
   };
-//-----------------------------------------------Search Field Value  Track ------------------------------
-            useEffect(() => {
-                let isCancelled = false;
 
-                const fetchCustomers = async () => {
-                    const term = debouncedSearchTerm.trim();
-                    if (!term) {
-                        setSearchResults([]);
-                        setHasMore(false);
-                        return;
-                    }
+  // Search functionality
+  useEffect(() => {
+    let isCancelled = false;
 
-                    setPageNumber(1);
-                    setHasMore(true);
-
-                    try {
-                        await searchCustomers({ reset: true, page: 1, term, isCancelled });
-                    } catch (err) {
-                        if (!isCancelled) console.error(err);
-                    }
-                };
-
-                fetchCustomers();
-
-                return () => {
-                    // Cancel any ongoing fetch
-                    isCancelled = true;
-                };
-            }, [debouncedSearchTerm]);
-
-
-            //-------------------------------------Filter Values Api  -------------------------------------
-const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = false }) => {
-      if (!term || isCancelled) return;
-    if (!term) {
+    const fetchCustomers = async () => {
+      const term = debouncedSearchTerm.trim();
+      if (!term) {
         setSearchResults([]);
         setHasMore(false);
         return;
+      }
+
+      setPageNumber(1);
+      setHasMore(true);
+
+      try {
+        await searchCustomers({ reset: true, page: 1, term, isCancelled });
+      } catch (err) {
+        if (!isCancelled) console.error(err);
+      }
+    };
+
+    fetchCustomers();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedSearchTerm]);
+
+  const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = false }) => {
+    if (!term || isCancelled) return;
+    if (!term) {
+      setSearchResults([]);
+      setHasMore(false);
+      return;
     }
 
     if (loading || (!hasMore && !reset)) return;
 
     try {
-        setLoading(true);
-        const pageSize = 30;
-        const currentPage = reset ? 1 : page;
-        let url ;
-        if (mode === "add"){
-           url = `${BASE_URL}AddPoints/SearchCustomersWithPoints/${groupCode}?searchTerm=${encodeURIComponent(term)}&page=${currentPage}&pageSize=${pageSize}`;
-        }
-        else{
-           url = `${BASE_URL}RedeemPoints/SearchRedeemPoints/${groupCode}?searchTerm=${encodeURIComponent(term)}&page=${currentPage}&pageSize=${pageSize}`;
-        }
-     
+      setLoading(true);
+      const pageSize = 30;
+      const currentPage = reset ? 1 : page;
+      let url;
+      if (mode === "add") {
+        url = `${BASE_URL}AddPoints/SearchCustomersWithPoints/${groupCode}?searchTerm=${encodeURIComponent(term)}&page=${currentPage}&pageSize=${pageSize}`;
+      } else {
+        url = `${BASE_URL}RedeemPoints/SearchRedeemPoints/${groupCode}?searchTerm=${encodeURIComponent(term)}&page=${currentPage}&pageSize=${pageSize}`;
+      }
 
-        const response = await axios.get(url);
+      const response = await axios.get(url);
 
-        if (response.status === 200 && response.data) {
-            const customers = response.data.data || [];
+      if (response.status === 200 && response.data) {
+        const customers = response.data.data || [];
 
-            if (reset) {
-                setSearchResults(customers); 
-                setPageNumber(2);             
-            } else {
-                setSearchResults(prev => [...prev, ...customers]);
-                setPageNumber(prev => prev + 1);
-            }
-
-            setHasMore(customers.length === pageSize);
+        if (reset) {
+          setSearchResults(customers); 
+          setPageNumber(2);             
         } else {
-            handleStatusCodeError(response.status, "Error fetching data");
-            setSearchResults([]);
-            setHasMore(false);
+          setSearchResults(prev => [...prev, ...customers]);
+          setPageNumber(prev => prev + 1);
         }
-    }  catch (error) {
-          if (error.response) {
-            handleStatusCodeError(
-              error.response.status,
-              error.response.data?.message || "An unexpected server error occurred.",
-               setSearchResults([]),
-            setHasMore(false),
-            );
-          } else if (error.request) {
-            alert("No response received from the server. Please check your network connection.");
-          } 
-          else {
-            alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-          }
-        }
-    finally {
-        setLoading(false);
+
+        setHasMore(customers.length === pageSize);
+      } else {
+        handleStatusCodeError(response.status, "Error fetching data");
+        setSearchResults([]);
+        setHasMore(false);
+      }
+    } catch (error) {
+      if (error.response) {
+        handleStatusCodeError(
+          error.response.status,
+          error.response.data?.message || "An unexpected server error occurred.",
+          setSearchResults([]),
+          setHasMore(false),
+        );
+      } else if (error.request) {
+        alert("No response received from the server. Please check your network connection.");
+      } else {
+        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+      }
+    } finally {
+      setLoading(false);
     }
-};
+  };
 
   // Select customer from search results
   const selectCustomer = (customer) => {
     if (mode === "add") {
       setAddLoyaltyNumber(customer.loyaltyNumber || '');
       setAddName(customer.customerName || '');
- 
       setPointsEarned(customer.points.toString() || '');
-    setPurchaseAmount(customer.lAmt.toString() || '');
+      setPurchaseAmount(customer.lAmt.toString() || '');
       setAddNarration(customer.fnarration || '');
       setId(Number(customer.fID) || null);
-       setIsEditing(true);
+      setIsEditing(true);
     } else {
       setRedeemLoyaltyNumber(customer.loyaltyNumber || '');
       setRedeemName(customer.customerName || '');
@@ -664,9 +766,8 @@ const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = fa
     
     setModalAddVisible(false);
     setModalRedeemVisible(false);
-     setIsEditing(true);
+    setIsEditing(true);
   };
-         
 
   // Render customer item in search results 
   const renderCustomerItem = ({ item }) => (
@@ -697,6 +798,14 @@ const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = fa
     }
     setSearchTerm('');
     setSearchResults([]);
+  };
+
+  // Helper function to render error messages
+  const renderError = (fieldName) => {
+    if (validationErrors[fieldName]) {
+      return <Text style={styles.errorText}>{validationErrors[fieldName]}</Text>;
+    }
+    return null;
   };
 
   return (
@@ -769,7 +878,7 @@ const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = fa
               <View style={styles.card}>
                 {/* Loyalty Number Section */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={styles.label}>Loyalty Number</Text>
+                  <Text style={styles.label}>Loyalty Number *</Text>
                   <View style={styles.editContainer}>
                     <TouchableOpacity onPress={handleEdit}>
                       <MaterialIcons name="edit" size={28} color="#ffff" />
@@ -780,7 +889,7 @@ const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = fa
                 <View style={styles.row}>
                   <TextInput
                     ref={loyaltyNumberRef}
-                    style={[styles.input, { flex: 1 }]}
+                    style={[styles.input, validationErrors[mode === "add" ? "addLoyaltyNumber" : "redeemLoyaltyNumber"] && styles.inputError, { flex: 1 }]}
                     value={mode === "add" ? addLoyaltyNumber : redeemLoyaltyNumber}
                     onChangeText={mode === "add" ? setAddLoyaltyNumber : setRedeemLoyaltyNumber}
                     onBlur={getPoints}
@@ -801,6 +910,7 @@ const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = fa
                     <Icon name="qr-code-scanner" size={isTablet ? wp('5%') : wp('7%')} color="#333" />
                   </TouchableOpacity>
                 </View>
+                {renderError(mode === "add" ? "addLoyaltyNumber" : "redeemLoyaltyNumber")}
 
                 {/* Name Field */}
                 <Text style={styles.label}>Name</Text>
@@ -821,10 +931,10 @@ const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = fa
                 {/* Mode Specific Fields */}
                 {mode === "add" ? (
                   <>
-                    <Text style={styles.label}>Amount</Text>
+                    <Text style={styles.label}>Amount *</Text>
                     <TextInput
                       ref={purchaseAmountRef}
-                      style={styles.input}
+                      style={[styles.input, validationErrors.purchaseAmount && styles.inputError]}
                       value={purchaseAmount}
                       onChangeText={(val) => {
                         setPurchaseAmount(val);
@@ -833,20 +943,22 @@ const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = fa
                       keyboardType="numeric"
                       returnKeyType="next"
                     />
+                    {renderError("purchaseAmount")}
 
                     <Text style={styles.label}>Points Earned</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, validationErrors.pointsEarned && styles.inputError]}
                       value={pointsEarned}
                       editable={false}
                     />
+                    {renderError("pointsEarned")}
                   </>
                 ) : (
                   <>
-                    <Text style={styles.label}>Redeem Points</Text>
+                    <Text style={styles.label}>Redeem Points *</Text>
                     <TextInput
                       ref={redeemPointsRef}
-                      style={styles.input}
+                      style={[styles.input, validationErrors.redeemPoints && styles.inputError]}
                       value={redeemPoints}
                       onChangeText={(val) => {
                         setRedeemPoints(val);
@@ -855,26 +967,29 @@ const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = fa
                       keyboardType="numeric"
                       returnKeyType="next"
                     />
+                    {renderError("redeemPoints")}
 
                     <Text style={styles.label}>Amount</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, validationErrors.redeemAmount && styles.inputError]}
                       value={redeemAmount}
                       editable={false}
                     />
+                    {renderError("redeemAmount")}
                   </>
                 )}
 
                 {/* Narration Field */}
                 <Text style={styles.label}>Narration</Text>
                 <TextInput
-                  style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                  style={[styles.input, validationErrors[mode === "add" ? "addNarration" : "redeemNarration"] && styles.inputError, { height: 80, textAlignVertical: 'top' }]}
                   value={mode === "add" ? addNarration : redeemNarration}
                   onChangeText={mode === "add" ? setAddNarration : setRedeemNarration}
                   multiline={true}
                   numberOfLines={4}
                   returnKeyType="done"
                 />
+                {renderError(mode === "add" ? "addNarration" : "redeemNarration")}
 
                 {/* Action Buttons */}
                 <View style={styles.buttonRow}>
@@ -993,6 +1108,7 @@ const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = fa
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
