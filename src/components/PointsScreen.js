@@ -133,8 +133,9 @@ export default function PointsScreen({ navigation }) {
   // Focus effect to load point values
   useFocusEffect(
     useCallback(() => {
+      handleClear();
       AddPointsget();
-      RedeemAmount();
+      RedeemAmount(); 
     }, [])
   );
 
@@ -332,6 +333,38 @@ export default function PointsScreen({ navigation }) {
       }
     }
   };
+
+
+
+const handleDelete = async () => {
+    if (!Id) {
+        Alert.alert("Error", "No Bill selected for deletion.");
+        return;
+    }
+
+        let response;
+        try {
+          if(mode == "add"){
+             response = await axios.delete(`${BASE_URL}AddPoints/deletePoints/${Id}`);
+          }
+            else{
+               response = await axios.delete(`${BASE_URL}RedeemPoints/DeleteRedeem/${Id}`);
+            }
+
+            if (response.status === 200) {
+                Alert.alert('Success', 'Your Bill has been deleted successfully');
+                handleClear();
+            } else {
+                handleStatusCodeError(response.status, "Error deleting data");
+            }
+        } catch (error) {
+            handleApiError(error);
+        }
+  
+};
+
+
+
 
   const handleUpdate = async () => {
     if (!Id) {
@@ -677,7 +710,7 @@ export default function PointsScreen({ navigation }) {
     setIsEditing(true);
   };
 
-  // Render customer item in search results
+  // Render customer item in search results 
   const renderCustomerItem = ({ item }) => (
     <TouchableOpacity
       style={styles.customerItem}
@@ -685,7 +718,13 @@ export default function PointsScreen({ navigation }) {
     >
       <Text style={styles.customerName}>{item.customerName}</Text>
       <Text style={styles.customerDetail}>Loyalty: {item.loyaltyNumber || 'N/A'}</Text>
-      <Text style={styles.customerDetail}>Date: {item.lDate || 'N/A'}</Text>
+     <Text style={styles.customerDetail}>
+  Date: {item.lDate ? 
+    new Date(item.lDate).toLocaleDateString("en-GB") + 
+    " (" + new Date(item.lDate).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) + ")" 
+    : "N/A"}
+</Text>
+
       <Text style={styles.customerDetail}>Amount: {item.lAmt || '0'}</Text>
       <Text style={styles.customerDetail}>Points: {item.points || '0'}</Text>
     </TouchableOpacity>
@@ -895,22 +934,21 @@ export default function PointsScreen({ navigation }) {
 
                 {/* Action Buttons */}
                 <View style={styles.buttonRow}>
-                  <TouchableOpacity style={[styles.button, styles.saveBtn]} onPress={handleSave}>
-                    <Text style={styles.saveText}>{isEditing ? 'UPDATE' : 'SAVE'}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={handleClear}>
-                    <Text style={styles.clearText}>CLEAR</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Delete Button */}
-                <View style={styles.buttonRow}>
-                  {isEditing && (
-                    <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={() => { showConfirmation('Do You Want to Delete This Customer?', handleDelete) }}>
-                      <Text style={styles.saveText}>DELETE</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
+                   <TouchableOpacity style={[styles.button, styles.saveBtn]} onPress={handleSave}>
+                       <Text style={styles.saveText}>{isEditing ? 'UPDATE' : 'SAVE'}</Text>
+                   </TouchableOpacity>
+                   <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={handleClear}>
+                       <Text style={styles.clearText}>CLEAR</Text>
+                   </TouchableOpacity>
+               </View> 
+               {/* Delete Button */}
+               <View style={styles.buttonRow}>
+                   {isEditing==true && (
+                       <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={()=>{showConfirmation('Do You Want to Delete This Customer?', handleDelete)}}>
+                           <Text style={styles.saveText}>DELETE</Text>
+                       </TouchableOpacity>
+                   )}
+               </View>
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -953,6 +991,7 @@ export default function PointsScreen({ navigation }) {
                 data={searchResults}
                 renderItem={renderCustomerItem}
                 keyExtractor={(item, index) => index.toString()}
+                keyboardShouldPersistTaps="handled"
                 style={styles.customerList}
                 onEndReached={() => {
                   if (!loading && hasMore) {
@@ -1208,4 +1247,7 @@ const styles = StyleSheet.create({
     color: '#006A72',
     fontWeight: 'bold',
   },
+   deleteBtn: {
+        backgroundColor: '#FF4136',
+    },
 });

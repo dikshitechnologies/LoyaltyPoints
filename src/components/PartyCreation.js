@@ -507,6 +507,7 @@ const formatDate = (dateStr) => {
                             renderItem={renderCustomerItem}
                             keyExtractor={(item, index) => (index + 1).toString()}
                             style={styles.customerList}
+                            keyboardShouldPersistTaps="handled"
                             onEndReached={() => {
                                 if (!loading && hasMore) {
                                     searchCustomers(false, pageNumber);
