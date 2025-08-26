@@ -618,17 +618,31 @@ const TotalCustomers = () => {
         onEndReachedThreshold={0.5}
         ListHeaderComponent={
           <>
-            <ChartCard title="Top 5 Customers (by Sales)">
-              <BarChart
-                data={barData}
-                width={screenWidth * 0.9}
-                height={220}
-                yAxisLabel="₹"
-                chartConfig={chartConfig}
-                style={styles.chartStyle}
-                fromZero
-              />
-            </ChartCard>
+            {/* <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: wp('4%') }}> */}
+              <ChartCard title="Top 5 Customers (by Sales)">
+                <BarChart
+                  data={barData}
+                  width={screenWidth * 0.9}
+                  height={220}
+                  yAxisLabel="₹"
+                  chartConfig={chartConfig}
+                  style={styles.chartStyle}
+                  fromZero
+                />
+              </ChartCard>
+               <ChartCard title="Points Summary">
+                <PieChart
+                  data={pieData}
+                  width={screenWidth * 0.9}
+                  height={220}
+                  accessor="population"
+                  backgroundColor="transparent"
+                  paddingLeft="15"
+                  chartConfig={chartConfig}
+                  absolute
+                />
+              </ChartCard> 
+            {/* </ScrollView> */}
             <Text style={styles.listTitle}>All Customers</Text>
           </>
         }

@@ -17,6 +17,7 @@ import {
     FlatList
 } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { useDebounce } from 'use-debounce';
 
 import { BASE_URL } from './Services';
 import { showConfirmation } from './AlertUtils';
@@ -42,7 +43,14 @@ const PartyCreation = ({ navigation }) => {
     // Modal states
     const [modalVisible, setModalVisible] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
+
+//---------------PAGINATION SEARCH STATE  ------------------
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm] = useDebounce(searchTerm, 500); 
+    const [pageNumber, setPageNumber] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+
 
     const groupCode = getGroupCode();
     const fcomCode = getCompanyCode();
@@ -54,6 +62,7 @@ const PartyCreation = ({ navigation }) => {
     const addressRef = useRef();
     const birthDateRef = useRef();
     const weddingDateRef = useRef();
+
 
     useEffect(() => {
         // Set today's date when component mounts
@@ -87,9 +96,9 @@ const PartyCreation = ({ navigation }) => {
     const handleSave = () => {
         if (!handleValidation()) return;
         if (isEditing) {
-            handleUpdate();
+            showConfirmation('Do You Want to Update This Customer?', handleUpdate);
         } else {
-            newCustomer();
+            showConfirmation('Do You Want to Create a New Customer?', newCustomer);
         }
     };
 
@@ -193,65 +202,155 @@ const handleDelete = async () => {
   
 };
 
-    const handleEdit = () => {
-        setModalVisible(true);
-        setSearchTerm('');
+//-----------------------------------------------Search Field Value  Track ------------------------------
+            useEffect(() => {
+                let isCancelled = false;
+
+                const fetchCustomers = async () => {
+                    const term = debouncedSearchTerm.trim();
+                    if (!term) {
+                        setSearchResults([]);
+                        setHasMore(false);
+                        return;
+                    }
+
+                    setPageNumber(1);
+                    setHasMore(true);
+
+                    try {
+                        await searchCustomers({ reset: true, page: 1, term, isCancelled });
+                    } catch (err) {
+                        if (!isCancelled) console.error(err);
+                    }
+                };
+
+                fetchCustomers();
+
+                return () => {
+                    // Cancel any ongoing fetch
+                    isCancelled = true;
+                };
+            }, [debouncedSearchTerm]);
+
+
+            const handleEdit = () => {
+                setModalVisible(true);
+                setSearchTerm('');
+                setSearchResults([]);
+            };
+            //-------------------------------------Filter Values Api  -------------------------------------
+const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = false }) => {
+      if (!term || isCancelled) return;
+    if (!term) {
         setSearchResults([]);
-    };
+        setHasMore(false);
+        return;
+    }
 
-    const searchCustomers = async () => {
-        if (!searchTerm.trim()) {
-            Alert.alert("Search Error", "Please enter a Loyalty Number, Phone Number, or Name to search.");
-            return;
-        }
+    if (loading || (!hasMore && !reset)) return;
 
-        try {
-            const pageSize = 20;
-            const response = await axios.get(
-                `${BASE_URL}Register/CustomerList/${groupCode}?pageNumber=1&pageSize=${pageSize}`
-            );
+    try {
+        setLoading(true);
+        const pageSize = 30;
+        const currentPage = reset ? 1 : page;
+        const url = `${BASE_URL}Register/CustomerFilterData/${groupCode}?search=${encodeURIComponent(term)}&pageNumber=${currentPage}&pageSize=${pageSize}`;
 
-            if (response.status === 200 && response.data && response.data.data) {
-                const customers = response.data.data;
+        const response = await axios.get(url);
 
-                // Filter customers based on search term
-                const filteredCustomers = customers.filter(
-                    (c) =>
-                        (c.loyaltyNumber && c.loyaltyNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                        (c.phonenumber && c.phonenumber.includes(searchTerm)) ||
-                        (c.customerName && c.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
-                );
+        if (response.status === 200 && response.data) {
+            const customers = response.data.data || [];
 
-                setSearchResults(filteredCustomers);
-
-                if (filteredCustomers.length === 0) {
-                    Alert.alert("Not Found", "No customers found with the provided search term.");
-                }
+            if (reset) {
+                setSearchResults(customers); 
+                setPageNumber(2);             
             } else {
-                Alert.alert("Error", "Failed to fetch customer data.");
+                setSearchResults(prev => [...prev, ...customers]);
+                setPageNumber(prev => prev + 1);
             }
-        } catch (error) {
-            handleApiError(error);
+
+            setHasMore(customers.length === pageSize);
+        } else {
+            handleStatusCodeError(response.status, "Error fetching data");
+            setSearchResults([]);
+            setHasMore(false);
         }
-    };
+    }  catch (error) {
+          if (error.response) {
+            handleStatusCodeError(
+              error.response.status,
+              error.response.data?.message || "An unexpected server error occurred.",
+               setSearchResults([]),
+            setHasMore(false),
+            );
+          } else if (error.request) {
+            alert("No response received from the server. Please check your network connection.");
+          } 
+          else {
+            alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+          }
+        }
+    finally {
+        setLoading(false);
+    }
+};
+
+        const customerSelect = async (customerCode) => {
+            const customerCodeString = customerCode.toString();
+            try {
+                const response = await axios.get(`${BASE_URL}Register/CustomerSelect/${customerCodeString}`);
+
+                    if (response.status === 200 && response.data) {
+                        const customers = response.data;
+                        selectCustomer(customers);
+
+                    } else {
+                         handleStatusCodeError(response.status, "Error deleting data");
+                    }
+                }  catch (error) {
+            if (error.response) {
+                handleStatusCodeError(
+                error.response.status,
+                error.response.data?.message || "An unexpected server error occurred.",
+                handleClear()
+                );
+            } else if (error.request) {
+                alert("No response received from the server. Please check your network connection.");
+            } 
+            else {
+                alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+            }
+            }
+        };
+
+
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date)) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+
+
 
     const selectCustomer = (customer) => {
-        setCustomerCode(customer.customerCode); // ✅ FIXED
         setLoyaltyNumber(customer.loyaltyNumber || '');
         setName(customer.customerName || '');
         setPhoneNumber(customer.phonenumber || '');
         setAddress(customer.address || '');
-        setBirthDate(customer.fBirth || '');
-        setWeddingDate(customer.fWedding || '');
+        setBirthDate(formatDate(customer.fBirth));
+        setWeddingDate(formatDate(customer.fWed));
         setIsEditing(true);
         setModalVisible(false);
-        Alert.alert("Success", "Customer data loaded.");
+
     };
 
     const renderCustomerItem = ({ item }) => (
         <TouchableOpacity
             style={styles.customerItem}
-            onPress={() => selectCustomer(item)}
+            onPress={() => {setCustomerCode(item.customerCode); customerSelect(item.customerCode)}}
         >
             <Text style={styles.customerName}>{item.customerName}</Text>
             <Text style={styles.customerDetail}>Loyalty: {item.loyaltyNumber || 'N/A'}</Text>
@@ -362,7 +461,7 @@ const handleDelete = async () => {
                                 {/* Delete Button */}
                                 <View style={styles.buttonRow}>
                                     {isEditing && (
-                                        <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={()=>{showConfirmation('Confirm ', handleDelete)}}>
+                                        <TouchableOpacity style={[styles.button, styles.deleteBtn]} onPress={()=>{showConfirmation('Do You Want to Delete This Customer?', handleDelete)}}>
                                             <Text style={styles.saveText}>DELETE</Text>
                                         </TouchableOpacity>
                                     )}
@@ -384,26 +483,48 @@ const handleDelete = async () => {
                             <Text style={styles.modalTitle}>Search Customer</Text>
 
                             <View style={styles.searchContainer}>
-                                <TextInput
+                               <TextInput
                                     style={styles.searchInput}
                                     placeholder="Enter Loyalty Number, Name, or Phone"
                                     value={searchTerm}
-                                    onChangeText={setSearchTerm}
+                                    onChangeText={setSearchTerm} 
                                 />
-                                <TouchableOpacity
+
+
+                               <TouchableOpacity
                                     style={styles.searchButton}
-                                    onPress={searchCustomers}
+                                    onPress={() => searchCustomers(true,1)} // reset search
                                 >
                                     <Text style={styles.searchButtonText}>Search</Text>
                                 </TouchableOpacity>
+
                             </View>
 
-                            <FlatList
-                                data={searchResults}
-                                renderItem={renderCustomerItem}
-                                keyExtractor={(item) => item.customerCode.toString()}
-                                style={styles.customerList}
-                            />
+                         <FlatList
+                            data={searchResults}
+                            renderItem={renderCustomerItem}
+                            keyExtractor={(item, index) => (index + 1).toString()}
+                            style={styles.customerList}
+                            onEndReached={() => {
+                                if (!loading && hasMore) {
+                                    searchCustomers(false, pageNumber);
+                                }
+                            }}
+                            onEndReachedThreshold={0.5}
+                            ListEmptyComponent={
+                                !loading ? (
+                                    <Text style={{ textAlign: 'center', padding: 10, color: '#666' }}>
+                                        No customers found
+                                    </Text>
+                                ) : null
+                            }
+                            ListFooterComponent={
+                                loading ? (
+                                    <Text style={{ textAlign: 'center', padding: 10 }}>Loading...</Text>
+                                ) : null
+                            }
+                        />
+
 
                             <TouchableOpacity
                                 style={styles.closeButton}
