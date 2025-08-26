@@ -1,9 +1,7 @@
 // PointsScreen.js
-
 import axios from "axios";
 import { BASE_URL } from "./Services";
-
-import React, { useEffect, useState, useRef ,useCallback  } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,6 +16,10 @@ import {
   Easing,
   ScrollView,
   KeyboardAvoidingView,
+  FlatList,
+  SafeAreaView,
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { useFocusEffect } from "@react-navigation/native";
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
@@ -25,23 +27,24 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import DeviceInfo from 'react-native-device-info';
 import { showConfirmation } from "./AlertUtils";
- import {getCompanyCode,getGroupCode } from "../store";
+import { getCompanyCode, getGroupCode } from "../store";
 import { handleStatusCodeError } from "./ErrorHandler";
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { useDebounce } from 'use-debounce';
+
 const isTablet = DeviceInfo.isTablet();
 
-export default function PointsScreen() {
+export default function PointsScreen({ navigation }) {
+  const fcomCode = getCompanyCode();
+  const groupCode = getGroupCode();
+  
+  // Points calculation values
+  const [currentValPoint, setCurrentValPoint] = useState(null);
+  const [currentValAmount, setCurrentValAmount] = useState(null);
+  const [currentRedeemPoint, setCurrentRedeemPoint] = useState(null);
+  const [currentRedeemAmount, setCurrentRedeemAmount] = useState(null);
 
-   const loyaltyNumberRef = useRef(null);
-  // Add Mode State
-   const fcomCode = getCompanyCode();
-   const groupCode = getGroupCode();
-const [currentValPoint , setCurrentValPoint] = useState(null);
-const [currentValAmount , setCurrentValAmount] = useState(null);
-
-const [currentRedeemPoint , setCurrentRedeemPoint] = useState(null);
-const [currentRedeemAmount , setCurrentRedeemAmount] = useState(null);
-
-  const isTablet = DeviceInfo.isTablet();
+  // Add Points State
   const [addLoyaltyNumber, setAddLoyaltyNumber] = useState("");
   const [addName, setAddName] = useState("");
   const [addBalance, setAddBalance] = useState("");
@@ -49,6 +52,7 @@ const [currentRedeemAmount , setCurrentRedeemAmount] = useState(null);
   const [pointsEarned, setPointsEarned] = useState("");
   const [addNarration, setAddNarration] = useState("");
 
+  // Redeem Points State
   const [redeemLoyaltyNumber, setRedeemLoyaltyNumber] = useState("");
   const [redeemName, setRedeemName] = useState("");
   const [redeemBalance, setRedeemBalance] = useState("");
@@ -56,23 +60,28 @@ const [currentRedeemAmount , setCurrentRedeemAmount] = useState(null);
   const [redeemAmount, setRedeemAmount] = useState("");
   const [redeemNarration, setRedeemNarration] = useState("");
 
+  // Mode and UI State
   const [mode, setMode] = useState("add");
+  const [modalAddVisible, setModalAddVisible] = useState(false);
+  const [modalRedeemVisible, setModalRedeemVisible] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
+  
+  // Search and Pagination State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 500);
+  const [searchResults, setSearchResults] = useState([]);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Refs
+  const loyaltyNumberRef = useRef(null);
   const purchaseAmountRef = useRef(null);
   const redeemPointsRef = useRef(null);
-
-
-
-useFocusEffect(
-  useCallback(() => {
-    AddPointsget();
-    RedeemAmount();
-  }, [])
-);
-
-
-
-
   const animation = useRef(new Animated.Value(0)).current;
+
+  // Animation for mode switching
   const switchMode = (newMode) => {
     setMode(newMode);
     Animated.timing(animation, {
@@ -82,56 +91,101 @@ useFocusEffect(
       useNativeDriver: false,
     }).start();
   };
+
   const sliderLeft = animation.interpolate({
     inputRange: [0, 1],
     outputRange: ["2%", "50%"],
   });
 
+  // Focus effect to load point values
+  useFocusEffect(
+    useCallback(() => {
+      AddPointsget();
+      RedeemAmount();
+    }, [])
+  );
+
+  // Camera permission request
+  useEffect(() => {
+    requestPermission();
+  }, []);
+
+  const requestPermission = async () => {
+    let status;
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA
+      );
+      status = granted === PermissionsAndroid.RESULTS.GRANTED ? 'authorized' : 'denied';
+    } else {
+      status = await Camera.requestCameraPermission();
+    }
+    setHasPermission(status === 'authorized');
+  };
+
+  // QR Code Scanner
+  const device = useCameraDevice('back');
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr', 'ean-13', 'code-128'],
+    onCodeScanned: (codes) => {
+      if (codes.length > 0 && codes[0].value) {
+        const value = codes[0].value;
+        if (mode === "add") {
+          setAddLoyaltyNumber(value);
+        } else {
+          setRedeemLoyaltyNumber(value);
+        }
+        setShowScanner(false);
+        loyaltyNumberRef.current.focus();
+      }
+    }
+  });
+
+  // Calculate points based on purchase amount
   const calculatePoints = (amount) => {
     if (!amount || isNaN(amount)) {
       setPointsEarned("");
       return;
     }
-    console.log("Calculating points...",   currentValPoint);
+    
     const valAMT = parseFloat(currentValAmount) || 0;
     const valPOINT = parseFloat(currentValPoint) || 0;
     const onePointValue = valAMT / valPOINT || 0;
     let points = parseFloat(amount) / onePointValue;
-    let VAL;
-  
-      VAL = points;
     
-
-    setPointsEarned(VAL.toString());
+    setPointsEarned(points.toString());
   };
+
+  // Convert points to amount for redemption
   const convertPointsToAmount = (points) => {
     const RedeemvalPOINT = parseFloat(currentRedeemPoint) || 0;
     const onePointAMT = (parseFloat(currentRedeemAmount) || 0) / RedeemvalPOINT || 0;
-    console.log("Converting points to amount...", currentRedeemAmount);
     const amount = parseFloat(points) * onePointAMT;
     setRedeemAmount(amount ? amount.toFixed(2) : "");
   };
 
+  // Handle save action
   const handleSave = () => {
-   
     if (mode === "add") {
-       if(addLoyaltyNumber === "" || (mode === "add" && purchaseAmount === "") ) {
-      Alert.alert("Error", "Please fill in all required fields");
-      return;
-    }
-      showConfirmation("Are you sure you want to add points?", addPoints);
-    } else {
-      if(redeemLoyaltyNumber === "" || (mode === "redeem" && redeemPoints === "" && redeemBalance === "")) {
+      if (addLoyaltyNumber === "" || purchaseAmount === "") {
         Alert.alert("Error", "Please fill in all required fields");
         return;
       }
-      if(redeemBalance < 0 || redeemBalance == "0") {
+      showConfirmation("Are you sure you want to add points?", addPoints);
+    } else {
+      if (redeemLoyaltyNumber === "" || redeemPoints === "") {
+        Alert.alert("Error", "Please fill in all required fields");
+        return;
+      }
+      if (redeemBalance < 0 || redeemBalance == "0") {
         Alert.alert("Error", "Redeem points must be at least 1");
         return;
       }
       showConfirmation("Are you sure you want to redeem points?", RedeemPoints);
     }
   };
+
+  // Clear form fields
   const handleClear = () => {
     if (mode === "add") {
       setAddLoyaltyNumber("");
@@ -150,21 +204,24 @@ useFocusEffect(
     }
   };
 
+  // Get customer points
   const getPoints = async () => {
     let loyaltyNumber = mode === "add" ? addLoyaltyNumber : redeemLoyaltyNumber;
-    console.log("Fetching points for loyalty number:", loyaltyNumber);
+    
     if (!loyaltyNumber) {
-      Alert.alert("Error", "Please enter a loyalty number"); 
+      Alert.alert("Error", "Please enter a loyalty number");
       return;
     }
+    
     try {
       const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}/${groupCode}`);
-      console.log("Response:", response.data);
-      if(response.status == 200){
-        if(response.data.length === 0) {
+      
+      if (response.status == 200) {
+        if (response.data.length === 0) {
           Alert.alert("Error", "No points found for this loyalty number");
           return;
         }
+        
         const data = response.data;
         if (mode === "add") {
           setAddName(data.customerName);
@@ -173,320 +230,309 @@ useFocusEffect(
           setRedeemName(data.customerName);
           setRedeemBalance(data.balance.toString());
         }
+      } else {
+        handleStatusCodeError(response.status, "Error fetching points data");
+        handleClear();
       }
-      else {
-        handleStatusCodeError(response.status, "Error deleting data");
-       handleClear();
-      }
-    }
-    catch (error) {
-      if (error.response) {
-        handleStatusCodeError(
-          error.response.status,
-          error.response.data?.message || "An unexpected server error occurred.",
-          handleClear()
-        );
-      } else if (error.request) {
-        alert("No response received from the server. Please check your network connection.");
-      } 
-      else {
-        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-      }
+    } catch (error) {
+      handleApiError(error);
     }
   };
 
-
-  const addPoints = async() => {
-    if(purchaseAmount == Infinity) {
+  // Add points API call
+  const addPoints = async () => {
+    if (purchaseAmount == Infinity) {
       Alert.alert("Error", "Invalid purchase amount");
       return;
     }
-    try{
-        const todayDate = new Date().toISOString().split("T")[0];
-        const payload = {
-            loyaltyNumber: addLoyaltyNumber,
-            lAmt: Number(purchaseAmount) || 0,
-            lDate: todayDate,
-            points: Number(pointsEarned) || 0,
-            fcomCode: fcomCode,
-            narration : addNarration,
-            fGroupCode: groupCode
-        }
-        console.log(payload)
-        const response = await axios.post(`${BASE_URL}AddPoints/newPoints`, payload);
-        if(response.status == 200){
-            Alert.alert("Success", "Points added successfully");
-            handleClear();
-        }
-        else {
-        handleStatusCodeError(response.status, "Error deleting data");
-      }
-
-    }
-  catch (error) {
-      if (error.response) {
-        handleStatusCodeError(
-          error.response.status,
-          error.response.data?.message || "An unexpected server error occurred."
-        );
-      } else if (error.request) {
-        alert("No response received from the server. Please check your network connection.");
-      } 
-      else {
-        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-      }
-    }
-  };
-
-  const RedeemPoints = async() => {
-    try{
-       const todayDate = new Date();
-    const formattedDate = `${String(todayDate.getDate()).padStart(2, "0")}/${String(todayDate.getMonth() + 1).padStart(2, "0")}/${todayDate.getFullYear()}`;
-
-        const payload = {
-            LoyaltyNum: redeemLoyaltyNumber,
-            RedeemDate: formattedDate,
-            RedeemAmt: Number(redeemAmount) || 0,
-            RedeemPoint: Number(redeemPoints) || 0,
-            compCode: fcomCode,
-            narration : redeemNarration,
-            fGroupCode: groupCode
-        }
-        
-        console.log(payload)
-        const response = await axios.post(`${BASE_URL}RedeemPoints/RedeemPoints`, payload);
-        if(response.status == 200){
-            Alert.alert("Success", "Points redeemed successfully");
-            handleClear();
-        }   
-         else {
-        handleStatusCodeError(response.status, "Error deleting data");
-      }
-
-    }
-    catch (error) {
-      if (error.response) {
-        handleStatusCodeError(
-          error.response.status,
-          error.response.data?.message || "An unexpected server error occurred."
-        );
-      } else if (error.request) {
-        alert("No response received from the server. Please check your network connection.");
-      } 
-      else {
-        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-      }
-    }
-  };
-//--------------------------------------------Points Value Get  ---------------------------------------
-const AddPointsget = async ()=>{
-
-  try{
-    const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${groupCode}`)
-    console.log(response)
-    if(response.status == 200){
+    
+    try {
+      const todayDate = new Date().toISOString().split("T")[0];
+      const payload = {
+        loyaltyNumber: addLoyaltyNumber,
+        lAmt: Number(purchaseAmount) || 0,
+        lDate: todayDate,
+        points: Number(pointsEarned) || 0,
+        fcomCode: fcomCode,
+        narration: addNarration,
+        fGroupCode: groupCode
+      };
       
-      setCurrentValAmount(response.data.amount);
-      setCurrentValPoint(response.data.point);
-    }
-     else {
-        handleStatusCodeError(response.status, "Error deleting data");
+      const response = await axios.post(`${BASE_URL}AddPoints/newPoints`, payload);
+      
+      if (response.status == 200) {
+        Alert.alert("Success", "Points added successfully");
+        handleClear();
+      } else {
+        handleStatusCodeError(response.status, "Error adding points");
       }
-  }
-catch (error) {
-      if (error.response) {
-        handleStatusCodeError(
-          error.response.status,
-          error.response.data?.message || "An unexpected server error occurred."
-        );
-      } else if (error.request) {
-        alert("No response received from the server. Please check your network connection.");
-      } 
-      else {
-        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-      }
-    }
-  };
-//--------------------------------------------Points Value Get  ---------------------------------------
-const RedeemAmount = async ()=>{
-  try{
-    const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${groupCode}`)
-    if(response.status == 200){
-      console.log(response.data)
-      setCurrentRedeemAmount(response.data.fpointVal);
-      setCurrentRedeemPoint(response.data.point);
-    }
-     else {
-        handleStatusCodeError(response.status, "Error deleting data");
-      }
-  }
-catch (error) {
-      if (error.response) {
-        handleStatusCodeError(
-          error.response.status,
-          error.response.data?.message || "An unexpected server error occurred."
-        );
-      } else if (error.request) {
-        alert("No response received from the server. Please check your network connection.");
-      } 
-      else {
-        alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-      }
+    } catch (error) {
+      handleApiError(error);
     }
   };
 
+  // Redeem points API call
+  const RedeemPoints = async () => {
+    try {
+      const todayDate = new Date();
+      const formattedDate = `${String(todayDate.getDate()).padStart(2, "0")}/${String(todayDate.getMonth() + 1).padStart(2, "0")}/${todayDate.getFullYear()}`;
 
+      const payload = {
+        LoyaltyNum: redeemLoyaltyNumber,
+        RedeemDate: formattedDate,
+        RedeemAmt: Number(redeemAmount) || 0,
+        RedeemPoint: Number(redeemPoints) || 0,
+        compCode: fcomCode,
+        narration: redeemNarration,
+        fGroupCode: groupCode
+      };
 
+      const response = await axios.post(`${BASE_URL}RedeemPoints/RedeemPoints`, payload);
+      
+      if (response.status == 200) {
+        Alert.alert("Success", "Points redeemed successfully");
+        handleClear();
+      } else {
+        handleStatusCodeError(response.status, "Error redeeming points");
+      }
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
 
-  const device = useCameraDevice('back');
-  const [hasPermission, setHasPermission] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
+  // Get add points configuration
+  const AddPointsget = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}Ratefixing/Addpointfix/${groupCode}`);
+      
+      if (response.status == 200) {
+        setCurrentValAmount(response.data.amount);
+        setCurrentValPoint(response.data.point);
+      } else {
+        handleStatusCodeError(response.status, "Error fetching points configuration");
+      }
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
 
-  const requestPermission = async () => {
-    let status;
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CAMERA
+  // Get redeem points configuration
+  const RedeemAmount = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}Ratefixing/Redeempoints/${groupCode}`);
+      
+      if (response.status == 200) {
+        setCurrentRedeemAmount(response.data.fpointVal);
+        setCurrentRedeemPoint(response.data.point);
+      } else {
+        handleStatusCodeError(response.status, "Error fetching redeem configuration");
+      }
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  // Handle API errors
+  const handleApiError = (error) => {
+    if (error.response) {
+      handleStatusCodeError(
+        error.response.status,
+        error.response.data?.message || "An unexpected server error occurred."
       );
-      status = granted === PermissionsAndroid.RESULTS.GRANTED ? 'authorized' : 'denied';
+    } else if (error.request) {
+      Alert.alert("Network Error", "No response received from the server. Please check your network connection.");
     } else {
-      status = await Camera.requestCameraPermission();
+      Alert.alert("Request Error", `Error: ${error.message}. This might be due to an invalid URL or network issue.`);
     }
-    setHasPermission(status === 'authorized');
   };
 
+  // Search customers
   useEffect(() => {
-    requestPermission();
-  }, []);
+    if (debouncedSearchTerm) {
+      setPageNumber(1);
+      searchCustomers(true, 1);
+    } else {
+      setSearchResults([]);
+    }
+  }, [debouncedSearchTerm]);
 
-  const codeScanner = useCodeScanner({
-    codeTypes: ['qr', 'ean-13', 'code-128'],
-    onCodeScanned: (codes) => {
-      if (codes.length > 0 && codes[0].value) {
-        const value = codes[0].value;
-        setAddLoyaltyNumber(value);
-        setShowScanner(false);
-        loyaltyNumberRef.current.focus();
+  const searchCustomers = async (reset = false, page = 1) => {
+    const term = debouncedSearchTerm.trim();
+    
+    if (!term) {
+      setSearchResults([]);
+      setHasMore(false);
+      return;
+    }
+
+    if (loading || (!hasMore && !reset)) return;
+
+    try {
+      setLoading(true);
+      const pageSize = 10;
+      const currentPage = reset ? 1 : page;
+      
+      const response = await axios.get(
+        `${BASE_URL}AddPoints/SearchCustomersWithPoints/${groupCode}?search=${term}&pageNumber=${currentPage}&pageSize=${pageSize}`
+      );
+
+      if (response.status === 200 && response.data) {
+        const customers = response.data.data || [];
+
+        if (reset) {
+          setSearchResults(customers);
+          setPageNumber(2);
+        } else {
+          setSearchResults(prev => [...prev, ...customers]);
+          setPageNumber(prev => prev + 1);
+        }
+
+        setHasMore(customers.length === pageSize);
+      } else {
+        setSearchResults([]);
+        setHasMore(false);
       }
-       
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Select customer from search results
+  const selectCustomer = (customer) => {
+    if (mode === "add") {
+      setAddLoyaltyNumber(customer.loyaltyNumber || '');
+      setAddName(customer.customerName || '');
+      setAddBalance(customer.balance || '');
+    } else {
+      setRedeemLoyaltyNumber(customer.loyaltyNumber || '');
+      setRedeemName(customer.customerName || '');
+      setRedeemBalance(customer.balance || '');
     }
     
-  });
+    setModalAddVisible(false);
+    setModalRedeemVisible(false);
+  };
+
+  // Render customer item in search results
+  const renderCustomerItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.customerItem}
+      onPress={() => selectCustomer(item)}
+    >
+      <Text style={styles.customerName}>{item.customerName}</Text>
+      <Text style={styles.customerDetail}>Loyalty: {item.loyaltyNumber || 'N/A'}</Text>
+      <Text style={styles.customerDetail}>Phone: {item.phonenumber || 'N/A'}</Text>
+      <Text style={styles.customerDetail}>Balance: {item.balance || '0'}</Text>
+    </TouchableOpacity>
+  );
+
+  // Open search modal
+  const handleEdit = () => {
+    if (mode === "add") {
+      setModalAddVisible(true);
+    } else {
+      setModalRedeemVisible(true);
+    }
+    setSearchTerm('');
+    setSearchResults([]);
+  };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1,backgroundColor:'white' }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Loyalty Hub</Text>
-          </View>
-                      
-          {/* Segmented Control */}
-          <View style={styles.tabContainer}>
-  <TouchableOpacity
-    style={[styles.tabButton, mode === "add" && styles.activeTab]}
-    onPress={() => setMode("add")}
-  >
-    <Text style={[styles.tabText, mode === "add" && styles.activeTabText]}>
-      Add Points
-    </Text>
-  </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={{ flex: 1 }}>
+              {/* Header */}
+              <View style={[styles.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('PartyCreation')}
+                  style={{ position: 'absolute', left: 20, alignItems: 'center' }}
+                >
+                  <View style={{ backgroundColor: '#FFf', padding: 10, borderRadius: 50 }}>
+                    <MaterialIcons name="person-add" size={28} color="#006A72" />
+                  </View>
+                </TouchableOpacity>
+                <Text style={[styles.headerText, { marginBottom: 10 }]}>Loyalty Hub</Text>
+              </View>
 
-  <TouchableOpacity
-    style={[styles.tabButton, mode === "redeem" && styles.activeTab]}
-    onPress={() => setMode("redeem")}
-  >
-    <Text style={[styles.tabText, mode === "redeem" && styles.activeTabText]}>
-      Redeem Points
-    </Text>
-  </TouchableOpacity>
-</View>
+              {/* Segmented Control */}
+              <View style={styles.tabContainer}>
+                <TouchableOpacity
+                  style={[styles.tabButton, mode === "add" && styles.activeTab]}
+                  onPress={() => switchMode("add")}
+                >
+                  <Text style={[styles.tabText, mode === "add" && styles.activeTabText]}>
+                    Add Points
+                  </Text>
+                </TouchableOpacity>
 
+                <TouchableOpacity
+                  style={[styles.tabButton, mode === "redeem" && styles.activeTab]}
+                  onPress={() => switchMode("redeem")}
+                >
+                  <Text style={[styles.tabText, mode === "redeem" && styles.activeTabText]}>
+                    Redeem Points
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-          <View style={{ marginVertical: 10 }}>
-            {mode === "add" ? (
-              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72",position: "absolute", top: 1, right:10 }}>
-                Per Point value:{" "}
-                {currentValAmount && currentValPoint
-                  ? (parseFloat(currentValAmount) / parseFloat(currentValPoint)).toFixed(2)
-                  : "Loading..."}
-              </Text>
-            ) : (
-              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72",position: "absolute", top: 1, right:10 }}>
-                Per Redeem value:{" "}
-                {currentRedeemAmount && currentRedeemPoint
-                  ? (parseFloat(currentRedeemAmount) / parseFloat(currentRedeemPoint)).toFixed(2)
-                  : "Loading..."}
-              </Text>
-            )}
-          </View>
+              {/* Points Value Display */}
+              <View style={{ marginVertical: 10, paddingHorizontal: 20 }}>
+                {mode === "add" ? (
+                  <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72", textAlign: 'right' }}>
+                    Per Point value:{" "}
+                    {currentValAmount && currentValPoint
+                      ? (parseFloat(currentValAmount) / parseFloat(currentValPoint)).toFixed(2)
+                      : "Loading..."}
+                  </Text>
+                ) : (
+                  <Text style={{ fontSize: 16, fontWeight: "bold", color: "#006A72", textAlign: 'right' }}>
+                    Per Redeem value:{" "}
+                    {currentRedeemAmount && currentRedeemPoint
+                      ? (parseFloat(currentRedeemAmount) / parseFloat(currentRedeemPoint)).toFixed(2)
+                      : "Loading..."}
+                  </Text>
+                )}
+              </View>
 
+              {/* Form Card */}
+              <View style={styles.card}>
+                {/* Loyalty Number Section */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.label}>Loyalty Number</Text>
+                  <View style={styles.editContainer}>
+                    <TouchableOpacity onPress={handleEdit}>
+                      <MaterialIcons name="edit" size={28} color="#ffff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
 
-          <View style={styles.card}>
-
-            {/* ADD Mode */}
-            {mode === "add" && (
-              <>
-                <Text style={styles.label}>Loyalty Number</Text>
                 <View style={styles.row}>
                   <TextInput
                     ref={loyaltyNumberRef}
                     style={[styles.input, { flex: 1 }]}
-                    value={addLoyaltyNumber}
-                    onChangeText={setAddLoyaltyNumber}
-                    onBlur={getPoints}
-                    placeholder="Enter Loyalty Number"
-                    returnKeyType="Done"
-                    onSubmitEditing={() => purchaseAmountRef.current.focus()}
-                  />
-                  <TouchableOpacity
-                    onPress={() => (hasPermission ? setShowScanner(true) : requestPermission())}
-                    style={styles.qrButton}
-                  >
-                    <Icon name="qr-code-scanner" size={isTablet ? wp('5%') : wp('7%')} color="#333" />
-                  </TouchableOpacity>
-                </View>
-
-                <Text style={styles.label}>Name</Text>
-                <TextInput style={styles.input} value={addName} editable={false} />
-
-                <Text style={styles.label}>Balance Points</Text>
-                <TextInput style={styles.input} value={addBalance} editable={false} />
-
-                <Text style={styles.label}>Amount</Text>
-                <TextInput
-                  ref={purchaseAmountRef}
-                  style={styles.input}
-                  value={purchaseAmount}
-                  onChangeText={(val) => {
-                    setPurchaseAmount(val);
-                    calculatePoints(val);
-                  }}
-                  keyboardType="numeric"
-                />
-
-                <Text style={styles.label}>Points Earned</Text>
-                <TextInput style={styles.input} value={pointsEarned} editable={false} />
-
-                <Text style={styles.label}>Narration</Text>
-                <TextInput style={styles.input} value={addNarration} onChangeText={setAddNarration} multiline={true} numberOfLines={4} />
-              </>
-            )}
-
-            {/* REDEEM Mode */}
-            {mode === "redeem" && (
-              <>
-                <Text style={styles.label}>Loyalty Number</Text>
-                <View style={styles.row}>
-                   <TextInput
-                    style={[styles.input, { flex: 1 }]}
-                    value={redeemLoyaltyNumber}
-                    onChangeText={setRedeemLoyaltyNumber}
+                    value={mode === "add" ? addLoyaltyNumber : redeemLoyaltyNumber}
+                    onChangeText={mode === "add" ? setAddLoyaltyNumber : setRedeemLoyaltyNumber}
                     onBlur={getPoints}
                     placeholder="Enter Loyalty Number"
                     returnKeyType="next"
-                    onSubmitEditing={() => redeemPointsRef.current.focus()}
+                    onSubmitEditing={() => {
+                      if (mode === "add") {
+                        purchaseAmountRef.current.focus();
+                      } else {
+                        redeemPointsRef.current.focus();
+                      }
+                    }}
                   />
                   <TouchableOpacity
                     onPress={() => (hasPermission ? setShowScanner(true) : requestPermission())}
@@ -496,203 +542,383 @@ catch (error) {
                   </TouchableOpacity>
                 </View>
 
+                {/* Name Field */}
                 <Text style={styles.label}>Name</Text>
-                <TextInput style={styles.input} value={redeemName} editable={false} />
-
-                <Text style={styles.label}>Balance Points</Text>
-                <TextInput style={styles.input} value={redeemBalance} editable={false} />
-
-                <Text style={styles.label}>Redeem Points</Text>
                 <TextInput
-                  ref={redeemPointsRef}
                   style={styles.input}
-                  value={redeemPoints}
-                  onChangeText={(val) => {
-                    setRedeemPoints(val);
-                    convertPointsToAmount(val);
-                  }}
-                  keyboardType="numeric"
+                  value={mode === "add" ? addName : redeemName}
+                  editable={false}
                 />
 
-                <Text style={styles.label}>Amount</Text>
-                <TextInput style={styles.input} value={redeemAmount} editable={false} />
-                <Text style={styles.label}>Narration</Text>
-                <TextInput style={styles.input} value={redeemNarration} onChangeText={setRedeemNarration} multiline={true} numberOfLines={4} />
-              </>
-              
-            )}
+                {/* Balance Points Field */}
+                <Text style={styles.label}>Balance Points</Text>
+                <TextInput
+                  style={styles.input}
+                  value={mode === "add" ? addBalance : redeemBalance}
+                  editable={false}
+                />
 
-            {/* Buttons */}
-            <View style={styles.buttonRow}>
-              <TouchableOpacity style={[styles.button, styles.saveBtn]} onPress={handleSave}>
-                <Text style={styles.saveText}>SAVE</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={handleClear}>
-                <Text style={styles.clearText}>CLEAR</Text>
+                {/* Mode Specific Fields */}
+                {mode === "add" ? (
+                  <>
+                    <Text style={styles.label}>Amount</Text>
+                    <TextInput
+                      ref={purchaseAmountRef}
+                      style={styles.input}
+                      value={purchaseAmount}
+                      onChangeText={(val) => {
+                        setPurchaseAmount(val);
+                        calculatePoints(val);
+                      }}
+                      keyboardType="numeric"
+                      returnKeyType="next"
+                    />
+
+                    <Text style={styles.label}>Points Earned</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={pointsEarned}
+                      editable={false}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.label}>Redeem Points</Text>
+                    <TextInput
+                      ref={redeemPointsRef}
+                      style={styles.input}
+                      value={redeemPoints}
+                      onChangeText={(val) => {
+                        setRedeemPoints(val);
+                        convertPointsToAmount(val);
+                      }}
+                      keyboardType="numeric"
+                      returnKeyType="next"
+                    />
+
+                    <Text style={styles.label}>Amount</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={redeemAmount}
+                      editable={false}
+                    />
+                  </>
+                )}
+
+                {/* Narration Field */}
+                <Text style={styles.label}>Narration</Text>
+                <TextInput
+                  style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                  value={mode === "add" ? addNarration : redeemNarration}
+                  onChangeText={mode === "add" ? setAddNarration : setRedeemNarration}
+                  multiline={true}
+                  numberOfLines={4}
+                  returnKeyType="done"
+                />
+
+                {/* Action Buttons */}
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity style={[styles.button, styles.saveBtn]} onPress={handleSave}>
+                    <Text style={styles.saveText}>SAVE</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.button, styles.clearBtn]} onPress={handleClear}>
+                    <Text style={styles.clearText}>CLEAR</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+
+        {/* Customer Search Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalAddVisible || modalRedeemVisible}
+          onRequestClose={() => {
+            setModalAddVisible(false);
+            setModalRedeemVisible(false);
+          }}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Search Customer</Text>
+
+              <View style={styles.searchContainer}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Enter Loyalty Number, Name, or Phone"
+                  value={searchTerm}
+                  onChangeText={(text) => {
+                    setSearchTerm(text);
+                    setPageNumber(1);
+                  }}
+                />
+
+                <TouchableOpacity
+                  style={styles.searchButton}
+                  onPress={() => searchCustomers(true)}
+                >
+                  <Text style={styles.searchButtonText}>Search</Text>
+                </TouchableOpacity>
+              </View>
+
+              <FlatList
+                data={searchResults}
+                renderItem={renderCustomerItem}
+                keyExtractor={(item, index) => index.toString()}
+                style={styles.customerList}
+                onEndReached={() => {
+                  if (!loading && hasMore) {
+                    searchCustomers(false, pageNumber);
+                  }
+                }}
+                onEndReachedThreshold={0.5}
+                ListEmptyComponent={
+                  !loading ? (
+                    <Text style={{ textAlign: 'center', padding: 10, color: '#666' }}>
+                      No customers found
+                    </Text>
+                  ) : null
+                }
+                ListFooterComponent={
+                  loading ? (
+                    <Text style={{ textAlign: 'center', padding: 10 }}>Loading...</Text>
+                  ) : null
+                }
+              />
+
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => {
+                  setModalAddVisible(false);
+                  setModalRedeemVisible(false);
+                }}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
               </TouchableOpacity>
             </View>
-         
-        </View>
-      </View>
-      </ScrollView>
+          </View>
+        </Modal>
 
-      {/* QR Scanner */}
-      <Modal visible={showScanner} animationType="slide" onRequestClose={() => setShowScanner(false)}>
-        <View style={{ flex: 1, backgroundColor: 'black' }}>
-          {device && hasPermission && (
-            <Camera style={{ flex: 1 }} device={device} isActive={showScanner} codeScanner={codeScanner} />
-          )}
-          <TouchableOpacity style={styles.closeButton} onPress={() => setShowScanner(false)}>
-            <Text style={{ color: 'white', fontSize: 18 }}>Close</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-    </KeyboardAvoidingView>
+        {/* QR Scanner Modal */}
+        <Modal visible={showScanner} animationType="slide" onRequestClose={() => setShowScanner(false)}>
+          <View style={{ flex: 1, backgroundColor: 'black' }}>
+            {device && hasPermission && (
+              <Camera
+                style={{ flex: 1 }}
+                device={device}
+                isActive={showScanner}
+                codeScanner={codeScanner}
+              />
+            )}
+            <TouchableOpacity
+              style={[styles.closeButton, { position: 'absolute', bottom: 30, alignSelf: 'center' }]}
+              onPress={() => setShowScanner(false)}
+            >
+              <Text style={{ color: 'white', fontSize: 18 }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff'
+  },
   header: {
     backgroundColor: '#006A72',
-    paddingTop: hp('5%'),      // 40px → hp
-    paddingBottom: hp('2.5%'), // 20px → hp
+    paddingRight: wp('2.5%'),
+    paddingBottom: hp('2.5%'),
+    paddingTop: hp('3.5%'),
     alignItems: 'center',
     borderBottomLeftRadius: wp('5%'),
     borderBottomRightRadius: wp('5%'),
   },
-  headerText: { fontSize: wp('6%'), color: 'white', fontWeight: 'bold' },
-
+  headerText: {
+    fontSize: wp('6%'),
+    color: 'white',
+    fontWeight: 'bold',
+  },
   card: {
     backgroundColor: 'white',
-    borderRadius: wp('3%'),
+    borderRadius: wp('2.5%'),
     padding: wp('4%'),
     margin: wp('4%'),
     marginTop: hp('2.5%'),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: hp('0.3%') },
+    shadowOffset: { width: 0, height: hp('0.25%') },
     shadowOpacity: 0.1,
     shadowRadius: wp('1%'),
     elevation: 3,
   },
- label: { 
-  fontSize: isTablet ? wp('3.8%') : wp('3.9%'), 
-  fontWeight: "600", 
-  color: "#006A72", 
-  marginTop: hp('1.5%'), 
-  marginBottom: hp('0.7%')
-},
-
-input: {
-  borderWidth: 1,
-  borderColor: "#8FD6DA",
-  borderRadius: wp('2%'),
-  paddingHorizontal: wp('3%'),                 
-  paddingVertical: hp('1.2%'),
-  fontSize: isTablet ? wp('4.2%') : wp('3.9%'), 
-  backgroundColor: "#ffffff",
-  color: "#00363A",
-},
-  buttonRow: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    marginTop: hp('2.5%') 
-  },
-  button: { 
-    flex: 1, 
-    paddingVertical: hp('1.5%'), 
-    borderRadius: wp('7%'), 
-    alignItems: "center", 
-    marginHorizontal: wp('1.2%') 
-  },
-  saveBtn: { backgroundColor: "#006A72" },
-  saveText: { color: "#ffffff", fontWeight: "bold", fontSize: wp('4%') },
-  clearBtn: { backgroundColor: "#D9F5F7" },
-  clearText: { color: "#006A72", fontWeight: "bold", fontSize: wp('4%') },
-
-  segmentContainer: {
-    flexDirection: "row",
-    backgroundColor: "#d1e6e7",
-    borderRadius: wp('10%'),
-    padding: wp('0.8%'),
-    position: "relative",
-    marginBottom: hp('2%'),
-    height: hp('6%'),
-    elevation: 3,
-    marginTop: hp('1.5%'),
-    width: "100%",
-    overflow: "hidden",
-  },
-  slider: {
-    position: "absolute",
-    top: wp('0.8%'),
-    bottom: wp('0.8%'),
-    width: "48%",
-    backgroundColor: "#006A72",
-    borderRadius: wp('10%'),
-    elevation: 4,
-  },
-  segmentButton: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  segmentText: {
+  label: {
     fontSize: wp('4%'),
     fontWeight: "600",
-    color: "#444",
+    color: "#006A72",
+    marginTop: hp('1.5%'),
+    marginBottom: hp('0.7%')
   },
-  segmentTextActive: {
-    color: "#fff",
-  },
-
-  row: { flexDirection: "row", alignItems: "center" },
-  qrButton: { 
-    marginLeft: wp('2%'), 
-    paddingHorizontal: wp('1.5%'), 
-    justifyContent: "center", 
-    alignItems: "center" 
-  },
-  closeButton: {
-    position: 'absolute',
-    bottom: hp('4%'),
-    alignSelf: 'center',
-    paddingVertical: hp('1%'),
-    paddingHorizontal: wp('4%'),
-    backgroundColor: '#00000088',
+  input: {
+    borderWidth: 1,
+    borderColor: "#8FD6DA",
     borderRadius: wp('2%'),
+    paddingHorizontal: wp('3%'),
+    paddingVertical: hp('1.2%'),
+    fontSize: wp('4%'),
+    backgroundColor: "#ffffff",
+    color: "#00363A",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: hp('2.5%'),
+  },
+  button: {
+    flex: 1,
+    paddingVertical: hp('1.5%'),
+    borderRadius: wp('6%'),
+    alignItems: "center",
+    marginHorizontal: wp('1%'),
+  },
+  saveBtn: {
+    backgroundColor: "#006A72"
+  },
+  saveText: {
+    color: "#ffffff",
+    fontWeight: "bold",
+    fontSize: wp('4%')
+  },
+  clearBtn: {
+    backgroundColor: "#D9F5F7"
+  },
+  clearText: {
+    color: "#006A72",
+    fontWeight: "bold",
+    fontSize: wp('4%')
   },
   tabContainer: {
-  flexDirection: "row",
-  marginHorizontal: wp("5%"),
-  marginTop: hp("2%"),
-  borderRadius: 30,
-  backgroundColor: "#D9F5F7",
-  padding: hp("0.5%"),
-  overflow: "hidden",
-},
-tabButton: {
-  flex: 1,
-  alignItems: "center",
-  justifyContent: "center",
-  paddingVertical: hp("1.5%"),
-  borderRadius: 30,
-},
-activeTab: {
-  backgroundColor: "#006A72",
-  shadowColor: "#000",
-  shadowOpacity: 0.08,
-  shadowRadius: 4,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 3,
-},
-tabText: {
-  color: "#006A72",
-  fontWeight: "bold",
-  fontSize: wp("4%"),
-},
-activeTabText: {
-  color: "#fff",
-},
-
+    flexDirection: "row",
+    marginHorizontal: wp('5%'),
+    marginTop: hp('2%'),
+    borderRadius: 30,
+    backgroundColor: "#D9F5F7",
+    padding: hp('0.5%'),
+    overflow: "hidden",
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: hp('1.5%'),
+    borderRadius: 30,
+  },
+  activeTab: {
+    backgroundColor: "#006A72",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  tabText: {
+    color: "#006A72",
+    fontWeight: "bold",
+    fontSize: wp('4%'),
+  },
+  activeTabText: {
+    color: "#fff",
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  qrButton: {
+    marginLeft: wp('2%'),
+    paddingHorizontal: wp('1.5%'),
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  editContainer: {
+    paddingHorizontal: 8,
+    backgroundColor: '#006A72',
+    borderRadius: wp('6%'),
+    padding: wp('2%')
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: wp('90%'),
+    backgroundColor: 'white',
+    borderRadius: wp('4%'),
+    padding: wp('5%'),
+    maxHeight: hp('80%'),
+  },
+  modalTitle: {
+    fontSize: wp('5%'),
+    fontWeight: 'bold',
+    color: '#006A72',
+    textAlign: 'center',
+    marginBottom: hp('2%'),
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    marginBottom: hp('2%'),
+  },
+  searchInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#8FD6DA',
+    borderRadius: wp('2%'),
+    paddingHorizontal: wp('3%'),
+    paddingVertical: hp('1%'),
+    marginRight: wp('2%'),
+  },
+  searchButton: {
+    backgroundColor: '#006A72',
+    paddingHorizontal: wp('4%'),
+    paddingVertical: hp('1%'),
+    borderRadius: wp('2%'),
+    justifyContent: 'center',
+  },
+  searchButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  customerList: {
+    maxHeight: hp('40%'),
+    marginBottom: hp('2%'),
+  },
+  customerItem: {
+    padding: wp('3%'),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  customerName: {
+    fontSize: wp('4%'),
+    fontWeight: 'bold',
+    color: '#00363A',
+  },
+  customerDetail: {
+    fontSize: wp('3.5%'),
+    color: '#666',
+  },
+  closeButton: {
+    backgroundColor: '#D9F5F7',
+    padding: wp('3%'),
+    borderRadius: wp('2%'),
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#006A72',
+    fontWeight: 'bold',
+  },
 });
