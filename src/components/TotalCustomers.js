@@ -10,6 +10,9 @@ import {
   Dimensions,
   ActivityIndicator,
   TextInput, // Import TextInput
+  ImageBackground,
+  TouchableOpacity,
+  Image,
 } from 'react-native';
 import {
   widthPercentageToDP as wp,
@@ -19,6 +22,7 @@ import { BarChart, PieChart } from 'react-native-chart-kit';
 import { BASE_URL } from './Services'; // Assuming these are correctly set up
 import { getCompanyCode, getGroupCode } from '../store'; // Assuming these are correctly set up
 import axios from 'axios';
+import { useNavigation } from "@react-navigation/native";
 
 // --- MOCK DATA for UI development without API access ---
 // (Can be removed when using the actual API)
@@ -27,6 +31,7 @@ import axios from 'axios';
 const screenWidth = Dimensions.get('window').width;
 
 const TotalCustomers = () => {
+  const navigation = useNavigation();
   const [customerData, setCustomerData] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [pageNumber, setPageNumber] = React.useState(1);
@@ -185,7 +190,32 @@ const TotalCustomers = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F7F9" />
-      <Text style={styles.title}>Total Customers Report</Text>
+     <ImageBackground
+  source={require('../assets/customer-header1.jpg')} // same header image
+  style={styles.headerBackground}
+  resizeMode="cover"
+>
+  {/* Semi-transparent overlay */}
+  <View style={styles.imageOverlay} />
+
+  {/* Header content */}
+  <View style={styles.headerRowInside}>
+    <TouchableOpacity
+      style={styles.backButton}
+      onPress={() => navigation.goBack()}
+    >
+      <Image
+        source={require("../assets/backicon.png")}
+        style={styles.backIcon}
+        resizeMode="contain"
+      />
+    </TouchableOpacity>
+
+    <Text style={styles.headerTitle}>Total Customers Report</Text>
+  </View>
+</ImageBackground>
+
+
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -244,7 +274,7 @@ const chartConfig = {
   color: (opacity = 1) => `rgba(0, 106, 114, ${opacity})`,
   labelColor: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
   propsForDots: {
-    r: '6',
+    r: '9',
     strokeWidth: '2',
     stroke: '#006A72',
   },
@@ -255,6 +285,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F4F7F9',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    
   },
   title: {
     fontSize: hp('3%'),
@@ -391,6 +422,85 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
     borderRadius: 10,
   },
+  headerBackground: {
+  width: '100%',
+  height: hp('18%'),
+  justifyContent: 'flex-end',
+  borderRadius: 12,
+  overflow: 'hidden',
+  marginBottom: hp('2%'),
+},
+
+headerOverlay: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: 'rgba(255, 255, 255, 0.3)', // Adjust opacity here
+},
+
+headerContent: {
+  paddingHorizontal: wp('4%'),
+  paddingBottom: hp('3%'),
+},
+
+headerTitle: {
+  fontSize: hp('3.3%'),
+  fontWeight: '700',
+  color: '#006A72', // Or a color that contrasts nicely
+},
+headerBackground: {
+  width: '100%',
+  height: hp('14%'),
+  justifyContent: 'flex-end',
+  borderRadius: 12,
+  overflow: 'hidden',
+  marginBottom: hp('2%'),
+  position: 'relative',
+  marginTop: hp('-4%'),
+},
+
+imageOverlay: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: 'rgba(255, 255, 255, 0.52)', // same opacity
+},
+
+headerRowInside: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: wp("4%"),
+  flex: 1,
+  paddingTop: hp("5%"),
+  position: 'absolute', // keeps it above overlay
+  width: '100%',
+},
+
+headerTitle: {
+  fontSize: hp('3%'),
+  fontWeight: '800',
+  color: '#006A72',
+  textAlign: 'left',
+  flex: 1,
+  marginLeft: wp("5%"),
+  marginBottom: hp("1%"),
+},
+
+backButton: {
+  width: hp("5%"),
+  height: hp("5%"),
+  borderRadius: hp("2.5%"),
+  backgroundColor: "#006A72",
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: wp("2%"),
+  marginBottom: hp("7%"),
+  marginLeft: wp("-3%"),
+},
+
+backIcon: {
+  width: hp("2.5%"), 
+  height: hp("2.5%"),
+  tintColor: "#fff",
+},
+
+
 });
 
 export default TotalCustomers;

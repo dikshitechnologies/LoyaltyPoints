@@ -996,7 +996,7 @@ const selectCustomer = async (customer) => {
                         setPurchaseAmount(val);
                         calculatePoints(val);
                       }}
-                      keyboardType="numeric"
+                      keyboardType="phone-pad"
                       returnKeyType="next"
                     />
                     {renderError("purchaseAmount")}
@@ -1020,7 +1020,7 @@ const selectCustomer = async (customer) => {
                         setRedeemPoints(val);
                         convertPointsToAmount(val);
                       }}
-                      keyboardType="numeric"
+                      keyboardType="phone-pad"
                       returnKeyType="next"
                     />
                     {renderError("redeemPoints")}
@@ -1030,6 +1030,7 @@ const selectCustomer = async (customer) => {
                       style={[styles.input, validationErrors.redeemAmount && styles.inputError]}
                       value={redeemAmount}
                       editable={false}
+                      keyboardType="phone-pad"
                     />
                     {renderError("redeemAmount")}
                   </>

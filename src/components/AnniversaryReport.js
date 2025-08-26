@@ -112,6 +112,10 @@ const AnniversaryReport = () => {
         style={styles.titleBackground}
         resizeMode="cover"
       >
+        
+          {/* Overlay for opacity */}
+          <View style={styles.imageOverlay} />
+
         <View style={styles.headerRowInside}>
           <TouchableOpacity
             style={styles.backButton}
@@ -204,7 +208,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F9FAFB",
-    padding: wp("4%"),
+    // padding: wp("4%"),
   },
 
   // Header inside Image
@@ -218,14 +222,14 @@ const styles = StyleSheet.create({
 
   backButton: {
     width: hp("5%"),
-    height: hp("5%"),
-    borderRadius: hp("2.5%"),
-    backgroundColor: "#006A72",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: wp("11%"),
-    marginTop: hp("7%"),
-    marginLeft: wp("-3%"),
+  height: hp("5%"),
+  borderRadius: hp("2.5%"),
+  backgroundColor: "#006A72",
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: wp("2%"),
+  marginBottom: hp("14%"),
+  marginLeft: wp("-3%"),
   },
 
   backIcon: {
@@ -236,20 +240,22 @@ const styles = StyleSheet.create({
 
   titleBackground: {
     width: "100%",
-    height: hp("18%"),
+    height: hp("14%"),
     justifyContent: "flex-end",
     borderRadius: 12,
     overflow: "hidden",
     marginBottom: hp("2%"),
+      marginTop: hp('0%'),
   },
 
   title: {
-    fontSize: hp("3.3%"),
-    fontWeight: "700",
-    color: "#006A72",
-    textAlign: "left",
-    flex: 1,
-    marginTop: hp("6%"),
+    fontSize: hp('3%'),
+  fontWeight: '800',
+  color: '#006A72',
+  textAlign: 'left',
+  flex: 1,
+  marginLeft: wp("3%"),
+  marginBottom: hp("3%"),
   },
 
   inputRow: {
@@ -329,6 +335,10 @@ const styles = StyleSheet.create({
     color: "#374151",
     textAlign: "center",
   },
+  imageOverlay: {
+  ...StyleSheet.absoluteFillObject, // fills the entire ImageBackground
+  backgroundColor: 'rgba(255, 255, 255, 0.43)', // adjust opacity here
+},
 });
 
 export default AnniversaryReport;

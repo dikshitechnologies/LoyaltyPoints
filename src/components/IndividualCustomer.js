@@ -26,7 +26,7 @@ import { getCompanyCode, getGroupCode } from "../store";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
+} from "react-native-responsive-screen";                                                                                                                                      
 const { width } = Dimensions.get('window');
 
 const IndividualCustomer = ({ navigation }) => {
@@ -246,24 +246,29 @@ const extractLoyaltyNumber = (value, format) => {
     <SafeAreaView style={styles.container}>
       {/* Header with background image */}
       <ImageBackground
-        source={require('../assets/customer-header.jpg')}
-        style={styles.headerBackground}
-        resizeMode="cover"
-      >
-         <View style={styles.headerRowInside}>
-                <TouchableOpacity
-                  style={styles.backButton}
-                  onPress={() => navigation.goBack()}
-                >
-                  <Image
-                    source={require("../assets/backicon.png")}
-                    style={styles.backIcon}
-                    resizeMode="contain"
-                  />
-                  </TouchableOpacity>
-          <Text style={styles.headerTitle}>Individual Customer Report</Text>
-        </View>
-      </ImageBackground>
+  source={require('../assets/gi.jpeg')}
+  style={styles.headerBackground}
+  resizeMode="cover"
+>
+  {/* Semi-transparent overlay to fade the image */}
+  <View style={styles.imageOverlay} />
+
+  {/* Header content */}
+  <View style={styles.headerRowInside}>
+    <TouchableOpacity
+      style={styles.backButton}
+      onPress={() => navigation.goBack()}
+    >
+      <Image
+        source={require("../assets/backicon.png")}
+        style={styles.backIcon}
+        resizeMode="contain"
+      />
+    </TouchableOpacity>
+    <Text style={styles.headerTitle}>Individual Customer Report</Text>
+  </View>
+</ImageBackground>
+
 
       {/* Loyalty Number Input + Barcode Scanner */}
       <View style={styles.inputRow}>
@@ -1009,56 +1014,58 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   headerBackground: {
-    width: '100%',
-    height: hp('18%'),
-    justifyContent: 'flex-end',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: hp('2%'),
+  width: '100%',
+  height: hp('14%'),
+  justifyContent: 'flex-end',
+  borderRadius: 12,
+  overflow: 'hidden',
+  marginBottom: hp('2%'),
+  position: 'relative', // needed for overlay
 },
-headerRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  height: '100%',
+
+imageOverlay: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: 'rgba(255, 255, 255, 0.52)', // controls opacity of image
 },
-backButton: {
-  marginRight: 12,
-  padding: 8,
+
+headerRowInside: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: wp("4%"),
+  flex: 1,
+  paddingTop: hp("5%"),
+  position: 'absolute', // ensures content stays above overlay
+  width: '100%',
 },
+
 headerTitle: {
-    fontSize: hp('3%'),
-    fontWeight: '700',
-    color: '#006A72',
-    textAlign: 'left',
-    flex: 1,
-    marginTop: hp('4.5%'),
-    marginLeft: wp('-5%'),
-  },
-   headerRowInside: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: wp("4%"),
-    flex: 1,
-    paddingTop: hp("5%"),
-  },
+  fontSize: hp('3%'),
+  fontWeight: '800',
+  color: '#006A72',
+  textAlign: 'left',
+  flex: 1,
+  marginLeft: wp("5%"),
+  marginBottom: hp("1%"),
+},
 
-  backButton: {
-    width: hp("5%"),
-    height: hp("5%"),
-    borderRadius: hp("2.5%"),
-    backgroundColor: "#006A72",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: wp("13%"),
-    marginTop: hp("4.5%"),
-    marginLeft: wp("-3%"),
-  },
+backButton: {
+  width: hp("5%"),
+  height: hp("5%"),
+  borderRadius: hp("2.5%"),
+  backgroundColor: "#006A72",
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: wp("2%"),
+  marginBottom: hp("8%"),
+  marginLeft: wp("-3%"),
+},
 
-  backIcon: {
-    width: hp("2.5%"),
-    height: hp("2.5%"),
-    tintColor: "#fff",
-  },
+backIcon: {
+  width: hp("2.5%"),
+  height: hp("2.5%"),
+  tintColor: "#fff",
+},
+
 
 });
 
