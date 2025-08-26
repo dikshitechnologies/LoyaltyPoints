@@ -1,5 +1,3 @@
-// PointsScreen.js
-
 import axios from "axios";
 import { BASE_URL } from "./Services";
 
@@ -336,6 +334,19 @@ catch (error) {
   };
 
 
+  const handleEdit = () => {
+  if (mode === "add") {
+    // Handle Add Points edit
+    Alert.alert("Edit Add Points", "Here you can edit Add Points details");
+    // Or open modal / prefill form etc.
+  } else if (mode === "redeem") {
+    // Handle Redeem Points edit
+    Alert.alert("Edit Redeem Points", "Here you can edit Redeem Points details");
+  }
+};
+
+
+
 
 
   const device = useCameraDevice('back');
@@ -378,9 +389,20 @@ catch (error) {
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Loyalty Hub</Text>
-          </View>
+          
+{/* Header */}
+<View style={styles.header}>
+  <Text style={styles.headerText}>Loyalty Hub</Text>
+</View>
+
+{/* Common Edit Button */}
+<View style={styles.editButtonContainer}>
+  <TouchableOpacity onPress={handleEdit}>
+    <Icon name="edit" size={26} color="#006A72" />
+  </TouchableOpacity>
+</View>
+
+
                       
           {/* Segmented Control */}
           <View style={styles.tabContainer}>
@@ -694,5 +716,29 @@ tabText: {
 activeTabText: {
   color: "#fff",
 },
+editButton: {
+  position: "absolute",
+  right: wp("5%"),
+  bottom: hp("1.5%"),
+  padding: wp("1%"),
+},
+editButtonContainer: {
+  alignItems: "flex-end",
+  paddingHorizontal: wp("5%"),
+  marginTop: hp("1%"),
+},
+
+
 
 });
+
+
+
+
+
+
+
+
+
+
+

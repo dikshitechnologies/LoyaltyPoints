@@ -28,7 +28,7 @@ const COLUMN_WIDTHS = {
 };
 
 const AnniversaryReport = () => {
-  const navigation = useNavigation(); // <-- added navigation
+  const navigation = useNavigation();
 
   const [customerData, setCustomerData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -36,7 +36,7 @@ const AnniversaryReport = () => {
   const [hasMore, setHasMore] = useState(true);
 
   const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
+  const [toDate, setToDate] = useState(new Date()); // ✅ Default current date
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
 
@@ -126,6 +126,7 @@ const AnniversaryReport = () => {
           <Text style={styles.title}>💍 Anniversary Report</Text>
         </View>
       </ImageBackground>
+
       {/* Date Pickers */}
       <View style={styles.inputRow}>
         <TouchableOpacity style={styles.dateButton} onPress={() => setShowFromPicker(true)}>

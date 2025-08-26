@@ -22,7 +22,7 @@ const ReportScreen = () => {
     {
       id: 1,
       title: "Total Customers",
-      image: require("../assets/total-customer.png"),
+      image: require("../assets/total-customer1.png"),
       screen: "TotalCustomers"
     },
     {

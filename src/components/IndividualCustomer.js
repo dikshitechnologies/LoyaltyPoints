@@ -13,7 +13,8 @@ import {
   Alert,
   Linking,
   Dimensions,
-  SafeAreaView
+  SafeAreaView,
+  Image
 } from 'react-native';
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
@@ -22,10 +23,13 @@ import bgcard from '../assets/bgcard.png';
 import { BASE_URL } from './Services';
 import { handleStatusCodeError } from './ErrorHandler';
 import { getCompanyCode, getGroupCode } from "../store";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+const { width } = Dimensions.get('window');
 
-const { width, height } = Dimensions.get('window');
-
-const IndividualCustomer = () => {
+const IndividualCustomer = ({ navigation }) => {
   const [loyaltyNumber, setLoyaltyNumber] = useState('');
   const [customerData, setCustomerData] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -44,15 +48,11 @@ const IndividualCustomer = () => {
   const groupCode = getGroupCode();
   const device = useCameraDevice('back');
 
-  // Function to extract loyalty number
   const extractLoyaltyNumber = (value) => {
     if (!value) return null;
-    console.log('Raw scanned value:', value);
-    // Return the original value without any processing
     return value;
   };
 
-  // Request camera permission
   useEffect(() => {
     (async () => {
       try {
@@ -75,7 +75,6 @@ const IndividualCustomer = () => {
     })();
   }, []);
 
-  // Fixed code scanner configuration
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'code-128', 'code-39', 'ean-13', 'ean-8', 'upc-a', 'upc-e', 'codabar', 'code-93', 'itf'],
     onCodeScanned: (codes) => {
@@ -94,7 +93,6 @@ const IndividualCustomer = () => {
     }
   });
 
-  // Reset scanning state when scanner opens/closes
   useEffect(() => {
     if (scannerVisible) {
       setIsScanning(true);
@@ -104,7 +102,6 @@ const IndividualCustomer = () => {
     }
   }, [scannerVisible]);
 
-  // Fetch customer info
   const fetchUser = async (val) => {
     if (!val) return;
     setLoyaltyNumber(val);
@@ -124,8 +121,6 @@ const IndividualCustomer = () => {
         handleStatusCodeError(response.status, "Error fetching customer");
         setTransactions([]);
         setCustomerData(null);
-        
-        // Show manual input if API call fails
         setShowManualInput(true);
         setManualInput(val);
       }
@@ -137,8 +132,6 @@ const IndividualCustomer = () => {
       }
       setTransactions([]);
       setCustomerData(null);
-      
-      // Show manual input on error
       setShowManualInput(true);
       setManualInput(val);
     } finally {
@@ -146,7 +139,6 @@ const IndividualCustomer = () => {
     }
   };
 
-  // Handle manual input confirmation
   const handleManualConfirm = () => {
     if (manualInput.trim()) {
       fetchUser(manualInput.trim());
@@ -155,7 +147,6 @@ const IndividualCustomer = () => {
     }
   };
 
-  // Fetch transactions
   const fetchCustomerData = async (number, page = 1) => {
     if (!number.trim()) return;
     if (page === 1) setTransactions([]);
@@ -200,7 +191,26 @@ const IndividualCustomer = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Individual Customer Report</Text>
+      {/* Header with background image */}
+      <ImageBackground
+        source={require('../assets/customer-header.jpg')}
+        style={styles.headerBackground}
+        resizeMode="cover"
+      >
+         <View style={styles.headerRowInside}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => navigation.goBack()}
+                >
+                  <Image
+                    source={require("../assets/backicon.png")}
+                    style={styles.backIcon}
+                    resizeMode="contain"
+                  />
+                  </TouchableOpacity>
+          <Text style={styles.headerTitle}>Individual Customer Report</Text>
+        </View>
+      </ImageBackground>
 
       {/* Loyalty Number Input + Barcode Scanner */}
       <View style={styles.inputRow}>
@@ -942,6 +952,58 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  headerBackground: {
+    width: '100%',
+    height: hp('18%'),
+    justifyContent: 'flex-end',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: hp('2%'),
+},
+headerRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  height: '100%',
+},
+backButton: {
+  marginRight: 12,
+  padding: 8,
+},
+headerTitle: {
+    fontSize: hp('3%'),
+    fontWeight: '700',
+    color: '#006A72',
+    textAlign: 'left',
+    flex: 1,
+    marginTop: hp('4.5%'),
+    marginLeft: wp('-5%'),
+  },
+   headerRowInside: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: wp("4%"),
+    flex: 1,
+    paddingTop: hp("5%"),
+  },
+
+  backButton: {
+    width: hp("5%"),
+    height: hp("5%"),
+    borderRadius: hp("2.5%"),
+    backgroundColor: "#006A72",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: wp("13%"),
+    marginTop: hp("4.5%"),
+    marginLeft: wp("-3%"),
+  },
+
+  backIcon: {
+    width: hp("2.5%"),
+    height: hp("2.5%"),
+    tintColor: "#fff",
+  },
+
 });
 
 export default IndividualCustomer;
