@@ -14,16 +14,22 @@ import {
     TouchableWithoutFeedback,
     Alert,
     Modal,
-    FlatList
+    FlatList,
+    PermissionsAndroid
 } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { useDebounce } from 'use-debounce';
+import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import DeviceInfo from 'react-native-device-info';
 
 import { BASE_URL } from './Services';
 import { showConfirmation } from './AlertUtils';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { handleStatusCodeError } from './ErrorHandler';
 import { getGroupCode, getCompanyCode } from '../store';
+
+const isTablet = DeviceInfo.isTablet();
 
 const PartyCreation = ({ navigation }) => {
     // Existing States
@@ -36,21 +42,24 @@ const PartyCreation = ({ navigation }) => {
     const [weddingDate, setWeddingDate] = useState('');
     const [focusedField, setFocusedField] = useState(null);
 
+    // Scanner states
+    const [showScanner, setShowScanner] = useState(false);
+    const [hasPermission, setHasPermission] = useState(false);
+
     // States for Edit/Delete
-    const [customerCode, setCustomerCode] = useState(null); // ✅ FIXED: store customerCode instead of id
+    const [customerCode, setCustomerCode] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
 
     // Modal states
     const [modalVisible, setModalVisible] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
 
-//---------------PAGINATION SEARCH STATE  ------------------
+    // Pagination search state
     const [searchTerm, setSearchTerm] = useState('');
-    const [debouncedSearchTerm] = useDebounce(searchTerm, 500); 
+    const [debouncedSearchTerm] = useDebounce(searchTerm, 500);
     const [pageNumber, setPageNumber] = useState(1);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
-
 
     const groupCode = getGroupCode();
     const fcomCode = getCompanyCode();
@@ -63,6 +72,8 @@ const PartyCreation = ({ navigation }) => {
     const birthDateRef = useRef();
     const weddingDateRef = useRef();
 
+    // Camera setup
+    const device = useCameraDevice('back');
 
     useEffect(() => {
         // Set today's date when component mounts
@@ -71,9 +82,102 @@ const PartyCreation = ({ navigation }) => {
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const formattedDate = `${day}/${month}/${today.getFullYear()}`;
         setCurrentDate(formattedDate);
+        
+        // Request camera permission
+        requestPermission();
     }, []);
 
+    const requestPermission = async () => {
+        let status;
+        if (Platform.OS === 'android') {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.CAMERA
+            );
+            status = granted === PermissionsAndroid.RESULTS.GRANTED ? 'authorized' : 'denied';
+        } else {
+            status = await Camera.requestCameraPermission();
+        }
+        setHasPermission(status === 'authorized');
+    };
+
+    // QR/Barcode scanner configuration
+    const codeScanner = useCodeScanner({
+        codeTypes: [
+            'codabar', 
+            'qr', 
+            'code-128', 
+            'code-39', 
+            'ean-13', 
+            'ean-8', 
+            'upc-a',  
+            'upc-e', 
+            'code-93', 
+            'itf'
+        ],
+        onCodeScanned: (codes) => {
+            if (codes.length > 0 && codes[0].value) {
+                const code = codes[0];
+                const scannedValue = code.value;
+                const format = code.type;
+                
+                const extractedNumber = extractLoyaltyNumber(scannedValue, format);
+                setLoyaltyNumber(extractedNumber);
+                setShowScanner(false);
+                if (nameRef.current) {
+                    nameRef.current.focus();
+                }
+            }
+        }
+    });
+
+    // Extract loyalty number from scanned data
+    const extractLoyaltyNumber = (value, format) => {
+        if (!value) return '';
+        let cleaned = value.trim();
+
+        switch (format.toLowerCase()) {
+            case 'code-39':
+                cleaned = cleaned.replace(/[^0-9]/g, '');
+                if (cleaned.startsWith('*') && cleaned.endsWith('*')) {
+                    cleaned = cleaned.slice(1, -1);
+                }
+                break;
+
+            case 'codabar':
+                if (/^[A-D].*[A-D]$/i.test(cleaned)) {
+                    cleaned = cleaned.slice(1, -1);
+                }
+                break;
+
+            case 'upc-a':
+            case 'ean-13':
+            case 'ean-8':
+            case 'upc-e':
+            case 'itf':
+                cleaned = cleaned.replace(/\D/g, '');
+                break;
+
+            case 'code-128':
+            case 'code-93':
+            case 'qr':
+                break;
+
+            default:
+                break;
+        }
+
+        return cleaned;
+    };
+
     const handleValidation = () => {
+         if (!loyaltyNumber.trim()) {
+            Alert.alert("Validation Error", "Loyalty Number is required");
+            return false;
+        }
+         if (loyaltyNumber.trim() === "") {
+            Alert.alert("Validation Error", "Loyalty Number is required");
+            return false;
+        }
         if (!name.trim()) {
             Alert.alert("Validation Error", "Name is required");
             return false;
@@ -151,7 +255,7 @@ const PartyCreation = ({ navigation }) => {
     };
 
     const handleUpdate = async () => {
-                if (!handleValidation()) return;
+        if (!handleValidation()) return;
 
         if (!customerCode) {
             Alert.alert("Error", "No customer selected for update.");
@@ -159,7 +263,7 @@ const PartyCreation = ({ navigation }) => {
         }
 
         const payload = {
-            customerCode, // ✅ using customerCode
+            customerCode,
             loyaltyNumber,
             customerName: name,
             phonenumber: phoneNumber,
@@ -182,12 +286,11 @@ const PartyCreation = ({ navigation }) => {
         }
     };
 
-const handleDelete = async () => {
-    if (!customerCode) {
-        Alert.alert("Error", "No customer is loaded to delete.");
-        return;
-    }
-
+    const handleDelete = async () => {
+        if (!customerCode) {
+            Alert.alert("Error", "No customer is loaded to delete.");
+            return;
+        }
 
         try {
             const response = await axios.delete(`${BASE_URL}Register/RemoveCustomer${customerCode}`);
@@ -201,141 +304,120 @@ const handleDelete = async () => {
         } catch (error) {
             handleApiError(error);
         }
-  
-};
+    };
 
-//-----------------------------------------------Search Field Value  Track ------------------------------
-            useEffect(() => {
-                let isCancelled = false;
+    useEffect(() => {
+        let isCancelled = false;
 
-                const fetchCustomers = async () => {
-                    const term = debouncedSearchTerm.trim();
-                    if (!term) {
-                        setSearchResults([]);
-                        setHasMore(false);
-                        return;
-                    }
-
-                    setPageNumber(1);
-                    setHasMore(true);
-
-                    try {
-                        await searchCustomers({ reset: true, page: 1, term, isCancelled });
-                    } catch (err) {
-                        if (!isCancelled) console.error(err);
-                    }
-                };
-
-                fetchCustomers();
-
-                return () => {
-                    // Cancel any ongoing fetch
-                    isCancelled = true;
-                };
-            }, [debouncedSearchTerm]);
-
-
-            const handleEdit = () => {
-                setModalVisible(true);
-                setSearchTerm('');
+        const fetchCustomers = async () => {
+            const term = debouncedSearchTerm.trim();
+            if (!term) {
                 setSearchResults([]);
-            };
-            //-------------------------------------Filter Values Api  -------------------------------------
-const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = false }) => {
-      if (!term || isCancelled) return;
-    if (!term) {
-        setSearchResults([]);
-        setHasMore(false);
-        return;
-    }
-
-    if (loading || (!hasMore && !reset)) return;
-
-    try {
-        setLoading(true);
-        const pageSize = 30;
-        const currentPage = reset ? 1 : page;
-        const url = `${BASE_URL}Register/CustomerFilterData/${groupCode}?search=${encodeURIComponent(term)}&pageNumber=${currentPage}&pageSize=${pageSize}`;
-
-        const response = await axios.get(url);
-
-        if (response.status === 200 && response.data) {
-            const customers = response.data.data || [];
-
-            if (reset) {
-                setSearchResults(customers); 
-                setPageNumber(2);             
-            } else {
-                setSearchResults(prev => [...prev, ...customers]);
-                setPageNumber(prev => prev + 1);
+                setHasMore(false);
+                return;
             }
 
-            setHasMore(customers.length === pageSize);
-        } else {
-            handleStatusCodeError(response.status, "Error fetching data");
-            setSearchResults([]);
-            setHasMore(false);
-        }
-    }  catch (error) {
-          if (error.response) {
-            handleStatusCodeError(
-              error.response.status,
-              error.response.data?.message || "An unexpected server error occurred.",
-               setSearchResults([]),
-            setHasMore(false),
-            );
-          } else if (error.request) {
-            alert("No response received from the server. Please check your network connection.");
-          } 
-          else {
-            alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-          }
-        }
-    finally {
-        setLoading(false);
-    }
-};
+            setPageNumber(1);
+            setHasMore(true);
 
-        const customerSelect = async (customerCode) => {
-            const customerCodeString = customerCode.toString();
             try {
-                const response = await axios.get(`${BASE_URL}Register/CustomerSelect/${customerCodeString}`);
-
-                    if (response.status === 200 && response.data) {
-                        const customers = response.data;
-                        selectCustomer(customers);
-
-                    } else {
-                         handleStatusCodeError(response.status, "Error deleting data");
-                    }
-                }  catch (error) {
-            if (error.response) {
-                handleStatusCodeError(
-                error.response.status,
-                error.response.data?.message || "An unexpected server error occurred.",
-                handleClear()
-                );
-            } else if (error.request) {
-                alert("No response received from the server. Please check your network connection.");
-            } 
-            else {
-                alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
-            }
+                await searchCustomers({ reset: true, page: 1, term, isCancelled });
+            } catch (err) {
+                if (!isCancelled) console.error(err);
             }
         };
 
+        fetchCustomers();
 
-const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    if (isNaN(date)) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-};
+        return () => {
+            isCancelled = true;
+        };
+    }, [debouncedSearchTerm]);
 
+    const handleEdit = () => {
+        setModalVisible(true);
+        setSearchTerm('');
+        setSearchResults([]);
+    };
 
+    const searchCustomers = async ({ reset = false, page = 1, term, isCancelled = false }) => {
+        if (!term || isCancelled) return;
+        if (!term) {
+            setSearchResults([]);
+            setHasMore(false);
+            return;
+        }
+
+        if (loading || (!hasMore && !reset)) return;
+
+        try {
+            setLoading(true);
+            const pageSize = 30;
+            const currentPage = reset ? 1 : page;
+            const url = `${BASE_URL}Register/CustomerFilterData/${groupCode}?search=${encodeURIComponent(term)}&pageNumber=${currentPage}&pageSize=${pageSize}`;
+
+            const response = await axios.get(url);
+
+            if (response.status === 200 && response.data) {
+                const customers = response.data.data || [];
+
+                if (reset) {
+                    setSearchResults(customers); 
+                    setPageNumber(2);             
+                } else {
+                    setSearchResults(prev => [...prev, ...customers]);
+                    setPageNumber(prev => prev + 1);
+                }
+
+                setHasMore(customers.length === pageSize);
+            } else {
+                handleStatusCodeError(response.status, "Error fetching data");
+                setSearchResults([]);
+                setHasMore(false);
+            }
+        }  catch (error) {
+            if (error.response) {
+                handleStatusCodeError(
+                    error.response.status,
+                    error.response.data?.message || "An unexpected server error occurred.",
+                    setSearchResults([]),
+                    setHasMore(false),
+                );
+            } else if (error.request) {
+                alert("No response received from the server. Please check your network connection.");
+            } else {
+                alert(`Error: ${error.message}. This might be due to an invalid URL or network issue.`);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const customerSelect = async (customerCode) => {
+        const customerCodeString = customerCode.toString();
+        try {
+            const response = await axios.get(`${BASE_URL}Register/CustomerSelect/${customerCodeString}`);
+
+            if (response.status === 200 && response.data) {
+                const customers = response.data;
+                selectCustomer(customers);
+            } else {
+                handleStatusCodeError(response.status, "Error fetching customer data");
+            }
+        } catch (error) {
+            handleApiError(error);
+        }
+    };
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        if (isNaN(date)) return '';
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
 
     const selectCustomer = (customer) => {
         setLoyaltyNumber(customer.loyaltyNumber || '');
@@ -344,9 +426,9 @@ const formatDate = (dateStr) => {
         setAddress(customer.address || '');
         setBirthDate(formatDate(customer.fBirth));
         setWeddingDate(formatDate(customer.fWed));
+        setCustomerCode(customer.customerCode);
         setIsEditing(true);
         setModalVisible(false);
-
     };
 
     const renderCustomerItem = ({ item }) => (
@@ -360,7 +442,7 @@ const formatDate = (dateStr) => {
         </TouchableOpacity>
     );
 
-    // Reusable input component
+    // Reusable input component with scanner support
     const renderInput = (
         label,
         value,
@@ -372,7 +454,8 @@ const formatDate = (dateStr) => {
         multiline = false,
         numberOfLines = 1,
         autoCapitalize = "characters",
-        fieldKey
+        fieldKey,
+        showScannerButton = false
     ) => (
         <View style={styles.inputContainer}>
             <Text style={styles.label}>{label}</Text>
@@ -381,7 +464,8 @@ const formatDate = (dateStr) => {
                     style={[
                         styles.input,
                         multiline && styles.textArea,
-                        focusedField === fieldKey && styles.inputFocused
+                        focusedField === fieldKey && styles.inputFocused,
+                        showScannerButton && { paddingRight: wp('12%') }
                     ]}
                     value={value}
                     onChangeText={setValue}
@@ -396,6 +480,14 @@ const formatDate = (dateStr) => {
                     onFocus={() => setFocusedField(fieldKey)}
                     onBlur={() => setFocusedField(null)}
                 />
+                {showScannerButton && (
+                    <TouchableOpacity
+                        onPress={() => (hasPermission ? setShowScanner(true) : requestPermission())}
+                        style={styles.qrButton}
+                    >
+                        <Icon name="qr-code-scanner" size={isTablet ? wp('5%') : wp('7%')} color="#333" />
+                    </TouchableOpacity>
+                )}
             </View>
         </View>
     );
@@ -443,7 +535,20 @@ const formatDate = (dateStr) => {
                                 </View>
 
                                 {/* Form Fields */}
-                                {renderInput("Loyalty Number", loyaltyNumber, setLoyaltyNumber, "default", loyaltyNumberRef, () => nameRef.current.focus(), "next", false, 1, "characters", "loyaltyNumber")}
+                                {renderInput(
+                                    "Loyalty Number", 
+                                    loyaltyNumber, 
+                                    setLoyaltyNumber, 
+                                    "default", 
+                                    loyaltyNumberRef, 
+                                    () => nameRef.current.focus(), 
+                                    "next", 
+                                    false, 
+                                    1, 
+                                    "characters", 
+                                    "loyaltyNumber",
+                                    true
+                                )}
                                 {renderInput("Name", name, setName, "default", nameRef, () => phoneNumberRef.current.focus(), "next", false, 1, "characters", "name")}
                                 {renderInput("Phone Number", phoneNumber, setPhoneNumber, "phone-pad", phoneNumberRef, () => birthDateRef.current.focus(), "next", false, 1, "characters", "phoneNumber")}
                                 {renderInput("Birth Date", birthDate, setBirthDate, "default", birthDateRef, () => weddingDateRef.current.focus(), "next", false, 1, "characters", "birthDate")}
@@ -485,49 +590,46 @@ const formatDate = (dateStr) => {
                             <Text style={styles.modalTitle}>Search Customer</Text>
 
                             <View style={styles.searchContainer}>
-                               <TextInput
+                                <TextInput
                                     style={styles.searchInput}
                                     placeholder="Enter Loyalty Number, Name, or Phone"
                                     value={searchTerm}
-                                    onChangeText={setSearchTerm} 
+                                    onChangeText={setSearchTerm}
                                 />
 
-
-                               <TouchableOpacity
+                                <TouchableOpacity
                                     style={styles.searchButton}
-                                    onPress={() => searchCustomers(true,1)} // reset search
+                                    onPress={() => searchCustomers({ reset: true, page: 1, term: searchTerm })}
                                 >
                                     <Text style={styles.searchButtonText}>Search</Text>
                                 </TouchableOpacity>
-
                             </View>
 
-                         <FlatList
-                            data={searchResults}
-                            renderItem={renderCustomerItem}
-                            keyExtractor={(item, index) => (index + 1).toString()}
-                            style={styles.customerList}
-                            keyboardShouldPersistTaps="handled"
-                            onEndReached={() => {
-                                if (!loading && hasMore) {
-                                    searchCustomers(false, pageNumber);
+                            <FlatList
+                                data={searchResults}
+                                renderItem={renderCustomerItem}
+                                keyExtractor={(item, index) => (index + 1).toString()}
+                                style={styles.customerList}
+                                keyboardShouldPersistTaps="handled"
+                                onEndReached={() => {
+                                    if (!loading && hasMore) {
+                                        searchCustomers({ reset: false, page: pageNumber, term: searchTerm });
+                                    }
+                                }}
+                                onEndReachedThreshold={0.5}
+                                ListEmptyComponent={
+                                    !loading ? (
+                                        <Text style={{ textAlign: 'center', padding: 10, color: '#666' }}>
+                                            No customers found
+                                        </Text>
+                                    ) : null
                                 }
-                            }}
-                            onEndReachedThreshold={0.5}
-                            ListEmptyComponent={
-                                !loading ? (
-                                    <Text style={{ textAlign: 'center', padding: 10, color: '#666' }}>
-                                        No customers found
-                                    </Text>
-                                ) : null
-                            }
-                            ListFooterComponent={
-                                loading ? (
-                                    <Text style={{ textAlign: 'center', padding: 10 }}>Loading...</Text>
-                                ) : null
-                            }
-                        />
-
+                                ListFooterComponent={
+                                    loading ? (
+                                        <Text style={{ textAlign: 'center', padding: 10 }}>Loading...</Text>
+                                    ) : null
+                                }
+                            />
 
                             <TouchableOpacity
                                 style={styles.closeButton}
@@ -536,6 +638,26 @@ const formatDate = (dateStr) => {
                                 <Text style={styles.closeButtonText}>Close</Text>
                             </TouchableOpacity>
                         </View>
+                    </View>
+                </Modal>
+
+                {/* QR Scanner Modal */}
+                <Modal visible={showScanner} animationType="slide" onRequestClose={() => setShowScanner(false)}>
+                    <View style={{ flex: 1, backgroundColor: 'black' }}>
+                        {device && hasPermission && (
+                            <Camera
+                                style={{ flex: 1 }}
+                                device={device}
+                                isActive={showScanner}
+                                codeScanner={codeScanner}
+                            />
+                        )}
+                        <TouchableOpacity
+                            style={[styles.closeButton, { position: 'absolute', bottom: 30, alignSelf: 'center' }]}
+                            onPress={() => setShowScanner(false)}
+                        >
+                            <Text style={{ color: 'white', fontSize: 18 }}>Close</Text>
+                        </TouchableOpacity>
                     </View>
                 </Modal>
             </KeyboardAvoidingView>
@@ -608,6 +730,7 @@ const styles = StyleSheet.create({
     inputWrapper: {
         flexDirection: "row",
         alignItems: "center",
+        position: 'relative',
     },
     input: {
         borderWidth: 1,
@@ -623,6 +746,11 @@ const styles = StyleSheet.create({
     textArea: {
         height: hp('10%'),
         textAlignVertical: "top",
+    },
+    qrButton: {
+        position: 'absolute',
+        right: wp('2%'),
+        padding: wp('1%'),
     },
     buttonRow: {
         flexDirection: "row",
@@ -647,8 +775,6 @@ const styles = StyleSheet.create({
     clearBtn: {
         backgroundColor: "#D9F5F7"
     },
-    
-
     clearText: {
         color: "#006A72",
         fontWeight: "bold",
@@ -747,10 +873,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         backgroundColor: '#006A72',
         borderRadius: wp('6%'),
-        padding:wp('2%')
-        
+        padding: wp('2%')
     },
-
 });
 
 export default PartyCreation;

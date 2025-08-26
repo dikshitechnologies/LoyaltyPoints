@@ -30,6 +30,7 @@ import { getCompanyCode, getGroupCode } from "../store";
 import { handleStatusCodeError } from "./ErrorHandler";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useDebounce } from 'use-debounce';
+import { parse } from "react-native-svg";
 
 const isTablet = DeviceInfo.isTablet();
 
@@ -349,14 +350,6 @@ export default function PointsScreen({ navigation }) {
     const narrationError = validateNarration(redeemNarration);
     if (narrationError) errors.redeemNarration = narrationError;
     
-    // Check if redeem points exceed balance
-    if (redeemBalance && redeemPoints) {
-      const balance = parseFloat(redeemBalance);
-      const points = parseFloat(redeemPoints);
-      if (points > balance) {
-        errors.redeemPoints = 'Redeem points cannot exceed available balance';
-      }
-    }
     
     // Validate redeem amount (calculated field)
     if (!redeemAmount || isNaN(redeemAmount) || parseFloat(redeemAmount) <= 0) {
@@ -369,18 +362,18 @@ export default function PointsScreen({ navigation }) {
 
   // Handle save action
   const handleSave = () => {
-    let isValid = false;
+    // let isValid = false;
     
-    if (mode === "add") {
-      isValid = validateAddMode();
-    } else {
-      isValid = validateRedeemMode();
-    }
+    // if (mode === "add") {
+    //   isValid = validateAddMode();
+    // } else {
+    //   isValid = validateRedeemMode();
+    // }
     
-    if (!isValid) {
-      Alert.alert("Validation Error", "Please fix the errors before saving");
-      return;
-    }
+    // if (!isValid) {
+    //   Alert.alert("Validation Error", "Please fix the errors before saving");
+    //   return;
+    // }
     
     if (isEditing) {
       showConfirmation('Do You Want to Update?', handleUpdate);
@@ -437,11 +430,22 @@ const handleDelete = async () => {
     } else {
       isValid = validateRedeemMode();
     }
-    
+        
+    // Check if redeem points exceed balance
+    if (redeemBalance && redeemPoints) {
+      const balance = parseFloat(redeemBalance);
+      const points = parseFloat(redeemPoints);
+      if (points > balance) {
+        Alert.alert('Check Points', 'Insufficient Points');
+        return;
+      }
+    }
     if (!isValid) {
       Alert.alert("Validation Error", "Please fix the errors before updating");
       return;
     }
+
+
     
     let payload;
     if (mode === "add") {
@@ -467,6 +471,8 @@ const handleDelete = async () => {
     }
     
     console.log(JSON.stringify(payload));
+    console.log(Id) 
+
     let response;
     try {
       if (mode === "add") {
@@ -487,8 +493,9 @@ const handleDelete = async () => {
 
   // Clear form fields
   const handleClear = () => {
+    setMode("add");
     setValidationErrors({});
-    if (mode === "add") {
+    if (mode === "add") { 
       setAddLoyaltyNumber("");
       setAddName("");
       setAddBalance("");
@@ -549,6 +556,7 @@ const handleDelete = async () => {
       }
     } catch (error) {
       handleApiError(error);
+       handleClear();
     }
   };
 
@@ -558,6 +566,9 @@ const handleDelete = async () => {
       Alert.alert("Error", "Invalid purchase amount");
       return;
     }
+
+        
+   
     
     try {
       const todayDate = new Date().toISOString().split("T")[0];
@@ -745,29 +756,74 @@ const handleDelete = async () => {
       setLoading(false);
     }
   };
-
-  // Select customer from search results
-  const selectCustomer = (customer) => {
-    if (mode === "add") {
-      setAddLoyaltyNumber(customer.loyaltyNumber || '');
-      setAddName(customer.customerName || '');
-      setPointsEarned(customer.points.toString() || '');
-      setPurchaseAmount(customer.lAmt.toString() || '');
-      setAddNarration(customer.fnarration || '');
-      setId(Number(customer.fID) || null);
-      setIsEditing(true);
-    } else {
-      setRedeemLoyaltyNumber(customer.loyaltyNumber || '');
-      setRedeemName(customer.customerName || '');
-      setRedeemAmount(customer.lAmt.toString() || '');
-      setRedeemPoints(customer.points.toString() || '');
-      setId(Number(customer.id) || null);
+ const modifyPoints = async (loyaltyNumber) => {
+    if (!loyaltyNumber) {
+      Alert.alert("Error", "Please enter a loyalty number");
+      return;
+    }
+    console.log(loyaltyNumber)
+    // Validate loyalty number before API call
+    const loyaltyError = validateLoyaltyNumber(loyaltyNumber);
+    if (loyaltyError) {
+      setValidationErrors({
+        ...validationErrors,
+        [mode === "add" ? "addLoyaltyNumber" : "redeemLoyaltyNumber"]: loyaltyError
+      });
+      return;
     }
     
-    setModalAddVisible(false);
-    setModalRedeemVisible(false);
-    setIsEditing(true);
+    try {
+      const response = await axios.get(`${BASE_URL}Register/points-summary/${loyaltyNumber}/${groupCode}`);
+      
+      if (response.status == 200) {
+        if (response.data.length === 0) {
+          Alert.alert("Error", "No points found for this loyalty number");
+          return;
+        }
+        const data = response.data;
+          console.log(data);
+          return(data.balance);
+      } else {
+        handleStatusCodeError(response.status, "Error fetching points data");
+        handleClear();
+      }
+    } catch (error) {
+      handleApiError(error);
+    }
   };
+
+  // Select customer from search results
+const selectCustomer = async (customer) => {
+  if (mode === "add") {
+    const balAmt = await modifyPoints(customer.loyaltyNumber);  // await here
+    const balAdded = parseFloat(balAmt || 0) - parseFloat(customer.points || 0);
+
+    setAddLoyaltyNumber(customer.loyaltyNumber || '');
+    setAddName(customer.customerName || '');
+    setPointsEarned(customer.points?.toString() || '');
+    setPurchaseAmount(customer.lAmt?.toString() || '');
+    setAddNarration(customer.fnarration || '');
+    setAddBalance(balAdded.toString());
+    setId(Number(customer.fID) || null);
+    setIsEditing(true);
+
+  } else {
+    const balAmt = await modifyPoints(customer.loyaltyNumber);  // await here
+    const balRedeem = parseFloat(balAmt || 0) + parseFloat(customer.points || 0);
+
+    setRedeemLoyaltyNumber(customer.loyaltyNumber || '');
+    setRedeemName(customer.customerName || '');
+    setRedeemAmount(customer.lAmt?.toString() || '');
+    setRedeemPoints(customer.points?.toString() || '');
+    setRedeemBalance(balRedeem.toString());
+    setId(Number(customer.id) || null);
+  }
+
+  setModalAddVisible(false);
+  setModalRedeemVisible(false);
+  setIsEditing(true);
+};
+
 
   // Render customer item in search results 
   const renderCustomerItem = ({ item }) => (
@@ -803,7 +859,7 @@ const handleDelete = async () => {
   // Helper function to render error messages
   const renderError = (fieldName) => {
     if (validationErrors[fieldName]) {
-      return <Text style={styles.errorText}>{validationErrors[fieldName]}</Text>;
+      return <Text style={{color:"red"}}>{validationErrors[fieldName]}</Text>;
     }
     return null;
   };
