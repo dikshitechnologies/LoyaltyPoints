@@ -43,6 +43,12 @@ const ReportScreen = () => {
       image: require("../assets/anniversary.png"),
       screen: "AnniversaryReport"
     },
+    {
+      id: 5,
+      title: "Overall Report",
+      image: require("../assets/anniversary.png"),
+      screen: "OverallReport"
+    },
     
   ];
 
