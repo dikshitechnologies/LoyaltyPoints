@@ -178,6 +178,7 @@ const TotalCustomers = () => {
   if (loading && pageNumber === 1) {
     return (
       <View style={styles.container}>
+        <StatusBar backgroundColor="#006A72" barStyle="light-content" />
         <Text style={styles.title}>Total Customers Report</Text>
         <View style={styles.card}><View style={styles.skeletonChart} /></View>
         <View style={styles.card}><View style={styles.skeletonChart} /></View>
@@ -189,7 +190,6 @@ const TotalCustomers = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F7F9" />
      <ImageBackground
   source={require('../assets/customer-header1.jpg')} // same header image
   style={styles.headerBackground}
