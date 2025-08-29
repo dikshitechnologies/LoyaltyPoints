@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     View,
     Text,
@@ -13,6 +13,7 @@ import {
     Keyboard,
     TouchableWithoutFeedback,
     Alert,
+    BackHandler,
     Modal,
     FlatList,
     PermissionsAndroid
@@ -22,6 +23,8 @@ import { useDebounce } from 'use-debounce';
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import DeviceInfo from 'react-native-device-info';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { BASE_URL } from './Services';
 import { showConfirmation } from './AlertUtils';
@@ -86,6 +89,41 @@ const PartyCreation = ({ navigation }) => {
         // Request camera permission
         requestPermission();
     }, []);
+
+    // Show exit confirmation only when this screen is focused
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                Alert.alert(
+                    'Exit App',
+                    'Do you want to close this app?',
+                    [
+                        { text: 'No', style: 'cancel', onPress: () => {} },
+                        { text: 'Yes', onPress: () => {  
+                            navigation.reset({ index: 0, routes: [{ name: 'Splash' }] });
+                            BackHandler.exitApp();
+                        } }
+                    ],
+                    { cancelable: true }
+                );
+                return true;
+            };
+
+            const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+            return () => sub.remove();
+        }, [])
+    );
+
+    // Helper to clear credential keys and navigate to auth screen (logout)
+    const clearCredentialsAndLogout = async () => {
+        try {
+            await AsyncStorage.multiRemove(["loyaltyNumber", "phoneNumber", "username", "password"]);
+        } catch (e) {
+            console.warn('Error clearing credentials on logout', e);
+        }
+        // Reset navigation to the authentication screen
+        navigation.reset({ index: 0, routes: [{ name: 'UserAuth' }] });
+    };
 
     const requestPermission = async () => {
         let status;
@@ -506,15 +544,29 @@ const PartyCreation = ({ navigation }) => {
                     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                         <View style={{ flex: 1 }}>
                             <View style={[styles.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+                                {/* left price-change icon removed - moved to bottom tab navigator */}
+
+                                <Text style={[styles.headerText, { marginBottom: 10 }]}>Customer Registration</Text>
+
+                                {/* Top-right close/power icon to exit app */}
                                 <TouchableOpacity
-                                    onPress={() => navigation.navigate('RateFixing')}
-                                    style={{ position: 'absolute', left: 20, alignItems: 'center' }}
+                                    onPress={() => {
+                                        Alert.alert(
+                                            'Exit App',
+                                            'Do you want to close this app?',
+                                            [
+                                                { text: 'No', style: 'cancel' },
+                                                { text: 'Yes', onPress: () => { navigation.reset({ index: 0, routes: [{ name: 'Splash' }] }); BackHandler.exitApp(); } }
+                                            ],
+                                            { cancelable: true }
+                                        );
+                                    }}
+                                    style={{ position: 'absolute', right: 20, alignItems: 'center' }}
                                 >
-                                    <View style={{ backgroundColor: '#FFf', padding: 10, borderRadius: 50 }}>
-                                        <MaterialIcons name="price-change" size={28} color="#006A72" />
+                                    <View style={{ backgroundColor: '#fff', padding: 10, borderRadius: 50 }}>
+                                        <MaterialIcons name="power-settings-new" size={18} color="#FF4136" />
                                     </View>
                                 </TouchableOpacity>
-                                <Text style={[styles.headerText, { marginBottom: 10 }]}>Customer Registration</Text>
                             </View>
 
                             <View style={styles.card}>

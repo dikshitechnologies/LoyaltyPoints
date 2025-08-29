@@ -4,11 +4,13 @@ import { Text, View, StyleSheet, Animated, TouchableWithoutFeedback, Keyboard, P
 import PartyCreation from './PartyCreation';
 import PointsScreen from './PointsScreen';
 import ReportScreen from './ReportScreen';
+import RateFixingScreen from '../RateFixingScreen';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Entypo from 'react-native-vector-icons/Entypo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Custom Tab Icon component with MaterialIcons and animation
-const TabIcon = ({ focused, iconName }) => {
+const TabIcon = ({ focused, iconName, iconLib = 'MaterialIcons' }) => {
   const activeColor = '#FFFFFF'; // White for icon when active
   const inactiveColor = '#65979Cff'; // Lighter teal for icon when inactive
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -73,7 +75,11 @@ const TabIcon = ({ focused, iconName }) => {
             }
           ]}
         >
-          <MaterialIcons name={iconName} size={focused ? 26 : 22} color={focused ? activeColor : inactiveColor} />
+          {iconLib === 'Entypo' ? (
+            <Entypo name={iconName} size={focused ? 26 : 22} color={focused ? activeColor : inactiveColor} />
+          ) : (
+            <MaterialIcons name={iconName} size={focused ? 26 : 22} color={focused ? activeColor : inactiveColor} />
+          )}
         </Animated.View>
       </Animated.View>
     </View>
@@ -189,6 +195,22 @@ const TabNavigator = () => {
             <TabIcon 
               focused={focused}
               iconName="card-giftcard"
+            />
+          ),
+          tabBarActiveTintColor: '#006A72ff',
+          tabBarInactiveTintColor: 'white',
+        }}
+      />
+      <Tab.Screen
+        name="RateFixing"
+        component={RateFixingScreen}
+        options={{
+          tabBarLabel: '',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon 
+              focused={focused}
+              iconName="price-tag"
+              iconLib="Entypo"
             />
           ),
           tabBarActiveTintColor: '#006A72ff',

@@ -45,11 +45,14 @@ export default function PerCompReport() {
     totalBalance: 0
   });
 
-  const fetchReport = async (page = 1, replace = false) => {
+  const fetchReport = async (page = 1, replace = false, fDate = null, tDate = null) => {
     if (!hasMore && !replace) return;
 
     try {
       if (page === 1) setLoading(true);
+
+      const fd = fDate || fromDate;
+      const td = tDate || toDate;
 
       const response = await axios.get(
         `${BASE_URL}OverAllReport/GetBalanceReport`,
@@ -57,8 +60,8 @@ export default function PerCompReport() {
           params: {
             groupCode: groupCode,
             compCode: companyCode,
-            fromDate: fromDate.toISOString(),
-            toDate: toDate.toISOString(),
+            fromDate: fd.toISOString(),
+            toDate: td.toISOString(),
             pageNumber: page,
             pageSize: pageSize
           }
@@ -85,7 +88,8 @@ export default function PerCompReport() {
       console.error('Error fetching report:', error.message);
     } finally {
       setLoading(false);
-      if (refreshing) setRefreshing(false);
+      // Ensure refreshing state is cleared regardless of closure/stale values
+      setRefreshing(false);
       
     }
   };
@@ -100,11 +104,11 @@ const onRefresh = () => {
   setFromDate(today);
   setToDate(today);
 
-  // Clear data
+  // Clear data immediately so UI shows cleared state on first click
   setData([]);
 
-  // Fetch new data
-  fetchReport(1, true);
+  // Fetch new data using today's dates (pass them explicitly to avoid stale state)
+  fetchReport(1, true, today, today);
 };
 
 
