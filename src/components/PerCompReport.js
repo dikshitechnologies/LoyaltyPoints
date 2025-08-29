@@ -17,6 +17,7 @@ import { BASE_URL } from './Services';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getGroupCode, getCompanyCode } from '../store';
 
+
 const { width, height } = Dimensions.get('window');
 
 export default function PerCompReport() {
@@ -261,8 +262,8 @@ const styles = StyleSheet.create({
     elevation: 5,
     position: 'relative',
   },
-  screenTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 4 },
-  screenSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)' },
+  screenTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 4, justifyContent: 'center', alignSelf: 'center' },
+  screenSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', },
   refreshBtn: { position: 'absolute', right: 16, top: 28 },
   dateContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingHorizontal: 10 },
   dateBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, backgroundColor: '#f8f9fa', flex: 0.48 },
