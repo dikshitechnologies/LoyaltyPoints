@@ -9,18 +9,21 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  Dimensions
+  Dimensions,
+  Image
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import axios from 'axios';
 import { BASE_URL } from './Services';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getGroupCode, getCompanyCode } from '../store';
-
+import { useNavigation } from "@react-navigation/native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 
 const { width, height } = Dimensions.get('window');
 
 export default function PerCompReport() {
+  const navigation = useNavigation();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -74,7 +77,7 @@ export default function PerCompReport() {
       const combinedData = replace ? newData : [...data, ...newData];
       const totalAdded = combinedData.reduce((sum, item) => sum + item.totalAddedPoints, 0);
       const totalRedeemed = combinedData.reduce((sum, item) => sum + item.totalRedeemedPoints, 0);
-      // const totalBalance = combinedData.reduce((sum, item) => sum + item.balancePoints, 0);
+      const totalBalance = combinedData.reduce((sum, item) => sum + item.balancePoints, 0);
 
       setTotals({ totalAdded, totalRedeemed, totalBalance });
 
@@ -134,6 +137,16 @@ const onRefresh = () => {
 
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Image
+            source={require("../assets/backicon.png")}
+            style={styles.backIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
         <Text style={styles.screenTitle}>Balance Report</Text>
         <Text style={styles.screenSubtitle}>Company-wise points summary</Text>
         <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh}>
@@ -263,7 +276,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   screenTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 4, justifyContent: 'center', alignSelf: 'center' },
-  screenSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', },
+  screenSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignSelf: 'center' },
   refreshBtn: { position: 'absolute', right: 16, top: 28 },
   dateContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingHorizontal: 10 },
   dateBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, backgroundColor: '#f8f9fa', flex: 0.48 },
@@ -286,4 +299,23 @@ const styles = StyleSheet.create({
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   totalLabel: { fontWeight: '600', fontSize: 14, color: '#2c3e50' },
   totalValue: { fontWeight: '600', fontSize: 14 },
+    backButton: {
+    width: hp("5%"),
+    height: hp("5%"),
+    borderRadius: hp("2.5%"),
+    backgroundColor: "#D9F5F7",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    left: 16,
+    top: 28,
+    marginTop: hp("-3.5%"),
+    marginLeft: wp("-2%"),
+  },
+  backIcon: {
+    width: hp("2.5%"),
+    height: hp("2.5%"),
+    tintColor: "#006A72",
+  },
+
 });
