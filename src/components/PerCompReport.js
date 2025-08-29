@@ -73,7 +73,7 @@ export default function PerCompReport() {
       const combinedData = replace ? newData : [...data, ...newData];
       const totalAdded = combinedData.reduce((sum, item) => sum + item.totalAddedPoints, 0);
       const totalRedeemed = combinedData.reduce((sum, item) => sum + item.totalRedeemedPoints, 0);
-      const totalBalance = combinedData.reduce((sum, item) => sum + item.balancePoints, 0);
+      // const totalBalance = combinedData.reduce((sum, item) => sum + item.balancePoints, 0);
 
       setTotals({ totalAdded, totalRedeemed, totalBalance });
 
@@ -113,7 +113,7 @@ const onRefresh = () => {
       <Text style={[styles.cell, styles.headerCell, {flex: 1}]}>Added Points</Text>
       <Text style={[styles.cell, styles.headerCell, {flex: 1.5}]}>Company</Text>
       <Text style={[styles.cell, styles.headerCell, {flex: 1}]}>Redeemed</Text>
-      <Text style={[styles.cell, styles.headerCell, {flex: 1}]}>Balance</Text>
+      {/* <Text style={[styles.cell, styles.headerCell, {flex: 1}]}>Balance</Text> */}
     </View>
   );
 
@@ -123,7 +123,7 @@ const onRefresh = () => {
       <Text style={[styles.cell, {flex: 1, color: '#27ae60', fontWeight: '600'}]}>{item.totalAddedPoints}</Text>
       <Text style={[styles.cell, {flex: 1.5}]} numberOfLines={1} ellipsizeMode="tail">{item.fCompName}</Text>
       <Text style={[styles.cell, {flex: 1, color: '#e74c3c', fontWeight: '600'}]}>{item.totalRedeemedPoints}</Text>
-      <Text style={[styles.cell, {flex: 1, fontWeight: 'bold'}]}>{item.balancePoints}</Text>
+      {/* <Text style={[styles.cell, {flex: 1, fontWeight: 'bold'}]}>{item.balancePoints}</Text> */}
     </View>
   );
 
@@ -236,10 +236,10 @@ const onRefresh = () => {
           <Text style={styles.totalLabel}>Total Redeemed:</Text>
           <Text style={[styles.totalValue, {color: '#e74c3c'}]}>{totals.totalRedeemed}</Text>
         </View>
-        <View style={styles.totalRow}>
+        {/* <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Balance:</Text>
           <Text style={[styles.totalValue, {color: '#006A72', fontWeight: 'bold'}]}>{totals.totalBalance}</Text>
-        </View>
+        </View> */}
       </View>
     </SafeAreaView>
   );

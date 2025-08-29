@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
 
   grid: { padding: wp("4%") },
-  row: { justifyContent: "space-between" },
+  row: { justifyContent: "start" },
 
   card: {
     flex: 1,
