@@ -94,18 +94,19 @@ const PartyCreation = ({ navigation }) => {
     useFocusEffect(
         useCallback(() => {
             const onBackPress = () => {
-                Alert.alert(
-                    'Exit App',
-                    'Do you want to close this app?',
-                    [
-                        { text: 'No', style: 'cancel', onPress: () => {} },
-                        { text: 'Yes', onPress: () => {  
-                            navigation.reset({ index: 0, routes: [{ name: 'Splash' }] });
-                            BackHandler.exitApp();
-                        } }
-                    ],
-                    { cancelable: true }
-                );
+                 navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+                // Alert.alert(
+                //     'Exit App',
+                //     'Do you want to close this app?',
+                //     [
+                //         { text: 'No', style: 'cancel', onPress: () => {} },
+                //         { text: 'Yes', onPress: () => {  
+                //             navigation.reset({ index: 0, routes: [{ name: 'Splash' }] });
+                //             BackHandler.exitApp();
+                //         } }
+                //     ],
+                //     { cancelable: true }
+                // );
                 return true;
             };
 
