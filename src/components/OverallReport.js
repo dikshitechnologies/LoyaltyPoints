@@ -17,6 +17,7 @@ import axios from 'axios';
 import { BASE_URL } from './Services';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getGroupCode } from '../store';
+import PopupListSelector from './PopupWithPagination'
 const { width, height } = Dimensions.get('window');
 
 export default function OverallReportScreen({ navigation }) {
@@ -31,34 +32,33 @@ export default function OverallReportScreen({ navigation }) {
   const [customerModalVisible, setCustomerModalVisible] = useState(false);
   const pageSize = 20;
   const [hasMore, setHasMore] = useState(true);
-
+  const [customerListModal, setCustomerListModal] = useState(false);
 
 
     const groupCode = getGroupCode();
 
 
+      // ---------------------------------------------------get estimate details ---------------------------------------
 
-  // Fetch customers list
-  const fetchCustomers = async () => {
+  const fetchCustomers = async (page = 1, searchtext = '') => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${BASE_URL}OverAllReport/GetCustomers`,
-        {
-          params: {
-            groupCode: '0001',
-            pageNumber: 1,
-            pageSize: 20
-          },
-        }
-      );
-      setCustomers(response.data);
+      const pageSize = 20;
+      const url = `${BASE_URL}OverAllReport/GetCustomers?groupCode=${groupCode}&search=${searchtext}&pageNumber=${page}&pageSize=${pageSize}`;
+      console.log("Fetching customers from:", url); // ✅ log it
+      const response = await axios.get(url);
+
+      const customerList = response.data ?? [];
+      setCustomers(customerList);
+      return customerList;
     } catch (error) {
-      console.error('Error fetching customers:', error.message);
+      console.error("Error fetching customers :", error.message);
+      return [];
     } finally {
       setLoading(false);
     }
   };
+ 
 
  const groupData = (rows) => {
       const grouped = [];
@@ -95,7 +95,7 @@ export default function OverallReportScreen({ navigation }) {
 
   const fetchReport = async (loyaltyNumber, page = 1, replace = false) => {
     if (!hasMore && !replace) return;
-
+    console.log("Fetching report for:", loyaltyNumber);
     try {
       if (page === 1) setLoading(true);
 
@@ -110,7 +110,7 @@ export default function OverallReportScreen({ navigation }) {
           },
         }
       );
-
+      console.log("Report data fetched successfully:", response.data);
       const newData = response.data;
       const grouped = groupData(newData);
 
@@ -130,17 +130,20 @@ export default function OverallReportScreen({ navigation }) {
     }
   };
 
+
   useEffect(() => { 
     fetchCustomers(); 
   }, []);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    setHasMore(true);
-    if (selectedCustomer) {
-      fetchReport(selectedCustomer.loyaltyNumber, 1, true);
-    }
-  };
+ const onRefresh = async () => {
+  setRefreshing(true);
+  setSelectedCustomer(null);
+  setData([]); 
+  setRefreshing(false);
+};
+
+
+
 
   const loadMore = () => { 
     if (!loading && hasMore && selectedCustomer) {
@@ -201,41 +204,41 @@ export default function OverallReportScreen({ navigation }) {
     </TouchableOpacity>
   );
 
-  const CustomerSelectionModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={customerModalVisible}
-      onRequestClose={() => setCustomerModalVisible(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, {height: height * 0.8}]}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Customer</Text>
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => setCustomerModalVisible(false)}
-            >
-              <Icon name="close" size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
+  // const CustomerSelectionModal = () => (
+  //   <Modal
+  //     animationType="slide"
+  //     transparent={true}
+  //     visible={customerModalVisible}
+  //     onRequestClose={() => setCustomerModalVisible(false)}
+  //   >
+  //     <View style={styles.modalOverlay}>
+  //       <View style={[styles.modalContent, {height: height * 0.8}]}>
+  //         <View style={styles.modalHeader}>
+  //           <Text style={styles.modalTitle}>Select Customer</Text>
+  //           <TouchableOpacity 
+  //             style={styles.closeButton}
+  //             onPress={() => setCustomerModalVisible(false)}
+  //           >
+  //             <Icon name="close" size={24} color="#fff" />
+  //           </TouchableOpacity>
+  //         </View>
           
-          {customers.length > 0 ? (
-            <FlatList
-              data={customers}
-              keyExtractor={(item) => item.loyaltyNumber}
-              renderItem={renderCustomerItem}
-            />
-          ) : (
-            <View style={styles.emptyState}>
-              <ActivityIndicator size="large" color="#006A72" />
-              <Text style={styles.noData}>Loading customers...</Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </Modal>
-  );
+  //         {customers.length > 0 ? (
+  //           <FlatList
+  //             data={customers}
+  //             keyExtractor={(item) => item.loyaltyNumber}
+  //             renderItem={renderCustomerItem}
+  //           />
+  //         ) : (
+  //           <View style={styles.emptyState}>
+  //             <ActivityIndicator size="large" color="#006A72" />
+  //             <Text style={styles.noData}>Loading customers...</Text>
+  //           </View>
+  //         )}
+  //       </View>
+  //     </View>
+  //   </Modal>
+  // );
 
   const RedeemDetailsModal = () => (
     <Modal
@@ -319,14 +322,23 @@ export default function OverallReportScreen({ navigation }) {
      <View style={styles.header}>
 
   <View style={styles.headerTop}>
-    <Icon 
-      name="arrow-back" 
-      size={24} 
-      color="#fff" 
-      onPress={() => navigation.navigate('ReportDashboard')} 
-    />
-    <Text style={styles.screenTitle}>Loyalty Program Report</Text>
-  </View>
+  {/* Back Button */}
+  <Icon 
+    name="arrow-back" 
+    size={24} 
+    color="#fff" 
+    onPress={() => navigation.navigate('ReportDashboard')} 
+    style={{ marginRight: 12 }}
+  />
+
+  {/* Title */}
+  <Text style={styles.screenTitle}>Loyalty Program Report</Text>
+
+  {/* Refresh Button */}
+  <TouchableOpacity onPress={onRefresh} style={{ marginLeft: 'auto' }}>
+    <Icon name="refresh" size={24} color="#fff" />
+  </TouchableOpacity>
+</View>
 
   {/* Subtitle */}
   <Text style={styles.screenSubtitle}>
@@ -336,15 +348,16 @@ export default function OverallReportScreen({ navigation }) {
   </Text>
 
   {/* Customer Selector Button */}
-  <TouchableOpacity 
-    style={styles.customerSelector}
-    onPress={() => setCustomerModalVisible(true)}
-  >
-    <Text style={styles.customerSelectorText}>
-      {selectedCustomer ? 'Change Customer' : 'Select Customer'}
-    </Text>
-    <Icon name="people" size={20} color="#fff" />
-  </TouchableOpacity>
+<TouchableOpacity 
+  style={styles.customerSelector}
+  onPress={() => setCustomerListModal(true)} 
+>
+  <Text style={styles.customerSelectorText}>
+    {selectedCustomer ? 'Change Customer' : 'Select Customer'}
+  </Text>
+  <Icon name="people" size={20} color="#fff" />
+</TouchableOpacity>
+
 </View>
 
       {!selectedCustomer && (
@@ -401,8 +414,25 @@ export default function OverallReportScreen({ navigation }) {
         </>
       )}
       
-      <CustomerSelectionModal />
+    
       <RedeemDetailsModal />
+            <PopupListSelector
+              visible={customerListModal}
+              onClose={() => setCustomerListModal(false)}
+              onSelect={(item) => {
+                setSelectedCustomer(item);        
+                setCustomerListModal(false);      
+                setData([]);                     
+                setPageNumber(1);                 
+                fetchReport(item.loyaltyNumber, 1, true); 
+              }}
+              fetchItems={fetchCustomers}
+              title="Select Customer"
+              displayFieldIndex={['customerName','loyaltyNumber']} 
+              columnWidths={{ customerName: '100%', loyaltyNumber: '100%' }} 
+            />
+
+
     </SafeAreaView>
   );
 }
@@ -632,4 +662,12 @@ customerSelectorText: {
   fontSize: 14,
   marginRight: 8,
 },
+screenTitle: {
+  color: '#fff',
+  fontSize: 20,
+  fontWeight: 'bold',
+  flex: 1,
+  textAlign: 'center',
+},
+
 });

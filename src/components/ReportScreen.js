@@ -18,6 +18,8 @@ const numColumns = Math.floor(screenWidth / CARD_MIN_WIDTH); // auto adjust
 const ReportScreen = () => {
   const navigation = useNavigation();
 
+  
+
   const reportOptions = [
     {
       id: 1,
