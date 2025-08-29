@@ -207,6 +207,7 @@ export default function LoginScreen({ navigation }) {
                     onSubmitEditing={() => passwordRef.current?.focus()}
                     returnKeyType="next"
                     value={username}
+                    autoCapitalize="characters"
                     onChangeText={setUsername}
                   />
                 </View>
@@ -224,6 +225,7 @@ export default function LoginScreen({ navigation }) {
                     secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={setPassword}
+                      autoCapitalize="characters"
                     onSubmitEditing={handleLogin}
                   />
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>

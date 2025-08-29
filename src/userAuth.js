@@ -222,6 +222,7 @@ export default function UserAuth({ navigation }) {
                     onSubmitEditing={() => passwordRef.current?.focus()}
                     returnKeyType="next"
                     value={loyaltyNumber}
+                      autoCapitalize="characters"
                     onChangeText={setLoyaltyNumber}
                   />
                 </View>
