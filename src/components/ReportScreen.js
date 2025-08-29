@@ -46,8 +46,14 @@ const ReportScreen = () => {
     {
       id: 5,
       title: "Overall Report",
-      image: require("../assets/anniversary.png"),
+      image: require("../assets/overall.png"),
       screen: "OverallReport"
+    },
+    {
+      id: 6,
+      title: "Company Report",
+      image: require("../assets/company1.png"),
+      screen: "PerCompReport"
     },
     
   ];
@@ -104,7 +110,7 @@ const styles = StyleSheet.create({
   },
 
   grid: { padding: wp("4%") },
-  row: { justifyContent: "space-between" },
+  row: { justifyContent: "start" },
 
   card: {
     flex: 1,
