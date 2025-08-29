@@ -364,7 +364,7 @@ export default function OverallReportScreen({ navigation }) {
   <Icon name="people" size={20} color="#fff" />
 </TouchableOpacity>
 
-</View>
+
 
       {!selectedCustomer && (
         <View style={styles.placeholder}>
