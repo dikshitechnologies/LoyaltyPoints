@@ -74,7 +74,7 @@ export default function PerCompReport() {
       const combinedData = replace ? newData : [...data, ...newData];
       const totalAdded = combinedData.reduce((sum, item) => sum + item.totalAddedPoints, 0);
       const totalRedeemed = combinedData.reduce((sum, item) => sum + item.totalRedeemedPoints, 0);
-      // const totalBalance = combinedData.reduce((sum, item) => sum + item.balancePoints, 0);
+       const totalBalance = combinedData.reduce((sum, item) => sum + item.balancePoints, 0);
 
       setTotals({ totalAdded, totalRedeemed, totalBalance });
 
