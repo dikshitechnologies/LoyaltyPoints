@@ -26,6 +26,7 @@ import AnniversaryReport from './src/components/AnniversaryReport';
 import userAuth from './src/userAuth';
 import LoyaltyReportScreen from './src/UserReport';
 import OverallReport from './src/components/OverallReport';
+import PerCompReport from './src/components/PerCompReport';
 
 const Stack = createNativeStackNavigator();
 
@@ -51,6 +52,7 @@ function App() {
            <Stack.Screen name="BirthdayReport" component={BirthdayReport} />
            <Stack.Screen name="AnniversaryReport" component={AnniversaryReport} />
            <Stack.Screen name="OverallReport" component={OverallReport} />
+           <Stack.Screen name="PerCompReport" component={PerCompReport} />
          </Stack.Navigator>
     </NavigationContainer>
   );
