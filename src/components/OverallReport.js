@@ -16,50 +16,84 @@ import {
 import axios from 'axios';
 import { BASE_URL } from './Services';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-
+import { getGroupCode } from '../store';
 const { width, height } = Dimensions.get('window');
 
-export default function OverallReportScreen() {
+export default function OverallReportScreen({ navigation }) {
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [customerModalVisible, setCustomerModalVisible] = useState(false);
   const pageSize = 20;
   const [hasMore, setHasMore] = useState(true);
 
-  // Group data by loyalty + add company
-  const groupData = (rows) => {
-    const grouped = [];
-    const map = {};
 
-    rows.forEach(item => {
-      const key = item.loyaltyNumber + '-' + item.addCompName;
-      if (!map[key]) {
-        map[key] = {
-          loyaltyNumber: item.loyaltyNumber,
-          addCompName: item.addCompName,
-          addPoints: 0,
-          redeemDetails: []
-        };
-        grouped.push(map[key]);
-      }
 
-      map[key].addPoints += item.addPoints;
-      if (item.redeemedHere > 0) {
-        map[key].redeemDetails.push({
-          redeemPoints: item.redeemedHere,
-          redeemCompName: item.redeemCompName || '-',
-          redeemDate: item.redeemDate ? new Date(item.redeemDate).toLocaleDateString() : '-'
-        });
-      }
-    });
+    const groupCode = getGroupCode();
 
-    return grouped;
+
+
+  // Fetch customers list
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${BASE_URL}OverAllReport/GetCustomers`,
+        {
+          params: {
+            groupCode: '0001',
+            pageNumber: 1,
+            pageSize: 20
+          },
+        }
+      );
+      setCustomers(response.data);
+    } catch (error) {
+      console.error('Error fetching customers:', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const fetchReport = async (page = 1, replace = false) => {
+ const groupData = (rows) => {
+      const grouped = [];
+      const map = {};
+
+      rows.forEach(item => {
+        const key = item.addFID; 
+        if (!map[key]) {
+          map[key] = {
+            loyaltyNumber: item.loyaltyNumber,
+            addCompName: item.addCompName,
+            addPoints: 0,
+            redeemDetails: []
+          };
+          grouped.push(map[key]);
+        }
+
+     
+        map[key].addPoints = item.addPoints;
+
+   
+        if (item.redeemedHere > 0) {
+          map[key].redeemDetails.push({
+            redeemPoints: item.redeemedHere,
+            redeemCompName: item.redeemCompName || '-',
+            redeemDate: item.redeemDate ? new Date(item.redeemDate).toLocaleDateString() : '-'
+          });
+        }
+      });
+
+      return grouped;
+    };
+
+
+  const fetchReport = async (loyaltyNumber, page = 1, replace = false) => {
     if (!hasMore && !replace) return;
 
     try {
@@ -69,8 +103,8 @@ export default function OverallReportScreen() {
         `${BASE_URL}OverAllReport/GetLoyaltyReport`,
         {
           params: {
-            loyaltyNumber: '1001',
-            groupCode: '0002',
+            loyaltyNumber: loyaltyNumber,
+            groupCode: groupCode,
             pageNumber: page,
             pageSize: pageSize
           },
@@ -78,9 +112,14 @@ export default function OverallReportScreen() {
       );
 
       const newData = response.data;
-      const grouped = groupData(replace ? newData : [...data, ...newData]);
+      const grouped = groupData(newData);
 
-      setData(grouped);
+      if (replace) {
+        setData(grouped);
+      } else {
+        setData(prevData => [...prevData, ...grouped]);
+      }
+      
       setHasMore(newData.length === pageSize);
       setPageNumber(page);
     } catch (error) {
@@ -91,20 +130,51 @@ export default function OverallReportScreen() {
     }
   };
 
-  useEffect(() => { fetchReport(); }, []);
+  useEffect(() => { 
+    fetchCustomers(); 
+  }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
     setHasMore(true);
-    fetchReport(1, true);
+    if (selectedCustomer) {
+      fetchReport(selectedCustomer.loyaltyNumber, 1, true);
+    }
   };
 
-  const loadMore = () => { if (!loading && hasMore) fetchReport(pageNumber + 1); };
+  const loadMore = () => { 
+    if (!loading && hasMore && selectedCustomer) {
+      fetchReport(selectedCustomer.loyaltyNumber, pageNumber + 1);
+    }
+  };
 
   const openDetailsModal = (item) => {
     setSelectedItem(item);
     setModalVisible(true);
   };
+
+  const selectCustomer = (customer) => {
+    setSelectedCustomer(customer);
+    setCustomerModalVisible(false);
+    setData([]); // Clear previous data
+    setPageNumber(1); // Reset pagination
+    fetchReport(customer.loyaltyNumber, 1, true);
+  };
+
+  const renderCustomerItem = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.customerItem}
+      onPress={() => selectCustomer(item)}
+    >
+      <View style={styles.customerInfo}>
+        <Text style={styles.customerName}>{item.customerName}</Text>
+        <Text style={styles.customerDetails}>
+          Loyalty: {item.loyaltyNumber} | Phone: {item.phoneNumber}
+        </Text>
+      </View>
+      <Icon name="chevron-right" size={24} color="#006A72" />
+    </TouchableOpacity>
+  );
 
   const renderHeader = () => (
     <View style={styles.headerRow}>
@@ -131,6 +201,42 @@ export default function OverallReportScreen() {
     </TouchableOpacity>
   );
 
+  const CustomerSelectionModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={customerModalVisible}
+      onRequestClose={() => setCustomerModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, {height: height * 0.8}]}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Customer</Text>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setCustomerModalVisible(false)}
+            >
+              <Icon name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          
+          {customers.length > 0 ? (
+            <FlatList
+              data={customers}
+              keyExtractor={(item) => item.loyaltyNumber}
+              renderItem={renderCustomerItem}
+            />
+          ) : (
+            <View style={styles.emptyState}>
+              <ActivityIndicator size="large" color="#006A72" />
+              <Text style={styles.noData}>Loading customers...</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+
   const RedeemDetailsModal = () => (
     <Modal
       animationType="slide"
@@ -150,7 +256,7 @@ export default function OverallReportScreen() {
             </TouchableOpacity>
           </View>
           
-          {selectedItem && (
+          {selectedItem ? (
             <ScrollView style={styles.modalBody}>
               <View style={styles.detailSection}>
                 <Text style={styles.detailLabel}>Loyalty Number</Text>
@@ -172,7 +278,7 @@ export default function OverallReportScreen() {
               <View style={styles.detailSection}>
                 <Text style={[styles.detailLabel, {marginBottom: 10}]}>Redeem History</Text>
                 
-                {selectedItem.redeemDetails.length > 0 ? (
+                {selectedItem.redeemDetails && selectedItem.redeemDetails.length > 0 ? (
                   selectedItem.redeemDetails.map((redeem, index) => (
                     <View key={index} style={styles.redeemItem}>
                       <View style={styles.redeemRow}>
@@ -197,6 +303,10 @@ export default function OverallReportScreen() {
                 )}
               </View>
             </ScrollView>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.noData}>No details available</Text>
+            </View>
           )}
         </View>
       </View>
@@ -206,52 +316,92 @@ export default function OverallReportScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#006A72" barStyle="light-content" />
-      <View style={styles.header}>
-        <Text style={styles.screenTitle}>Loyalty Program Report</Text>
-        <Text style={styles.screenSubtitle}>Summary of points and redemptions</Text>
-      </View>
+     <View style={styles.header}>
 
-      {loading && pageNumber === 1 && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#006A72" />
-          <Text style={styles.loadingText}>Loading report data...</Text>
-        </View>
-      )}
-      
-      {!loading && data.length === 0 && (
-        <View style={styles.emptyState}>
+  <View style={styles.headerTop}>
+    <Icon 
+      name="arrow-back" 
+      size={24} 
+      color="#fff" 
+      onPress={() => navigation.navigate('ReportDashboard')} 
+    />
+    <Text style={styles.screenTitle}>Loyalty Program Report</Text>
+  </View>
+
+  {/* Subtitle */}
+  <Text style={styles.screenSubtitle}>
+    {selectedCustomer 
+      ? `Customer: ${selectedCustomer.customerName}` 
+      : 'Select a customer to view report'}
+  </Text>
+
+  {/* Customer Selector Button */}
+  <TouchableOpacity 
+    style={styles.customerSelector}
+    onPress={() => setCustomerModalVisible(true)}
+  >
+    <Text style={styles.customerSelectorText}>
+      {selectedCustomer ? 'Change Customer' : 'Select Customer'}
+    </Text>
+    <Icon name="people" size={20} color="#fff" />
+  </TouchableOpacity>
+</View>
+
+      {!selectedCustomer && (
+        <View style={styles.placeholder}>
           <Icon name="assignment" size={60} color="#ddd" />
-          <Text style={styles.noData}>No report available</Text>
-          <Text style={styles.noDataSubtitle}>Pull down to refresh</Text>
+          <Text style={styles.placeholderText}>Please select a customer to view their loyalty report</Text>
         </View>
       )}
 
-      <FlatList
-        data={data}
-        keyExtractor={(item, index) => `${item.loyaltyNumber}-${item.addCompName}-${index}`}
-        renderItem={renderItem}
-        ListHeaderComponent={renderHeader}
-        stickyHeaderIndices={[0]}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh}
-            colors={['#006A72']}
-            tintColor={'#006A72'}
-          />
-        }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.3}
-        ListFooterComponent={
-          loading && pageNumber > 1 ? (
-            <View style={styles.footerLoader}>
-              <ActivityIndicator size="small" color="#006A72" />
-              <Text style={styles.loadingMoreText}>Loading more...</Text>
+      {selectedCustomer && (
+        <>
+          {loading && pageNumber === 1 && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#006A72" />
+              <Text style={styles.loadingText}>Loading report data...</Text>
             </View>
-          ) : null
-        }
-      />
+          )}
+          
+          {!loading && data.length === 0 && (
+            <View style={styles.emptyState}>
+              <Icon name="assignment" size={60} color="#ddd" />
+              <Text style={styles.noData}>No report available for this customer</Text>
+              <Text style={styles.noDataSubtitle}>Pull down to refresh</Text>
+            </View>
+          )}
+
+          {!loading && data.length > 0 && (
+            <FlatList
+              data={data}
+              keyExtractor={(item, index) => `${item.loyaltyNumber}-${item.addCompName}-${index}`}
+              renderItem={renderItem}
+              ListHeaderComponent={renderHeader}
+              stickyHeaderIndices={[0]}
+              refreshControl={
+                <RefreshControl 
+                  refreshing={refreshing} 
+                  onRefresh={onRefresh}
+                  colors={['#006A72']}
+                  tintColor={'#006A72'}
+                />
+              }
+              onEndReached={loadMore}
+              onEndReachedThreshold={0.3}
+              ListFooterComponent={
+                loading && pageNumber > 1 ? (
+                  <View style={styles.footerLoader}>
+                    <ActivityIndicator size="small" color="#006A72" />
+                    <Text style={styles.loadingMoreText}>Loading more...</Text>
+                  </View>
+                ) : null
+              }
+            />
+          )}
+        </>
+      )}
       
+      <CustomerSelectionModal />
       <RedeemDetailsModal />
     </SafeAreaView>
   );
@@ -262,28 +412,39 @@ const styles = StyleSheet.create({
     flex: 1, 
     backgroundColor: '#FFF'
   },
-  header: {
-    backgroundColor: '#006A72',
-    padding: 16,
-    paddingTop: 24,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 5,
+  placeholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
   },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+  placeholderText: {
+    textAlign: 'center',
+    marginTop: 15,
+    color: '#95a5a6',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  customerItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  customerInfo: {
+    flex: 1,
+  },
+  customerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
     marginBottom: 4,
   },
-  screenSubtitle: {
+  customerDetails: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#7f8c8d',
   },
   headerRow: { 
     flexDirection: 'row', 
@@ -431,4 +592,44 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     padding: 10,
   },
+  header: {
+  backgroundColor: '#006A72',
+  padding: 16,
+  borderBottomLeftRadius: 20,
+  borderBottomRightRadius: 20,
+  elevation: 4,
+},
+headerTop: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 8,
+},
+screenTitle: {
+  color: '#fff',
+  fontSize: 20,
+  fontWeight: 'bold',
+  margin: 'auto',
+},
+screenSubtitle: {
+  color: '#e0e0e0',
+  fontSize: 14,
+  marginBottom: 12,
+  fontStyle: 'italic',
+    margin: 'auto',
+},
+customerSelector: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#009688',
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 20,
+  alignSelf: 'flex-start',
+    margin: 'auto',
+},
+customerSelectorText: {
+  color: '#fff',
+  fontSize: 14,
+  marginRight: 8,
+},
 });
