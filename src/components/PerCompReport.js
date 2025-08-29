@@ -157,20 +157,32 @@ const onRefresh = () => {
       {/* Date pickers + Search */}
       <View style={styles.dateContainer}>
         <TouchableOpacity 
-          onPress={() => setShowFromPicker(true)} 
-          style={styles.dateBtn}
-        >
-          <Icon name="event" size={18} color="#006A72" style={styles.dateIcon} />
-          <Text style={styles.dateText}>From: {fromDate.toLocaleDateString()}</Text>
-        </TouchableOpacity>
+  onPress={() => setShowFromPicker(true)} 
+  style={styles.dateBtn}
+>
+  <Icon name="event" size={18} color="#006A72" style={styles.dateIcon} />
+  <Text
+    style={styles.dateText}
+    numberOfLines={1}
+    ellipsizeMode="tail"
+  >
+    From: {fromDate.toLocaleDateString()}
+  </Text>
+</TouchableOpacity>
 
-        <TouchableOpacity 
-          onPress={() => setShowToPicker(true)} 
-          style={styles.dateBtn}
-        >
-          <Icon name="event" size={18} color="#006A72" style={styles.dateIcon} />
-          <Text style={styles.dateText}>To: {toDate.toLocaleDateString()}</Text>
-        </TouchableOpacity>
+<TouchableOpacity 
+  onPress={() => setShowToPicker(true)} 
+  style={styles.dateBtn}
+>
+  <Icon name="event" size={18} color="#006A72" style={styles.dateIcon} />
+  <Text
+    style={styles.dateText}
+    numberOfLines={1}
+    ellipsizeMode="tail"
+  >
+    To: {toDate.toLocaleDateString()}
+  </Text>
+</TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.searchBtn}
@@ -278,10 +290,17 @@ const styles = StyleSheet.create({
   screenTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 4, justifyContent: 'center', alignSelf: 'center' },
   screenSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignSelf: 'center' },
   refreshBtn: { position: 'absolute', right: 16, top: 28 },
-  dateContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingHorizontal: 10 },
+  dateContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingHorizontal: 9 },
   dateBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, backgroundColor: '#f8f9fa', flex: 0.48 },
-  dateIcon: { marginRight: 8 },
-  dateText: { color: '#2c3e50', fontSize: 14 },
+  dateIcon: { marginRight: 2,
+    marginLeft:-7
+   },
+  dateText: { 
+  color: '#2c3e50',
+  fontSize: 14,
+  // flexShrink: 1  
+},
+
   searchBtn: { backgroundColor: '#006A72', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginLeft: 5 },
   searchBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   headerRow: { flexDirection: 'row', backgroundColor: '#006A72', paddingVertical: 12, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },

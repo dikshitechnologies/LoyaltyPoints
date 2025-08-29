@@ -11,13 +11,16 @@ import {
   ScrollView,
   Dimensions,
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  Image
 } from 'react-native';
 import axios from 'axios';
 import { BASE_URL } from './Services';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getGroupCode } from '../store';
+import { useNavigation } from "@react-navigation/native";
 const { width, height } = Dimensions.get('window');
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 
 export default function OverallReportScreen({ navigation }) {
   const [customers, setCustomers] = useState([]);
@@ -316,24 +319,27 @@ export default function OverallReportScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#006A72" barStyle="light-content" />
-     <View style={styles.header}>
-
-  <View style={styles.headerTop}>
-    <Icon 
-      name="arrow-back" 
-      size={24} 
-      color="#fff" 
-      onPress={() => navigation.navigate('ReportDashboard')} 
-    />
-    <Text style={styles.screenTitle}>Loyalty Program Report</Text>
-  </View>
-
-  {/* Subtitle */}
-  <Text style={styles.screenSubtitle}>
+      <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Image
+                source={require("../assets/backicon.png")}
+                style={styles.backIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+            <Text style={styles.screenTitle}>Loyalty Program Report</Text>
+            <Text style={styles.screenSubtitle}>
     {selectedCustomer 
       ? `Customer: ${selectedCustomer.customerName}` 
       : 'Select a customer to view report'}
   </Text>
+      </View>
+
+  {/* Subtitle */}
+  
 
   {/* Customer Selector Button */}
   <TouchableOpacity 
@@ -343,9 +349,8 @@ export default function OverallReportScreen({ navigation }) {
     <Text style={styles.customerSelectorText}>
       {selectedCustomer ? 'Change Customer' : 'Select Customer'}
     </Text>
-    <Icon name="people" size={20} color="#fff" />
-  </TouchableOpacity>
-</View>
+  <Icon name="people" size={20} color="#fff" />
+</TouchableOpacity>
 
       {!selectedCustomer && (
         <View style={styles.placeholder}>
@@ -592,13 +597,20 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     padding: 10,
   },
-  header: {
-  backgroundColor: '#006A72',
-  padding: 16,
-  borderBottomLeftRadius: 20,
-  borderBottomRightRadius: 20,
-  elevation: 4,
-},
+   header: {
+    backgroundColor: '#006A72',
+    padding: 16,
+    paddingTop: 24,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+    position: 'relative',
+  },
 headerTop: {
   flexDirection: 'row',
   alignItems: 'center',
@@ -609,13 +621,17 @@ screenTitle: {
   fontSize: 20,
   fontWeight: 'bold',
   margin: 'auto',
+  justifyContent: 'center',
+  alignItems: "center",
 },
 screenSubtitle: {
   color: '#e0e0e0',
   fontSize: 14,
   marginBottom: 12,
-  fontStyle: 'italic',
-    margin: 'auto',
+  // fontStyle: 'italic',
+  margin: 'auto',
+  justifyContent: 'center',
+  alignItems: "center",
 },
 customerSelector: {
   flexDirection: 'row',
@@ -632,4 +648,22 @@ customerSelectorText: {
   fontSize: 14,
   marginRight: 8,
 },
+backButton: {
+    width: hp("5%"),
+    height: hp("5%"),
+    borderRadius: hp("2.5%"),
+    backgroundColor: "#D9F5F7",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    left: 16,
+    top: 28,
+    marginTop: hp("-3.5%"),
+    marginLeft: wp("-2%"),
+  },
+  backIcon: {
+    width: hp("2.5%"),
+    height: hp("2.5%"),
+    tintColor: "#006A72",
+  },
 });

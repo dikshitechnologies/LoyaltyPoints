@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   color: '#006A72',
   textAlign: 'left',
   flex: 1,
-  marginLeft: wp("3%"),
+  marginLeft: wp("5%"),
   marginBottom: hp("3%"),
   },
 
