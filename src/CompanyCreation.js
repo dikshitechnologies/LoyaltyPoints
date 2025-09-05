@@ -161,7 +161,6 @@ export default function CreationScreen({ navigation }) {
         userName: username,
         password,
         roleFlag: "N",
-     groupCode: selectedGroupCode,
         fGroupCode: selectedGroupCode,
       };
       console.log(payload)
@@ -688,7 +687,7 @@ export default function CreationScreen({ navigation }) {
                       style={{ marginRight: 8 }} 
                     />
                     <Text style={styles.btnText}>
-                      {isEditingGroup ? "UPDATE" : "CREATE"} GROUP
+                      {isEditingGroup ? "UPDATE" : "CREATE"} 
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
